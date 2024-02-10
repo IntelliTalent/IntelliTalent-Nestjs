@@ -27,6 +27,7 @@ export enum ServiceName {
   API_GATEWAY = 'API_GATEWAY',
   USER_SERVICE = 'USER_SERVICE',
   AUTH_SERVICE = 'AUTH_SERVICE',
+  COVER_LETTER_SERVICE = 'COVER_LETTER_SERVICE',
 }
 
 export const getServiceDatabse = async (
@@ -67,4 +68,5 @@ export enum QueuesName {
   AUTH_QUEUE = 'AUTH_QUEUE',
   BOOKS_QUEUE = 'BOOKS_QUEUE',
   MONITORING_QUEUE = 'MONITORING_QUEUE',
+  COVER_LETTER_QUEUE = 'cover_letter_queue',
 }

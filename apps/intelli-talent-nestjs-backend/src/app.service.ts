@@ -8,6 +8,8 @@ export class AppService {
   constructor(
     @Inject(ServiceName.AUTH_SERVICE) private readonly authService: ClientProxy,
     @Inject(ServiceName.USER_SERVICE) private readonly userService: ClientProxy,
+    @Inject(ServiceName.COVER_LETTER_SERVICE)
+    private readonly coverLetterService: ClientProxy,
   ) {}
 
   getHello(): string {
@@ -18,9 +20,13 @@ export class AppService {
     const pattern = { cmd: 'healthCheck' };
     const authHealth = await firstValueFrom(this.authService.send(pattern, {}));
     const userHealth = await firstValueFrom(this.userService.send(pattern, {}));
+    const coverletterHealth = await firstValueFrom(
+      this.coverLetterService.send(pattern, {}),
+    );
     return {
       authHealth,
       userHealth,
+      coverletterHealth,
     };
   }
 }

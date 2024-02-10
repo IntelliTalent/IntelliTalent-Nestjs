@@ -11,6 +11,10 @@ import {
   imports: [
     SharedModule.registerRmq(ServiceName.AUTH_SERVICE, QueuesName.AUTH_QUEUE),
     SharedModule.registerRmq(ServiceName.USER_SERVICE, QueuesName.USER_QUEUE),
+    SharedModule.registerRmq(
+      ServiceName.COVER_LETTER_SERVICE,
+      QueuesName.COVER_LETTER_QUEUE,
+    ),
   ],
   controllers: [AppController],
   providers: [AppService],
