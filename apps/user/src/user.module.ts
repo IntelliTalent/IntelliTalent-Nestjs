@@ -5,7 +5,9 @@ import { SharedModule } from '@app/shared';
 import { ServiceName } from '@app/shared/config/environment.constants';
 
 @Module({
-  imports: [SharedModule.registerPostgres(ServiceName.USER_SERVICE, [])],
+  imports: [
+    SharedModule.registerPostgres(ServiceName.USER_SERVICE, []),
+  ],
   controllers: [UserController],
   providers: [UserService],
 })

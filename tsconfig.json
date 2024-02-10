@@ -23,6 +23,12 @@
       ],
       "@app/shared/*": [
         "libs/shared/src/*"
+      ],
+      "@app/patterns": [
+        "libs/patterns/src"
+      ],
+      "@app/patterns/*": [
+        "libs/patterns/src/*"
       ]
     }
   }

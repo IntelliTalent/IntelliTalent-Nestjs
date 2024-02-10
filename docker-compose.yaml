@@ -8,7 +8,7 @@ services:
     ports:
       - '3000:3000'
     env_file:
-      - .env
+      - ../.env
     networks:
       - intelli-network
 
@@ -28,9 +28,9 @@ services:
       dockerfile: ./apps/auth/dockerfile.dev
     restart: unless-stopped
     env_file:
-      - .env
+      - ../.env
     # depends_on:
-      # - rabbitmq
+    # - rabbitmq
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -44,7 +44,7 @@ services:
       dockerfile: ./apps/user/dockerfile.dev
     restart: unless-stopped
     env_file:
-      - .env
+      - ../.env
     # depends_on:
     #   - rabbitmq
     volumes:

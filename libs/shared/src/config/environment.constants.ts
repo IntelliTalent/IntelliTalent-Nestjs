@@ -1,9 +1,10 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import getConfigVariables from './configVariables.config';
+import { RmqOptions, Transport } from '@nestjs/microservices';
 
 export const Constants = {
   //basic app info
-  APPPORT: 'APP_PORT',
+  APPPORT: 'NODE_PORT',
   BASEURL: 'APP_BASE_URL',
   //database values
   DB: {
@@ -14,20 +15,50 @@ export const Constants = {
     dbName: {
       AUTHDB: 'AUTHDB',
       USERSDB: 'USERSDB',
-      BOOKSDB: 'BOOKSDB',
-      MONITORINGDB: 'MONITORINGDB',
     },
   },
   RABBITMQ: {
-    url: 'RABBIT_MQ_URL',
+    HOST: 'RABBITMQ_HOST',
+    PORT: 'RABBITMQ_PORT',
+    USER: 'RABBITMQ_USER',
+    PASSWORD: 'RABBITMQ_PASS',
+  },
+  QUEUES: {
+    USER_QUEUE: 'RABBITMQ_AUTH_QUEUE',
+    AUTH_QUEUE: 'RABBITMQ_USERS_QUEUE',
+    COVER_LETTER_QUEUE: 'RABBITMQ_COVER_LETTER_QUEUE',
   },
 };
 
-export enum ServiceName {
-  API_GATEWAY = 'API_GATEWAY',
-  USER_SERVICE = 'USER_SERVICE',
-  AUTH_SERVICE = 'AUTH_SERVICE',
-}
+export const getRMQConfig = async () => {
+  const USER = await getConfigVariables(Constants.RABBITMQ.USER);
+  const PASSWORD = await getConfigVariables(Constants.RABBITMQ.PASSWORD);
+  const HOST = await getConfigVariables(Constants.RABBITMQ.HOST);
+  const PORT = await getConfigVariables(Constants.RABBITMQ.PORT);
+  return {
+    USER,
+    PASSWORD,
+    HOST,
+    PORT,
+  };
+};
+
+export const getRabbitMQOptions = async (
+  queue: string,
+): Promise<RmqOptions> => {
+  const { HOST, PASSWORD, PORT, USER } = await getRMQConfig();
+
+  return {
+    transport: Transport.RMQ,
+    options: {
+      urls: [`amqp://${USER}:${PASSWORD}@${HOST}:${PORT}`],
+      queue,
+      queueOptions: {
+        durable: true,
+      },
+    },
+  };
+};
 
 export const getServiceDatabse = async (
   serviceName: ServiceName,
@@ -62,9 +93,22 @@ export const getServiceDatabse = async (
   return configObject;
 };
 
-export enum QueuesName {
-  USER_QUEUE = 'USER_QUEUE',
-  AUTH_QUEUE = 'AUTH_QUEUE',
-  BOOKS_QUEUE = 'BOOKS_QUEUE',
-  MONITORING_QUEUE = 'MONITORING_QUEUE',
+export enum ServiceName {
+  API_GATEWAY = 'API_GATEWAY',
+  USER_SERVICE = 'USER_SERVICE',
+  AUTH_SERVICE = 'AUTH_SERVICE',
+  COVER_LETTER_SERVICE = 'COVER_LETTER_SERVICE',
+}
+
+export async function mapServiceNameToQueueName(
+  serviceName: ServiceName,
+): Promise<string> {
+  switch (serviceName) {
+    case ServiceName.AUTH_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.AUTH_QUEUE);
+    case ServiceName.USER_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.USER_QUEUE);
+    case ServiceName.COVER_LETTER_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.COVER_LETTER_QUEUE);
+  }
 }

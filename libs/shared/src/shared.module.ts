@@ -3,7 +3,13 @@ import { SharedService } from './shared.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ServiceName, getServiceDatabse } from './config/environment.constants';
+import { getRabbitMQOptions } from './config/environment.constants';
+import {
+  ServiceName,
+  getRMQConfig,
+  getServiceDatabse,
+  mapServiceNameToQueueName,
+} from './config/environment.constants';
 
 /**
  * SharedModule is a module in the NestJS application.
@@ -29,7 +35,6 @@ import { ServiceName, getServiceDatabse } from './config/environment.constants';
   exports: [SharedService],
 })
 export class SharedModule {
-
   static registerPostgres(
     serviceType: ServiceName,
     entities: any[],
@@ -58,25 +63,14 @@ export class SharedModule {
     };
   }
 
-  static registerRmq(service: string, queue: string): DynamicModule {
+  static async registerRmq(service: ServiceName): Promise<DynamicModule> {
+    const queue = await mapServiceNameToQueueName(service);
+
     const providers = [
       {
         provide: service,
-        useFactory: (configService: ConfigService) => {
-          const USER = configService.get('RABBITMQ_USER');
-          const PASSWORD = configService.get('RABBITMQ_PASS');
-          const HOST = configService.get('RABBITMQ_HOST');
-
-          return ClientProxyFactory.create({
-            transport: Transport.RMQ,
-            options: {
-              urls: [`amqp://${USER}:${PASSWORD}@${HOST}`],
-              queue,
-              queueOptions: {
-                durable: true, // queue survives broker restart
-              },
-            },
-          });
+        useFactory: async () => {
+          return ClientProxyFactory.create(await getRabbitMQOptions(queue));
         },
         inject: [ConfigService],
       },
