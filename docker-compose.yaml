@@ -30,7 +30,7 @@ services:
     env_file:
       - ../.env
     # depends_on:
-      # - rabbitmq
+    # - rabbitmq
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
