@@ -17,19 +17,14 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "noEmit": false,
     "paths": {
-      "@app/shared": [
-        "libs/shared/src"
-      ],
-      "@app/shared/*": [
-        "libs/shared/src/*"
-      ],
-      "@app/patterns": [
-        "libs/patterns/src"
-      ],
-      "@app/patterns/*": [
-        "libs/patterns/src/*"
-      ]
+      "@app/shared": ["libs/shared/src"],
+      "@app/shared/*": ["libs/shared/src/*"],
+      "@app/patterns": ["libs/patterns/src"],
+      "@app/patterns/*": ["libs/patterns/src/*"],
+      "@app/services_communications": ["libs/services_communications/src"],
+      "@app/services_communications/*": ["libs/services_communications/src/*"]
     }
   }
 }

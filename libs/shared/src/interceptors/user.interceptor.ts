@@ -10,7 +10,7 @@ import { ClientProxy } from '@nestjs/microservices';
 
 import { Observable, switchMap, catchError } from 'rxjs';
 
-import { UserJwt } from '../interfaces/user-jwt.interface';
+import { UserJwt } from '../../../services_communications/src/authService/interfaces/user-jwt.interface';
 
 /**
  * UserInterceptor is a custom interceptor implementing the NestInterceptor interface from NestJS.

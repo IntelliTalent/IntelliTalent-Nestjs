@@ -6,7 +6,6 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { getRabbitMQOptions } from './config/environment.constants';
 import {
   ServiceName,
-  getRMQConfig,
   getServiceDatabse,
   mapServiceNameToQueueName,
 } from './config/environment.constants';
