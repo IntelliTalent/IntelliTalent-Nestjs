@@ -1,5 +1,6 @@
 version: '3'
 services:
+
   api:
     build:
       context: .
@@ -56,4 +57,5 @@ services:
 
 networks:
   intelli-network:
-    external: true
+    driver: bridge
+    # external: true
