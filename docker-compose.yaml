@@ -56,4 +56,4 @@ services:
 
 networks:
   intelli-network:
-    external: true
+    driver: bridge
