@@ -18,7 +18,9 @@ export class AppService {
 
   async gethealthCheck() {
     const pattern = { cmd: 'healthCheck' };
-    const authHealth = await firstValueFrom(this.authService.send(pattern, {}));
+    const authHealth = await firstValueFrom(
+      this.authService.send(pattern, {})
+      );
     const userHealth = await firstValueFrom(this.userService.send(pattern, {}));
     const coverletterHealth = await firstValueFrom(
       this.coverLetterService.send(pattern, {}),

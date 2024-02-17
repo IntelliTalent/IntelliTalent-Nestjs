@@ -7,6 +7,7 @@ import { ErrorInterceptor } from '@app/shared/interceptors/error.interceptor';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  
   // enable cors
   app.enableCors({
     origin: '*',
@@ -23,4 +24,5 @@ async function bootstrap() {
 
   await app.listen(3000);
 }
+
 bootstrap();
