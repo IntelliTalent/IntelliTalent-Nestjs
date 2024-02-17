@@ -1,11 +1,29 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { SharedModule } from '@app/shared';
-import { ServiceName } from '@app/shared/config/environment.constants';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { Constants, ServiceName, SharedModule } from '@app/shared';
+import getConfigVariables from '@app/shared/config/configVariables.config';
 
 @Module({
-  imports: [SharedModule.registerPostgres(ServiceName.AUTH_SERVICE, [])],
+  imports: [
+    SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    JwtModule.registerAsync({
+      useFactory: async () => {
+        const jwtSecret = await getConfigVariables(Constants.JWT.secret);
+        const jwtExpiresIn = await getConfigVariables(Constants.JWT.expiresIn);
+        return {
+          secret: jwtSecret,
+          signOptions: {
+            expiresIn: jwtExpiresIn,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
+  ],
+
   controllers: [AuthController],
   providers: [AuthService],
 })

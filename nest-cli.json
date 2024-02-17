@@ -54,6 +54,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/patterns/tsconfig.lib.json"
       }
+    },
+    "services_communications": {
+      "type": "library",
+      "root": "libs/services_communications",
+      "entryFile": "index",
+      "sourceRoot": "libs/services_communications/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/services_communications/tsconfig.lib.json"
+      }
     }
   }
 }

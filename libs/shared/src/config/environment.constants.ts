@@ -28,6 +28,11 @@ export const Constants = {
     AUTH_QUEUE: 'RABBITMQ_USERS_QUEUE',
     COVER_LETTER_QUEUE: 'RABBITMQ_COVER_LETTER_QUEUE',
   },
+  JWT: {
+    secret: 'JWT_SECRET',
+    expiresIn: 'JWT_EXPIRATION',
+    salt: 'BCRYPT_SALT'
+  }
 };
 
 export const getRMQConfig = async () => {
