@@ -20,5 +20,6 @@ export * from './config/environment.constants';
 
 export * from './decorators/user.decorator';
 
-
 export * from './enums/userType.enum';
+
+export * from './decorators/roles.decorator';

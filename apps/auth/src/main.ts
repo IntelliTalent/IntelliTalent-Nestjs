@@ -16,7 +16,7 @@ async function bootstrap() {
       await mapServiceNameToQueueName(ServiceName.AUTH_SERVICE),
     ),
   );
-  
+
   app.startAllMicroservices();
   console.log('Auth service is running');
 }

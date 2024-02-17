@@ -1,10 +1,13 @@
 version: '3'
 services:
-
   api:
     build:
       context: .
-      dockerfile: ./apps/intelli-talent-nestjs-backend/dockerfile.dev
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: intelli-talent-nestjs-backend
+    command: npm run start:dev intelli-talent-nestjs-backend
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -12,48 +15,43 @@ services:
       - ../.env
     networks:
       - intelli-network
-
-    depends_on:
-      # - rabbitmq
-      # - postgres
-      - auth
-      # - books
+    # depends_on:
+    #   - auth
     volumes:
-      - .:/usr/src/app # any change to base folder should be reflected
-      - /usr/src/app/node_modules
-    command: npm run start:dev microservice-books-club # overrides CMD from dockerfile
+      - .:/usr/src/app
+    # command: npm run start:dev microservice-books-club # overrides CMD from dockerfile
 
   auth:
     build:
       context: .
-      dockerfile: ./apps/auth/dockerfile.dev
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: auth
+    command: npm run start:dev auth
     restart: unless-stopped
     env_file:
       - ../.env
-    # depends_on:
-    # - rabbitmq
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-    command: npm run start:dev auth # overrides CMD from dockerfile
     networks:
       - intelli-network
+    volumes:
+      - .:/usr/src/app
 
   user:
     build:
       context: .
-      dockerfile: ./apps/user/dockerfile.dev
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: user
+    command: npm run start:dev user
     restart: unless-stopped
     env_file:
       - ../.env
-    # depends_on:
-    #   - rabbitmq
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-    command: npm run start:dev user # overrides CMD from dockerfile
     networks:
       - intelli-network
+    volumes:
+      - .:/usr/src/app
 
 networks:
   intelli-network:

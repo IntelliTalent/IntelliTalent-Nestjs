@@ -34,6 +34,7 @@ import {
   exports: [SharedService],
 })
 export class SharedModule {
+
   static registerPostgres(
     serviceType: ServiceName,
     entities: any[],
@@ -81,4 +82,8 @@ export class SharedModule {
       exports: providers,
     };
   }
+
+
+
+
 }
