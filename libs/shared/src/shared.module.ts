@@ -1,25 +1,18 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { SharedService } from './shared.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { ClientProxyFactory } from '@nestjs/microservices';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import {
-  MonogoDBName,
-  RedisDBName,
-  getMongoDBConfig,
-  getMongoDatabase,
-  getMongoUrl,
-  getRabbitMQOptions,
-  getRedisConfig,
-  getRedisDatabase,
-} from './config/environment.constants';
-import {
   ServiceName,
-  getServiceDatabse,
   mapServiceNameToQueueName,
 } from './config/environment.constants';
 import { MongooseModule, MongooseModuleFactoryOptions } from '@nestjs/mongoose';
 import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
+import { RedisDBName, getRedisConfig, getRedisDatabase } from './config/redis.config';
+import { MonogoDBName, getMongoDatabase, getMongoUrl } from './config/mongodb.config';
+import { getServiceDatabse } from './config/postgres.config';
+import { getRabbitMQOptions } from './config/rabbitmq.config';
 /**
  * SharedModule is a module in the NestJS application.
  * It provides shared functionality that can be used by other modules.
