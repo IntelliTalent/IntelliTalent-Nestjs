@@ -1,15 +1,18 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { SharedService } from './shared.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { ClientProxyFactory } from '@nestjs/microservices';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { getRabbitMQOptions } from './config/environment.constants';
 import {
   ServiceName,
-  getServiceDatabse,
   mapServiceNameToQueueName,
 } from './config/environment.constants';
-
+import { MongooseModule, MongooseModuleFactoryOptions } from '@nestjs/mongoose';
+import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
+import { RedisDBName, getRedisConfig, getRedisDatabase } from './config/redis.config';
+import { MonogoDBName, getMongoDatabase, getMongoUrl } from './config/mongodb.config';
+import { getServiceDatabse } from './config/postgres.config';
+import { getRabbitMQOptions } from './config/rabbitmq.config';
 /**
  * SharedModule is a module in the NestJS application.
  * It provides shared functionality that can be used by other modules.
@@ -27,13 +30,77 @@ import {
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: './.env',
+      envFilePath: '../.env',
     }),
   ],
   providers: [SharedService],
   exports: [SharedService],
 })
 export class SharedModule {
+  static registerRedis(dbName: RedisDBName): DynamicModule {
+    const redisProviders = [
+      {
+        provide: 'Redis_CONNECTION',
+        useFactory: async (): Promise<RedisModuleOptions> => {
+          const redisDbName = await getRedisDatabase(dbName);
+          const { HOST, PASSWORD, PORT } = await getRedisConfig();
+          const url = `redis://:${PASSWORD}@${HOST}:${PORT}`;
+
+          return {
+            options: {
+              db: redisDbName,
+              // tls: {
+              //   rejectUnauthorized: false,
+              // },
+            },
+            type: 'single',
+            url: url,
+          };
+        },
+        inject: [ConfigService],
+      },
+    ];
+
+    return {
+      module: SharedModule,
+      imports: [
+        RedisModule.forRootAsync({
+          useFactory: redisProviders[0].useFactory,
+        }),
+      ],
+      providers: redisProviders,
+      exports: redisProviders,
+    };
+  }
+
+  static registerMongoDB(dbName: MonogoDBName): DynamicModule {
+    const mongoProviders = [
+      {
+        provide: 'MONGODB_CONNECTION',
+        useFactory: async (): Promise<MongooseModuleFactoryOptions> => {
+          const monogoDbName = await getMongoDatabase(dbName);
+          const url = await getMongoUrl(monogoDbName);
+          console.log(url);
+          return {
+            dbName: monogoDbName,
+            uri: url,
+          };
+        },
+        inject: [ConfigService],
+      },
+    ];
+
+    return {
+      module: SharedModule,
+      imports: [
+        MongooseModule.forRootAsync({
+          useFactory: mongoProviders[0].useFactory,
+        }),
+      ],
+      providers: mongoProviders,
+      exports: mongoProviders,
+    };
+  }
 
   static registerPostgres(
     serviceType: ServiceName,
@@ -82,8 +149,4 @@ export class SharedModule {
       exports: providers,
     };
   }
-
-
-
-
 }

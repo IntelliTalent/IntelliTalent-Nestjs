@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RmqContext, RmqOptions } from '@nestjs/microservices';
 import { SharedServiceInterface } from './interfaces/shared.service.interface';
-import { getRabbitMQOptions } from './config/environment.constants';
+import { getRabbitMQOptions } from './config/rabbitmq.config';
 
 @Injectable()
 export class SharedService implements SharedServiceInterface {
