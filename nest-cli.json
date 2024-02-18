@@ -63,6 +63,51 @@
       "compilerOptions": {
         "tsConfigPath": "libs/services_communications/tsconfig.lib.json"
       }
+    },
+    "jobs": {
+      "type": "application",
+      "root": "apps/jobs",
+      "entryFile": "main",
+      "sourceRoot": "apps/jobs/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/jobs/tsconfig.app.json"
+      }
+    },
+    "ats": {
+      "type": "application",
+      "root": "apps/ats",
+      "entryFile": "main",
+      "sourceRoot": "apps/ats/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ats/tsconfig.app.json"
+      }
+    },
+    "notifier": {
+      "type": "application",
+      "root": "apps/notifier",
+      "entryFile": "main",
+      "sourceRoot": "apps/notifier/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notifier/tsconfig.app.json"
+      }
+    },
+    "autofill": {
+      "type": "application",
+      "root": "apps/autofill",
+      "entryFile": "main",
+      "sourceRoot": "apps/autofill/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/autofill/tsconfig.app.json"
+      }
+    },
+    "profile": {
+      "type": "application",
+      "root": "apps/profile",
+      "entryFile": "main",
+      "sourceRoot": "apps/profile/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/profile/tsconfig.app.json"
+      }
     }
   }
 }

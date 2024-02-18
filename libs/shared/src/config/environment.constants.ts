@@ -15,6 +15,33 @@ export const Constants = {
     dbName: {
       AUTHDB: 'AUTHDB',
       USERSDB: 'USERSDB',
+      PROFILEDB: 'ProfileDB',
+      STRUCTUREJOBSDB: 'StructuredJobsDB',
+      MATCHESDB: 'MatchesDB',
+      FILTERATIONDB: 'FilterationDB',
+      CVSDB: 'CVSDB',
+    },
+  },
+  MONGODB: {
+    MONGO_INITDB_ROOT_USERNAME: 'MONGO_INITDB_ROOT_USERNAME',
+    MONGO_INITDB_ROOT_PASSWORD: 'MONGO_INITDB_ROOT_PASSWORD',
+    MONGO_INITDB_ROOT_DATABASE: 'MONGO_INITDB_ROOT_DATABASE',
+    MONGODB_HOST: 'MONGODB_HOST',
+    MONGODB_PORT: 'MONGODB_PORT',
+    dbName: {
+      ScrappedJobsDB: 'ScrappedJobsDB',
+      FormFieldsDB: 'FormFieldsDB',
+      QuizzesDB: 'QuizzesDB',
+      InterviewQuestionsDB: 'InterviewQuestionsDB',
+    },
+  },
+  REDIS: {
+    HOST: 'REDIS_HOST',
+    PORT: 'REDIS_PORT',
+    PASSWORD: 'REDIS_PASSWORD',
+    dbName: {
+      mailingDB: 'REDIS_MAILING_DB',
+      jobsDB: 'REDIS_JOBS_DB',
     },
   },
   RABBITMQ: {
@@ -27,12 +54,52 @@ export const Constants = {
     USER_QUEUE: 'RABBITMQ_AUTH_QUEUE',
     AUTH_QUEUE: 'RABBITMQ_USERS_QUEUE',
     COVER_LETTER_QUEUE: 'RABBITMQ_COVER_LETTER_QUEUE',
+    ATS_QUEUE: 'RABBITMQ_ATS_QUEUE',
+    AUTOFILL_QUEUE: 'RABBITMQ_AUTOFILL_QUEUE',
+    JOB_QUEUE: 'RABBITMQ_JOB_QUEUE',
+    NOTIFIER_QUEUE: 'RABBITMQ_NOTIFIER_QUEUE',
+    PROFILE_QUEUE: 'RABBITMQ_PROFILE_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
     expiresIn: 'JWT_EXPIRATION',
-    salt: 'BCRYPT_SALT'
-  }
+    salt: 'BCRYPT_SALT',
+  },
+};
+
+export const getMongoDBConfig = async () => {
+  const MONGO_INITDB_ROOT_USERNAME = await getConfigVariables(
+    Constants.MONGODB.MONGO_INITDB_ROOT_USERNAME,
+  );
+  const MONGO_INITDB_ROOT_PASSWORD = await getConfigVariables(
+    Constants.MONGODB.MONGO_INITDB_ROOT_PASSWORD,
+  );
+  const MONGO_INITDB_ROOT_DATABASE = await getConfigVariables(
+    Constants.MONGODB.MONGO_INITDB_ROOT_DATABASE,
+  );
+  const MONGODB_HOST = await getConfigVariables(Constants.MONGODB.MONGODB_HOST);
+  const MONGODB_PORT = await getConfigVariables(Constants.MONGODB.MONGODB_PORT);
+
+  return {
+    MONGO_INITDB_ROOT_USERNAME,
+    MONGO_INITDB_ROOT_PASSWORD,
+    MONGO_INITDB_ROOT_DATABASE,
+    MONGODB_HOST,
+    MONGODB_PORT,
+  };
+};
+
+export const getMongoUrl = async (dbName: string) => {
+  const {
+    MONGODB_HOST,
+    MONGODB_PORT,
+    MONGO_INITDB_ROOT_PASSWORD,
+    MONGO_INITDB_ROOT_USERNAME,
+  } = await getMongoDBConfig();
+  const url = `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/`;
+  console.log('waer ', url);
+
+  return url;
 };
 
 export const getRMQConfig = async () => {
@@ -63,6 +130,53 @@ export const getRabbitMQOptions = async (
       },
     },
   };
+};
+
+export enum RedisDBName {
+  mailingDB = 'mailingDB',
+  jobsDB = 'jobsDB',
+}
+
+export const getRedisDatabase = async (dbName: RedisDBName) => {
+  switch (dbName) {
+    case RedisDBName.mailingDB:
+      return await getConfigVariables(Constants.REDIS.dbName.mailingDB);
+    case RedisDBName.jobsDB:
+      return await getConfigVariables(Constants.REDIS.dbName.jobsDB);
+  }
+};
+
+export const getRedisConfig = async () => {
+  const HOST = await getConfigVariables(Constants.REDIS.HOST);
+  const PORT = await getConfigVariables(Constants.REDIS.PORT);
+  const PASSWORD = await getConfigVariables(Constants.REDIS.PASSWORD);
+  return {
+    HOST,
+    PORT,
+    PASSWORD,
+  };
+};
+
+export enum MonogoDBName {
+  ScrappedJobsDB = 'ScrappedJobsDB',
+  FormFieldsDB = 'FormFieldsDB',
+  QuizzesDB = 'QuizzesDB',
+  InterviewQuestionsDB = 'InterviewQuestionsDB',
+}
+
+export const getMongoDatabase = async (dbName: MonogoDBName) => {
+  switch (dbName) {
+    case MonogoDBName.ScrappedJobsDB:
+      return await getConfigVariables(Constants.MONGODB.dbName.ScrappedJobsDB);
+    case MonogoDBName.FormFieldsDB:
+      return await getConfigVariables(Constants.MONGODB.dbName.FormFieldsDB);
+    case MonogoDBName.QuizzesDB:
+      return await getConfigVariables(Constants.MONGODB.dbName.QuizzesDB);
+    case MonogoDBName.InterviewQuestionsDB:
+      return await getConfigVariables(
+        Constants.MONGODB.dbName.InterviewQuestionsDB,
+      );
+  }
 };
 
 export const getServiceDatabse = async (
@@ -103,6 +217,11 @@ export enum ServiceName {
   USER_SERVICE = 'USER_SERVICE',
   AUTH_SERVICE = 'AUTH_SERVICE',
   COVER_LETTER_SERVICE = 'COVER_LETTER_SERVICE',
+  ATS_SERVICE = 'ATS_SERVICE',
+  AUTOFILL_SERVICE = 'AUTOFILL_SERVICE',
+  JOB_SERVICE = 'JOB_SERVICE',
+  NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
+  PROFILE_SERVICE = 'PROFILE_SERVICE',
 }
 
 export async function mapServiceNameToQueueName(
@@ -115,5 +234,15 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.USER_QUEUE);
     case ServiceName.COVER_LETTER_SERVICE:
       return await getConfigVariables(Constants.QUEUES.COVER_LETTER_QUEUE);
+    case ServiceName.ATS_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.ATS_QUEUE);
+    case ServiceName.AUTOFILL_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.AUTOFILL_QUEUE);
+    case ServiceName.JOB_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.JOB_QUEUE);
+    case ServiceName.NOTIFIER_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.NOTIFIER_QUEUE);
+    case ServiceName.PROFILE_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.PROFILE_QUEUE);
   }
 }
