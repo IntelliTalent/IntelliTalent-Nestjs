@@ -1,0 +1,64 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
+export enum JobType {
+  FullTime = 'Full Time',
+  PartTime = 'Part Time',
+  Contract = 'Contract',
+  Internship = 'Internship',
+  Temporary = 'Temporary',
+  Volunteer = 'Volunteer',
+  Other = 'Other',
+}
+
+export enum JobPlace {
+  Remote = 'Remote',
+  OnSite = 'On Site',
+  Hybrid = 'Hybrid',
+}
+
+@Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } })
+export class UnstructuredJobs {
+  @Prop({ required: true })
+  title: string;
+
+  @Prop({ required: true })
+  company: string;
+
+  @Prop({ required: true })
+  jobLocation: string;
+
+  @Prop({ required: true, enum: JobType })
+  type: JobType;
+
+  @Prop({ type: [String] })
+  skills: string[];
+
+  @Prop({ required: true })
+  url: string;
+
+  @Prop({ required: true })
+  description: string;
+
+  @Prop({ type: Date })
+  publishedAt: Date;
+
+  @Prop({ required: true, default: Date.now() })
+  scrappedAt: Date;
+
+  @Prop({})
+  jobPlace: JobPlace;
+
+  @Prop({})
+  numberOfApplicants: number;
+
+  @Prop({})
+  neededExperience: number;
+
+  @Prop({})
+  education: string;
+
+  @Prop({ default: null })
+  deletedAt: Date;
+}
+
+export const UnstructuredJobsSchema = SchemaFactory.createForClass(UnstructuredJobs);
