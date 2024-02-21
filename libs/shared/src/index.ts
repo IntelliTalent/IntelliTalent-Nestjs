@@ -2,8 +2,12 @@ export * from './shared.module';
 export * from './shared.service';
 
 // entities
+export * from './entities/profile.entity';
+
 // export * from './entities/book.entity';
 export * from './entities/user.entity';
+export * from './entities/unstructerd_jobs.entoty'
+
 
 //guards
 export * from './guards/auth.guard';

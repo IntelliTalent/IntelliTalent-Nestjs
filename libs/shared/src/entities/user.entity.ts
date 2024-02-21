@@ -1,8 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { UserType } from '../enums/userType.enum';
+import { AbstractEntity } from './abstract.enntity';
 
 @Entity()
-export class User {
+export class User extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -12,6 +13,42 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @Column({ type: 'enum', enum: UserType, default: 'jobSeeker' })
+  @Column({})
+  firstName: string;
+
+  @Column({})
+  lastName: string;
+
+  @Column({
+    type: 'text',
+  })
+  phoneNumber: string;
+
+  @Column({
+    type: 'text',
+  })
+  country: string;
+
+  @Column({
+    type: 'text',
+  })
+  city: string;
+
+  @Column({
+    type: 'text',
+  })
+  address: string;
+
+  @Column({
+    type: 'date',
+  })
+  dateOfBirth: Date;
+
+  @Column({
+    type: 'text',
+  })
+  photo: string;
+
+  @Column({ type: 'enum', enum: UserType, default: UserType.jobSeeker })
   type: UserType;
 }
