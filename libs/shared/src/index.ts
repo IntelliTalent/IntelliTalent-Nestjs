@@ -6,6 +6,8 @@ export * from './entities/profile.entity';
 
 // export * from './entities/book.entity';
 export * from './entities/user.entity';
+export * from './entities/structured_jobs.entity';
+
 export * from './entities/unstructerd_jobs.schema';
 export * from './entities/formFields.schema';
 

@@ -35,6 +35,10 @@ export const getServiceDatabse = async (
         database: await getConfigVariables(Constants.DB.dbName.PROFILEDB),
       });
       break;
+    case ServiceName.JOB_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.STRUCTUREJOBSDB),
+      });
 
   }
   return configObject;

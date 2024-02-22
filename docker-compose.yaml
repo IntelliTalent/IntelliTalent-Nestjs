@@ -7,7 +7,7 @@ services:
       target: development
       args:
         app: intelli-talent-nestjs-backend
-    command: npm run start:dev intelli-talent-nestjs-backend
+    command: sleep 8000000 #npm run start:dev intelli-talent-nestjs-backend
     restart: unless-stopped
     ports:
       - '3000:3000'
