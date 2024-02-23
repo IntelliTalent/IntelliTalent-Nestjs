@@ -1,4 +1,4 @@
-import { Prop, Schema } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Types } from "mongoose";
 
 interface Question {
@@ -8,7 +8,7 @@ interface Question {
 
 
 @Schema({})
-export class Quiz {
+class Quiz {
   @Prop({ required: true, type: Types.UUID })
   profileId: string;
 
@@ -24,7 +24,9 @@ export class Quiz {
   @Prop({ required: true })
   answers: number[]; // index of the correct answer in the answers array
 
-  @Prop({ required: true })
+  @Prop({})
   score: number;
 
 }
+
+export const QuizSchema = SchemaFactory.createForClass(Quiz);
