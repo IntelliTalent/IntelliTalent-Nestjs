@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { UserType } from '../enums/userType.enum';
-import { AbstractEntity } from './abstract.enntity';
+import { AbstractEntity } from './abstract.entity';
 
 @Entity()
 export class User extends AbstractEntity {

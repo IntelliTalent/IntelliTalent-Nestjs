@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { AbstractEntity } from './abstract.enntity';
+import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 
 @Entity()
@@ -7,25 +7,25 @@ export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ })
+  @Column({})
   title: string;
-  
-  @Column({ })
+
+  @Column({})
   company: string;
 
-  @Column({ })
+  @Column({})
   jobLocation: string;
-  
+
   @Column({ type: "enum", enum: JobType })
   type: JobType;
 
   @Column({ type: 'json', default: [] })
   skills: string[];
 
-  @Column({ })
+  @Column({})
   url: string;
 
-  @Column({ })
+  @Column({})
   description: string;
 
   @Column({ type: Date })

@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryColumn, Index, Unique } from 'typeorm';
 import { StageType } from '../enums/stageType.enum';
+import { AbstractEntity } from './abstract.entity';
 
 interface QuizData {
   grade: number;
@@ -30,7 +31,7 @@ type StageData = QuizData | InterviewData | CustomFilterData | MatchData | Appli
 
 @Entity()
 @Unique(['jobId', 'profileId'])
-export class Filteration {
+export class Filteration extends AbstractEntity {
 
   @Index()
   @PrimaryColumn()

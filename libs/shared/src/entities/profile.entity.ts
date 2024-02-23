@@ -5,10 +5,10 @@ import {
   OneToMany,
   ManyToOne,
 } from 'typeorm';
-import { AbstractEntity } from './abstract.enntity';
+import { AbstractEntity } from './abstract.entity';
 
 @Entity()
-export class Profile extends AbstractEntity{
+export class Profile extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -75,7 +75,7 @@ export class Profile extends AbstractEntity{
 }
 
 @Entity()
-export class Experience extends AbstractEntity{
+export class Experience extends AbstractEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -110,7 +110,7 @@ export class Experience extends AbstractEntity{
 }
 
 @Entity()
-export class Education extends AbstractEntity{
+export class Education extends AbstractEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -145,7 +145,7 @@ export class Education extends AbstractEntity{
 }
 
 @Entity()
-export class Project extends AbstractEntity{
+export class Project extends AbstractEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -169,7 +169,7 @@ export class Project extends AbstractEntity{
 }
 
 @Entity()
-export class Certificate extends AbstractEntity{
+export class Certificate extends AbstractEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
