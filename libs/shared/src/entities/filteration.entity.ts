@@ -9,12 +9,8 @@ interface QuizData {
 
 interface InterviewData {
   answers: string[];
+  grade: number;
   interviewDate: Date;
-}
-
-interface CustomFilterData {
-  answers: string[];
-  answerDate: Date;
 }
 
 interface MatchData {
@@ -26,7 +22,7 @@ interface AppliedData {
 }
 
 // Union type for all possible stage data
-type StageData = QuizData | InterviewData | CustomFilterData | MatchData | AppliedData;
+type StageData = QuizData | InterviewData | MatchData | AppliedData;
 
 
 @Entity()
@@ -46,7 +42,7 @@ export class Filteration extends AbstractEntity {
   @Column({ type: 'boolean', nullable: false, default: true })
   isQualified: boolean;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   stageData: StageData;
 
   @Column({ type: 'enum', enum: StageType, default: StageType.matched })

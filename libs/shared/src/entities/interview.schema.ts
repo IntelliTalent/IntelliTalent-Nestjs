@@ -15,6 +15,7 @@ class Interview {
   @Prop({})
   textAnswers: string[];
 
+  // links to record answers
   @Prop({})
   recordedAnswers: string[];
 

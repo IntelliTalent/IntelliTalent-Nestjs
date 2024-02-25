@@ -22,11 +22,10 @@ class Quiz {
   questions: Question[];
 
   @Prop({ required: true })
-  answers: number[]; // index of the correct answer in the answers array
+  userAnswers: number[]; // index of the correct answer in the answers array
 
   @Prop({})
   score: number;
-
 }
 
 export const QuizSchema = SchemaFactory.createForClass(Quiz);

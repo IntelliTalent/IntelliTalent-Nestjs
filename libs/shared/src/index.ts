@@ -9,7 +9,7 @@ export * from './entities/user.entity';
 export * from './entities/structured_jobs.entity';
 
 export * from './entities/unstructerd_jobs.schema';
-export * from './entities/formFields.schema';
+export * from './entities/form_fields.schema';
 
 //guards
 export * from './guards/auth.guard';

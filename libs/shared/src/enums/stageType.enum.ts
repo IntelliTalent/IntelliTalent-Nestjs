@@ -3,5 +3,4 @@ export enum StageType {
   applied = 'applied',
   quiz = 'quiz',
   interview = 'interview',
-  customFilter = 'customFilter',
 }

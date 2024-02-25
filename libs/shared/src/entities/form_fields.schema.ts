@@ -40,6 +40,15 @@ export class FormField {
 
   @Prop({})
   github: string;
+
+  @Prop({})
+  cvLink: string;
+
+  @Prop({})
+  postalCode: number;
+
+  @Prop({})
+  nationalID: string;
 }
 
 export const FormFieldSchema = SchemaFactory.createForClass(FormField);

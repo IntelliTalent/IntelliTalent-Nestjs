@@ -2,6 +2,14 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 
+export interface CustomFilters {
+  yearsOfExperience?: number;
+  graduatedFromCS?: boolean;
+  languages?: string[];
+  country?: string;
+  city?: string;
+}
+
 @Entity()
 export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -42,4 +50,16 @@ export class StructuredJob extends AbstractEntity {
 
   @Column({ nullable: true })
   csRequired: boolean;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ default: false })
+  isScrapped: boolean;
+
+  @Column({ nullable: true })
+  customFilters: CustomFilters;
+
+  @Column({ nullable: true })
+  interviewQuestions: string[];
 }
