@@ -18,6 +18,7 @@
     "dev-notifier": "nest start --watch notifier",
     "dev-autofill": "nest start --watch autofill",
     "dev-profile": "nest start --watch profile",
+    "dev-filtering": "nest start --watch filtering",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/intelli-talent-nestjs-backend/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
