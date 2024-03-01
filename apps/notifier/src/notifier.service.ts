@@ -15,7 +15,7 @@ export class NotifierService {
   }
 
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async handleCron() {
     await this.redis.set('waer', 'wwwaaeerrr');
     const result = await this.redis.get('waer');
