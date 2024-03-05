@@ -108,6 +108,42 @@
       "compilerOptions": {
         "tsConfigPath": "apps/profile/tsconfig.app.json"
       }
+    },
+    "interview": {
+      "type": "application",
+      "root": "apps/interview",
+      "entryFile": "main",
+      "sourceRoot": "apps/interview/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/interview/tsconfig.app.json"
+      }
+    },
+    "quiz": {
+      "type": "application",
+      "root": "apps/quiz",
+      "entryFile": "main",
+      "sourceRoot": "apps/quiz/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/quiz/tsconfig.app.json"
+      }
+    },
+    "filtering": {
+      "type": "application",
+      "root": "apps/filtering",
+      "entryFile": "main",
+      "sourceRoot": "apps/filtering/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/filtering/tsconfig.app.json"
+      }
+    },
+    "custom-job": {
+      "type": "application",
+      "root": "apps/custom-job",
+      "entryFile": "main",
+      "sourceRoot": "apps/custom-job/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/custom-job/tsconfig.app.json"
+      }
     }
   }
 }

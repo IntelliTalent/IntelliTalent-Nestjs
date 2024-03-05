@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
-import { MonogoDBName, SharedModule } from '@app/shared';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Cat, CatSchema } from './schemas/cat.schema';
+import { MonogoDBName } from '@app/shared/config/mongodb.config';
+import { UnstructuredJobsSchema, SharedModule, UnstructuredJobs, ServiceName, StructuredJob } from '@app/shared';
 
 @Module({
-  imports: [SharedModule.registerMongoDB(MonogoDBName.ScrappedJobsDB), MongooseModule.forFeature([{ name: Cat.name, schema: CatSchema }])],
+  imports: [
+    SharedModule.registerMongoDB(MonogoDBName.ScrappedJobsDB),
+    MongooseModule.forFeature([
+      { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
+    ]),
+    SharedModule.registerPostgres(ServiceName.JOB_SERVICE, [StructuredJob])
+  ],
   controllers: [JobsController],
   providers: [JobsService],
 })
