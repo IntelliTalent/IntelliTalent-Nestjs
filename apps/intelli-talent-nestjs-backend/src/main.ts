@@ -28,7 +28,6 @@ async function bootstrap() {
     .setTitle('IntelliTalent')
     .setDescription('The IntelliTalent API documentation.')
     .setVersion('1.0')
-    .addTag('intellitalent')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
