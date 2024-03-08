@@ -1,4 +1,4 @@
-import { atsServicePattern } from '@app/services_communications/atsService';
+import { atsServicePattern } from '@app/services_communications/ats-service';
 import { ServiceName, User } from '@app/shared';
 import {
   Controller,

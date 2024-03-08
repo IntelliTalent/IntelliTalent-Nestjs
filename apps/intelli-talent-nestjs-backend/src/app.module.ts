@@ -5,6 +5,7 @@ import { SharedModule } from '@app/shared';
 import { ServiceName } from '@app/shared/config/environment.constants';
 import { ApiAuthModule } from '../auth/auth.module';
 import { ApiATSModule } from '../ats/ats.module';
+import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-letter-generator.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { ApiATSModule } from '../ats/ats.module';
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
     ApiAuthModule,
-    ApiATSModule
+    ApiATSModule,
+    ApiCoverLetterGeneratorModule
   ],
   controllers: [AppController],
   providers: [AppService],

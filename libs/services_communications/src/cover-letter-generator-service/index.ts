@@ -1,0 +1,1 @@
+export * from './patterns/cover-letter-generator-service.patterns';

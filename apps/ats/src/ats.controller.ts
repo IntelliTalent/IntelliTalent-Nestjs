@@ -1,7 +1,7 @@
 import { Controller, Get, Post } from '@nestjs/common';
 import { AtsService } from './ats.service';
 import { MessagePattern } from '@nestjs/microservices';
-import { atsServicePattern } from '@app/services_communications/atsService';
+import { atsServicePattern } from '@app/services_communications/ats-service';
 
 @Controller()
 export class AtsController {
