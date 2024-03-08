@@ -8,7 +8,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  
   // enable cors
   app.enableCors({
     origin: '*',
@@ -22,6 +21,12 @@ async function bootstrap() {
 
   // use global error interceptor
   app.useGlobalInterceptors(new ErrorInterceptor());
+
+  // add json header middleware
+  app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+    next();
+  });
 
   // use swagger documentation
   const config = new DocumentBuilder()

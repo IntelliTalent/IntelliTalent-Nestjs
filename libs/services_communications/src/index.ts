@@ -12,6 +12,8 @@ export * from './userService/dtos/updateUser.dto';
 export * from './userService/dtos/login.dto';
 export * from './userService/dtos/user.dto';
 
+export * from './cover-letter-generator-service/dtos/generate-cover-letter.dto'
+
 // interfaces
 export * from './userService/interfaces/findUser.interface';
 export * from './userService/interfaces/populateUser.interface';
