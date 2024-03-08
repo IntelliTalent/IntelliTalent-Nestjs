@@ -1,5 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { AtsService } from './ats.service';
+import { MessagePattern } from '@nestjs/microservices';
+import { atsServicePattern } from '@app/services_communications/atsService';
 
 @Controller()
 export class AtsController {
@@ -8,5 +10,10 @@ export class AtsController {
   @Get()
   getHello(): string {
     return this.atsService.getHello();
+  }
+
+  @MessagePattern({ cmd: atsServicePattern.match })
+  match(): object {
+    return this.atsService.match();
   }
 }
