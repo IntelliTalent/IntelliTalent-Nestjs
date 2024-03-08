@@ -4,13 +4,16 @@ import { AppService } from './app.service';
 import { SharedModule } from '@app/shared';
 import { ServiceName } from '@app/shared/config/environment.constants';
 import { ApiAuthModule } from '../auth/auth.module';
+import { ApiATSModule } from '../ats/ats.module';
 
 @Module({
   imports: [
     SharedModule.registerRmq(ServiceName.AUTH_SERVICE),
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
     ApiAuthModule,
+    ApiATSModule
   ],
   controllers: [AppController],
   providers: [AppService],
