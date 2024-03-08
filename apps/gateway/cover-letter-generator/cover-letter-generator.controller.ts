@@ -9,7 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Cover Letter Generator')
 @Controller('coverLetters')
@@ -25,6 +25,7 @@ export class ApiCoverLetterGeneratorController {
    *
    * @returns An Observable of the command response.
    */
+  @ApiOperation({ summary: 'Generate cover letter for a profile' })
   @Post('/:profileId')
   async generate(@Param('profileId') profileId: string, @Body() generateCoverLetterDto: GenerateCoverLetterDto ) {
     return this.coverLetterGeneratorService.send(

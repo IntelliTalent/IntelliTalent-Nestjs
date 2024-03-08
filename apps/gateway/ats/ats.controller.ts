@@ -6,7 +6,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('ATS')
 @Controller('ats')
@@ -22,6 +22,7 @@ export class ApiATSController {
    *
    * @returns An Observable of the command response.
    */
+  @ApiOperation({ summary: 'For testing ATS service' })
   @Post('match')
   async match() {
     return this.atsService.send(

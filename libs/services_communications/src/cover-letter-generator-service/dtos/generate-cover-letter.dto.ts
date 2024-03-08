@@ -6,6 +6,6 @@ export class GenerateCoverLetterDto {
   @IsNotEmpty()
   jobTitle: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   companyName?: string;
 }
