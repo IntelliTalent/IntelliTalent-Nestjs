@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Constants, ServiceName, SharedModule } from '@app/shared';
 import getConfigVariables from '@app/shared/config/configVariables.config';
+import { Token } from '@app/shared/entities/token.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,12 @@ import getConfigVariables from '@app/shared/config/configVariables.config';
       },
       inject: [ConfigService],
     }),
+    SharedModule.registerPostgres(
+      ServiceName.AUTH_SERVICE,
+      [
+        Token
+      ]
+      )
   ],
 
   controllers: [AuthController],
