@@ -1,22 +1,22 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/intelli-talent-nestjs-backend/src",
+  "sourceRoot": "apps/gatway/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/intelli-talent-nestjs-backend/tsconfig.app.json"
+    "tsConfigPath": "apps/gatway/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/intelli-talent-nestjs-backend",
+  "root": "apps/gatway",
   "projects": {
-    "intelli-talent-nestjs-backend": {
+    "gatway": {
       "type": "application",
-      "root": "apps/intelli-talent-nestjs-backend",
+      "root": "apps/gatway",
       "entryFile": "main",
-      "sourceRoot": "apps/intelli-talent-nestjs-backend/src",
+      "sourceRoot": "apps/gatway/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/intelli-talent-nestjs-backend/tsconfig.app.json"
+        "tsConfigPath": "apps/gatway/tsconfig.app.json"
       }
     },
     "auth": {

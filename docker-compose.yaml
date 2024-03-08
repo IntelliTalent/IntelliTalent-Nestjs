@@ -6,8 +6,8 @@ services:
       dockerfile: ./dockerfile
       target: development
       args:
-        app: intelli-talent-nestjs-backend
-    command: sleep 8000000 #npm run start:dev intelli-talent-nestjs-backend
+        app: gatway
+    command: sleep 8000000 #npm run start:dev gatway
     restart: unless-stopped
     ports:
       - '3000:3000'
