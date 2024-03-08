@@ -3,7 +3,15 @@ import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MonogoDBName } from '@app/shared/config/mongodb.config';
-import { UnstructuredJobsSchema, SharedModule, UnstructuredJobs, ServiceName, StructuredJob } from '@app/shared';
+import {
+  UnstructuredJobsSchema,
+  SharedModule,
+  UnstructuredJobs,
+  ServiceName,
+  StructuredJob,
+  CustomJobsStages,
+  Interview,
+} from '@app/shared';
 
 @Module({
   imports: [
@@ -11,7 +19,14 @@ import { UnstructuredJobsSchema, SharedModule, UnstructuredJobs, ServiceName, St
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
     ]),
-    SharedModule.registerPostgres(ServiceName.JOB_SERVICE, [StructuredJob])
+    SharedModule.registerPostgres(
+      ServiceName.JOB_SERVICE,
+      [
+        Interview,
+        CustomJobsStages,
+        StructuredJob,
+      ],
+    ),
   ],
   controllers: [JobsController],
   providers: [JobsService],

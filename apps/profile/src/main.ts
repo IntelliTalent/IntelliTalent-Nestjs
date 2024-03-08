@@ -8,3 +8,4 @@ async function bootstrap() {
   console.log('Profile service is running');
 }
 bootstrap();
+
