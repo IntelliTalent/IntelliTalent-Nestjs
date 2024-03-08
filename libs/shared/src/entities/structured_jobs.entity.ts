@@ -1,14 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  JoinColumn,
+  OneToOne,
+} from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
+import { CustomJobsStages } from './custom_jobs_stages.entity';
 
-export interface CustomFilters {
-  yearsOfExperience?: number;
-  graduatedFromCS?: boolean;
-  languages?: string[];
-  country?: string;
-  city?: string;
-}
+
 
 @Entity()
 export class StructuredJob extends AbstractEntity {
@@ -24,7 +25,7 @@ export class StructuredJob extends AbstractEntity {
   @Column({})
   jobLocation: string;
 
-  @Column({ type: "enum", enum: JobType })
+  @Column({ type: 'enum', enum: JobType })
   type: JobType;
 
   @Column({ type: 'json', default: [] })
@@ -39,7 +40,7 @@ export class StructuredJob extends AbstractEntity {
   @Column({ type: Date })
   publishedAt: Date;
 
-  @Column({ type: "enum", enum: JobPlace })
+  @Column({ type: 'enum', enum: JobPlace })
   jobPlace: JobPlace;
 
   @Column({ nullable: true })
@@ -57,9 +58,10 @@ export class StructuredJob extends AbstractEntity {
   @Column({ default: false })
   isScrapped: boolean;
 
-  @Column({ nullable: true })
-  customFilters: CustomFilters;
+  @Column({ type: 'date', nullable: true })
+  jobEndDate: Date;
 
-  @Column({ nullable: true })
-  interviewQuestions: string[];
+  @OneToOne(() => CustomJobsStages)
+  @JoinColumn()
+  stages: CustomJobsStages;
 }

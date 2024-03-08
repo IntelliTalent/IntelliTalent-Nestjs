@@ -11,6 +11,7 @@ export const getServiceDatabse = async (
     port: parseInt(await getConfigVariables(Constants.DB.dbPort)),
     username: await getConfigVariables(Constants.DB.dbUserName),
     password: await getConfigVariables(Constants.DB.dbPassword),
+    autoLoadEntities: true,
     synchronize: true, // Set to false in production
     retryAttempts: 15, // Number of times to retry connecting
     retryDelay: 10000, // Delay between connection retries (in milliseconds)
