@@ -6,7 +6,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('ATS')
 @Controller('ats')
 export class ApiATSController {
   constructor(
