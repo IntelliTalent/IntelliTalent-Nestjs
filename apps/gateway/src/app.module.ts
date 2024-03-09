@@ -7,6 +7,8 @@ import { ApiAuthModule } from '../auth/auth.module';
 import { ApiATSModule } from '../ats/ats.module';
 import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-letter-generator.module';
 import { ApiProfileModule } from '../profile/profile.module';
+import { ApiCustomJobModule } from '../custom-job/custom-job.module';
+import { ApiFilterationModule } from '../filteration/filteration.module';
 
 @Module({
   imports: [
@@ -17,7 +19,9 @@ import { ApiProfileModule } from '../profile/profile.module';
     ApiAuthModule,
     ApiATSModule,
     ApiCoverLetterGeneratorModule,
-    ApiProfileModule
+    ApiProfileModule,
+    ApiCustomJobModule,
+    ApiFilterationModule
   ],
   controllers: [AppController],
   providers: [AppService],
