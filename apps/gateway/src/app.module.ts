@@ -11,13 +11,16 @@ import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 import { ApiFilterationModule } from '../filteration/filteration.module';
 import { ApiInterviewModule } from '../interview/interview.module';
 import { ApiAutofillModule } from '../autofill/autofill.module';
+import { ApiCVGeneratorModule } from '../cv-generator/cv-generator.module';
 
 @Module({
   imports: [
     SharedModule.registerRmq(ServiceName.AUTH_SERVICE),
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
-    SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
+    SharedModule.registerRmq(ServiceName.COVER_LETTER_GENERATOR_SERVICE),
+    SharedModule.registerRmq(ServiceName.CV_GENERATOR_SERVICE),
     ApiAuthModule,
     ApiATSModule,
     ApiCoverLetterGeneratorModule,
@@ -26,6 +29,8 @@ import { ApiAutofillModule } from '../autofill/autofill.module';
     ApiFilterationModule,
     ApiInterviewModule,
     ApiAutofillModule
+    ApiCVGeneratorModule,
+    ApiProfileModule
   ],
   controllers: [AppController],
   providers: [AppService],
