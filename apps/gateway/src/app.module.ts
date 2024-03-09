@@ -9,6 +9,7 @@ import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-l
 import { ApiProfileModule } from '../profile/profile.module';
 import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 import { ApiFilterationModule } from '../filteration/filteration.module';
+import { ApiInterviewModule } from '../interview/interview.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { ApiFilterationModule } from '../filteration/filteration.module';
     ApiCoverLetterGeneratorModule,
     ApiProfileModule,
     ApiCustomJobModule,
-    ApiFilterationModule
+    ApiFilterationModule,
+    ApiInterviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

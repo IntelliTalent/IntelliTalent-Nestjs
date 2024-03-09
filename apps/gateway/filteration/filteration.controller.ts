@@ -3,7 +3,6 @@ import { GetAppliedUsersResponseDto } from '@app/services_communications/filtera
 import { GetStageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { ServiceName } from '@app/shared';
-import { StageType } from '@app/shared/enums/stageType.enum';
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
