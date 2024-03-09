@@ -1,0 +1,15 @@
+export const profileServicePattern = {
+  createProfile: 'createProfile',
+  getuserProfile: 'getuserProfile',
+  getProfileById: 'getProfileById',
+  getuserProfileCard: 'getuserProfileCard',
+  getuserProfileNames: 'getuserProfileNames',
+  updateUserProfile: 'updateUserProfile',
+  updateProfilePersonalInfo: 'updateProfilePersonalInfo',
+  updateProfileExperience: 'updateProfileExperience',
+  updateProfileEducation: 'updateProfileEducation',
+  updateProfileSkills: 'updateProfileSkills',
+  updateProfileCertifications: 'updateProfileCertifications',
+  updateProfileLanguages: 'updateProfileLanguages',
+  updateProfileProjects: 'updateProfileProjects',
+};
