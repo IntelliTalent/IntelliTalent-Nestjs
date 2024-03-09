@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ServiceName, SharedModule } from '@app/shared';
-import { ApiCoverLetterGeneratorController } from './cover-letter-generator.controller';
+import { ApiCVGeneratorController } from './cv-generator.controller';
 
 @Module({
-  // assign the RabbitMQ queues (CoverLetterGenerator) to the CoverLetterGeneratorController
+  // assign the RabbitMQ queues (CVGenerator) to the CVGeneratorController
   imports: [
-    SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
+    SharedModule.registerRmq(ServiceName.CV_GENERATOR_SERVICE),
   ],
-  controllers: [ApiCoverLetterGeneratorController],
+  controllers: [ApiCVGeneratorController],
   providers: [],
 })
-export class ApiCoverLetterGeneratorModule {}
+export class ApiCVGeneratorModule {}

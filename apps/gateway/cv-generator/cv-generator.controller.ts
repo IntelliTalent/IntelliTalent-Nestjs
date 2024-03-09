@@ -1,39 +1,95 @@
-import { GenerateCoverLetterDto } from '@app/services_communications';
-import { coverLetterGeneratorServicePattern } from '@app/services_communications/cover-letter-generator-service';
-import { ServiceName } from '@app/shared';
-import { Body, Controller, Inject, Param, Post } from '@nestjs/common';
+import { CVResponseDto, cvGeneratorServicePattern } from '@app/services_communications';
+import { CurrentUser, ServiceName, User } from '@app/shared';
+import { Controller, Get, Header, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-@ApiTags('Cover Letter Generator')
-@Controller('coverLetters')
-export class ApiCoverLetterGeneratorController {
+@ApiTags('CV Generator')
+@Controller('cvs')
+export class ApiCVGeneratorController {
   constructor(
-    @Inject(ServiceName.COVER_LETTER_SERVICE)
-    private coverLetterGeneratorService: ClientProxy,
+    @Inject(ServiceName.CV_GENERATOR_SERVICE)
+    private cvGeneratorService: ClientProxy,
   ) {}
 
   /**
-   * This method generates cover letter for a profile.
+   * This method generates CV for a profile.
    * The generate method does the following:
-   * - Uses the coverLetterGeneratorService to send a 'generate' command as payload to the microservice.
+   * - Uses the cvGeneratorService to send a 'generate' command as payload to the microservice.
    *
    * @returns An Observable of the command response.
    */
-  @ApiOperation({ summary: 'Generate cover letter for a profile' })
+  @ApiOperation({ summary: 'Generate CV for a profile' })
+  @ApiOkResponse({
+      description: 'The CV links',
+      type: CVResponseDto,
+  })
+  @Header('content-type', 'application/json')
   @Post('/:profileId')
   async generate(
     @Param('profileId') profileId: string,
-    @Body() generateCoverLetterDto: GenerateCoverLetterDto,
   ) {
-    return this.coverLetterGeneratorService.send(
+    return this.cvGeneratorService.send(
       {
-        cmd: coverLetterGeneratorServicePattern.generate,
+        cmd: cvGeneratorServicePattern.generate,
       },
       {
         profileId,
-        jobTitle: generateCoverLetterDto.jobTitle,
-        companyName: generateCoverLetterDto.companyName,
+      },
+    );
+  }
+
+  /**
+   * This method gets CV for a profile.
+   * The getProfileCV method does the following:
+   * - Uses the cvGeneratorService to send a 'getProfileCV' command as payload to the microservice.
+   *
+   * @returns An Observable of the command response.
+   */
+  @ApiOperation({ summary: 'Get CV for a profile' })
+  @ApiOkResponse({
+      description: 'The CV links',
+      type: CVResponseDto,
+  })
+  @Header('content-type', 'application/json')
+  @Get('/:profileId')
+  async getProfileCV(
+    @Param('profileId') profileId: string,
+  ) {
+    return this.cvGeneratorService.send(
+      {
+        cmd: cvGeneratorServicePattern.getProfileCV,
+      },
+      {
+        profileId,
+      },
+    );
+  }
+
+  /**
+   * This method gets all CVs for a user.
+   * The getAllCVs method does the following:
+   * - Uses the cvGeneratorService to send a 'getAllCVs' command as payload to the microservice.
+   *
+   * @returns An Observable of the command response.
+   */
+  @ApiOperation({ summary: 'Get all CVs for a user' })
+  @ApiOkResponse({
+      description: 'The CVs links',
+      type: CVResponseDto,
+      isArray: true,
+  })
+  @Header('content-type', 'application/json')
+  @Get('')
+  async getAllCVs(
+    @CurrentUser() user: User,
+  ) {
+    return this.cvGeneratorService.send(
+      {
+        cmd: cvGeneratorServicePattern.getAllCVs,
+      },
+      {
+        userId: "5454" // TODO: change to user.id,
       },
     );
   }

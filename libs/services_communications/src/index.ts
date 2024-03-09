@@ -13,4 +13,7 @@ export * from './profile/index';
 // cover letter generator service
 export * from './cover-letter-generator-service/index';
 
+// cv generator service
+export * from './cv-generator-service/index';
+
 export const HealthCheckPatterns = 'healthCheck';

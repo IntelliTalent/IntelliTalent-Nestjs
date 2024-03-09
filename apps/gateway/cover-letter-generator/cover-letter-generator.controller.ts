@@ -1,7 +1,7 @@
 import { GenerateCoverLetterDto } from '@app/services_communications';
 import { CoverLetterResponseDto, coverLetterGeneratorServicePattern } from '@app/services_communications/cover-letter-generator-service';
 import { ServiceName } from '@app/shared';
-import { Body, Controller, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Header, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -9,7 +9,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 @Controller('coverLetters')
 export class ApiCoverLetterGeneratorController {
   constructor(
-    @Inject(ServiceName.COVER_LETTER_SERVICE)
+    @Inject(ServiceName.COVER_LETTER_GENERATOR_SERVICE)
     private coverLetterGeneratorService: ClientProxy,
   ) {}
 
@@ -25,6 +25,7 @@ export class ApiCoverLetterGeneratorController {
       description: 'The cover letter links and content',
       type: CoverLetterResponseDto,
   })
+  @Header('content-type', 'application/json')
   @Post('/:profileId')
   async generate(
     @Param('profileId') profileId: string,
