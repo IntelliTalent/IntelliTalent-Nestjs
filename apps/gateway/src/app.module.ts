@@ -10,6 +10,7 @@ import { ApiProfileModule } from '../profile/profile.module';
 import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 import { ApiFilterationModule } from '../filteration/filteration.module';
 import { ApiInterviewModule } from '../interview/interview.module';
+import { ApiAutofillModule } from '../autofill/autofill.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ApiInterviewModule } from '../interview/interview.module';
     ApiCustomJobModule,
     ApiFilterationModule,
     ApiInterviewModule,
+    ApiAutofillModule
   ],
   controllers: [AppController],
   providers: [AppService],
