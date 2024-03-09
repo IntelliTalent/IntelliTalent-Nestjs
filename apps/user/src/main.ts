@@ -17,6 +17,7 @@ async function bootstrap() {
     ),
   );
   app.startAllMicroservices();
+  app.init();
   console.log('User service is running');
 }
 bootstrap();

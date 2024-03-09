@@ -1,6 +1,4 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import getConfigVariables from './configVariables.config';
-import { RmqOptions, Transport } from '@nestjs/microservices';
 
 export const Constants = {
   //basic app info
@@ -59,6 +57,7 @@ export const Constants = {
     JOB_QUEUE: 'RABBITMQ_JOB_QUEUE',
     NOTIFIER_QUEUE: 'RABBITMQ_NOTIFIER_QUEUE',
     PROFILE_QUEUE: 'RABBITMQ_PROFILE_QUEUE',
+    FILTRATION_QUEUE: 'RABBITMQ_FILTRATION_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
@@ -66,7 +65,6 @@ export const Constants = {
     salt: 'BCRYPT_SALT',
   },
 };
-
 
 export enum ServiceName {
   API_GATEWAY = 'API_GATEWAY',
@@ -78,6 +76,7 @@ export enum ServiceName {
   JOB_SERVICE = 'JOB_SERVICE',
   NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
   PROFILE_SERVICE = 'PROFILE_SERVICE',
+  FILTRATION_SERVICE = 'FILTERATION_SERVICE',
 }
 
 export async function mapServiceNameToQueueName(
@@ -100,5 +99,7 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.NOTIFIER_QUEUE);
     case ServiceName.PROFILE_SERVICE:
       return await getConfigVariables(Constants.QUEUES.PROFILE_QUEUE);
+    case ServiceName.FILTRATION_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.FILTRATION_QUEUE);
   }
 }
