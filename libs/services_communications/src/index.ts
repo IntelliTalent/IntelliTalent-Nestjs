@@ -10,10 +10,7 @@ export * from './authService/index';
 // profile service
 export * from './profile/index';
 
-// pattern
-
-// dtos
-
-export * from './cover-letter-generator-service/dtos/generate-cover-letter.dto';
+// cover letter generator service
+export * from './cover-letter-generator-service/index';
 
 export const HealthCheckPatterns = 'healthCheck';
