@@ -1,5 +1,9 @@
 import { CreateUserDto, LoginDto } from '@app/services_communications';
-import { authServicePattern } from '@app/services_communications/authService';
+import {
+  AUTH_HEADER,
+  ChangeForgottenPasswordDto,
+  authServicePattern,
+} from '@app/services_communications/authService';
 import { CurrentUser, ServiceName, User } from '@app/shared';
 import { JwtAuthGuard } from '@app/shared/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '@app/shared/guards/local-auth.guard';
@@ -8,13 +12,24 @@ import {
   Controller,
   Get,
   Inject,
+  NotImplementedException,
   Post,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import { ReturnedUserDto } from '@app/services_communications/authService/dtos/user.dto';
+import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
+import { ForgetPasswordDto } from '@app/services_communications/authService/dtos/forget-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -54,6 +69,12 @@ export class ApiAuthController {
    * @returns An Observable of the logged in user.
    */
   @UseGuards(LocalAuthGuard)
+  @ApiOperation({ description: 'Login user to his account' })
+  @ApiCreatedResponse({
+    description: 'Autherized Successfully',
+    type: ReturnedUserDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
   @Post('login')
   async login(@CurrentUser() user: any) {
     console.log('userggg', user);
@@ -63,6 +84,48 @@ export class ApiAuthController {
       },
       user,
     );
+  }
+
+  @ApiOperation({ description: 'Logout user from his account' })
+  @ApiCreatedResponse({ description: 'Logout Successfully' })
+  @Post('logout')
+  async logout(
+    @Res({
+      passthrough: true,
+    })
+    res: Response,
+  ) {
+    // return this.authService.logout(res);
+    res.clearCookie('jwt');
+  }
+
+  @ApiOperation({ description: 'Recover the password of an account' })
+  @ApiCreatedResponse({
+    description: 'An email will be sent if the user exists in the database',
+  })
+  @Public()
+  @Post('forget-password')
+  async forgetPassword(@Body() dto: ForgetPasswordDto) {
+    throw new NotImplementedException();
+    // return this.authService.forgetPassword(dto);
+  }
+
+  @ApiProperty({ description: 'after sending token to the user in email' })
+  @ApiCreatedResponse({ description: 'password changed successfully' })
+  @ApiUnauthorizedResponse({ description: 'wrong token' })
+  @ApiBearerAuth(AUTH_HEADER)
+  @Public()
+  // @UseGuards(JWTForgetPasswordGuard)
+  @Post('change-forgotten-password')
+  async changeForgottenPassword(
+    @Body() dto: ChangeForgottenPasswordDto,
+    @CurrentUser() user: User,
+  ) {
+    throw new NotImplementedException();
+    // return this.authService.changePasswordUsingToken(
+    //   user.user_id,
+    //   dto.password,
+    // );
   }
 
   @UseGuards(JwtAuthGuard)
