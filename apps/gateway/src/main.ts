@@ -1,4 +1,3 @@
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -21,12 +20,6 @@ async function bootstrap() {
 
   // use global error interceptor
   app.useGlobalInterceptors(new ErrorInterceptor());
-
-  // add json header middleware
-  app.use((req, res, next) => {
-    res.setHeader('Content-Type', 'application/json');
-    next();
-  });
 
   // use swagger documentation
   const config = new DocumentBuilder()

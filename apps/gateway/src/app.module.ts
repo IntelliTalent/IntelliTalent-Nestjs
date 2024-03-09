@@ -6,6 +6,7 @@ import { ServiceName } from '@app/shared/config/environment.constants';
 import { ApiAuthModule } from '../auth/auth.module';
 import { ApiATSModule } from '../ats/ats.module';
 import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-letter-generator.module';
+import { ApiProfileModule } from '../profile/profile.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-l
     SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
     ApiAuthModule,
     ApiATSModule,
-    ApiCoverLetterGeneratorModule
+    ApiCoverLetterGeneratorModule,
+    ApiProfileModule
   ],
   controllers: [AppController],
   providers: [AppService],
