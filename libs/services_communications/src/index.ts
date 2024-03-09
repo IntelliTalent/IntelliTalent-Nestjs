@@ -7,6 +7,9 @@ export * from './userService/index';
 // auth service
 export * from './authService/index';
 
+// profile service
+export * from './profile/index';
+
 // pattern
 
 // dtos
