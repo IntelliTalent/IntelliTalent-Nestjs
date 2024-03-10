@@ -8,7 +8,7 @@ export class AppService {
   constructor(
     @Inject(ServiceName.AUTH_SERVICE) private readonly authService: ClientProxy,
     @Inject(ServiceName.USER_SERVICE) private readonly userService: ClientProxy,
-    @Inject(ServiceName.COVER_LETTER_SERVICE)
+    @Inject(ServiceName.COVER_LETTER_GENERATOR_SERVICE)
     private readonly coverLetterService: ClientProxy,
   ) {}
 
