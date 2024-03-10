@@ -49,9 +49,6 @@ export class SharedModule {
           return {
             options: {
               db: redisDbName,
-              // tls: {
-              //   rejectUnauthorized: false,
-              // },
             },
             type: 'single',
             url: url,
