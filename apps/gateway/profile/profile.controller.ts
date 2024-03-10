@@ -1,5 +1,7 @@
 import {
   CreateProfileDto,
+  ResponseProfileDto,
+  ResponseProfileNames,
   UpdateCertificationsDto,
   UpdateEducationsDto,
   UpdateExperienceDto,
@@ -30,14 +32,24 @@ import {
 export class ProfileController {
   @Get('cards')
   @ApiOperation({ summary: 'Get profile cards' })
-  @ApiResponse({ status: 200, description: 'Returns profile cards' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns profile cards',
+    type: ResponseProfileDto,
+    isArray: true,
+  })
   async getProfileCards(@CurrentUser() user: User) {
     throw new NotImplementedException();
   }
 
   @Get('names')
   @ApiOperation({ summary: 'Get profile names' })
-  @ApiResponse({ status: 200, description: 'Returns profile names' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns profile names',
+    isArray: true,
+    type: ResponseProfileNames,
+  })
   async getProfileNames(@CurrentUser() user: User) {
     throw new NotImplementedException();
   }
@@ -45,6 +57,9 @@ export class ProfileController {
   @Get(':id')
   @ApiOperation({ summary: 'Get profile by ID' })
   @ApiNotFoundResponse({ description: 'Profile not found' })
+  @ApiResponse({
+    type: ResponseProfileDto
+  })
   async getProfileById(@CurrentUser() user: User, @Param('id') id: string) {
     throw new NotFoundException();
   }

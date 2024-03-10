@@ -1,4 +1,8 @@
-import { CreateUserDto, LoginDto } from '@app/services_communications';
+import {
+  CreateUserDto,
+  LoginDto,
+  ResponseUserDto,
+} from '@app/services_communications';
 import {
   AUTH_HEADER,
   ChangeForgottenPasswordDto,
@@ -24,6 +28,7 @@ import {
   ApiCreatedResponse,
   ApiOperation,
   ApiProperty,
+  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -130,6 +135,9 @@ export class ApiAuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
+  @ApiResponse({
+    type: ResponseUserDto,
+  })
   async me(@CurrentUser() user: User) {
     return user;
   }

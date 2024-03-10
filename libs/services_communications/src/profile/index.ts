@@ -5,3 +5,5 @@ export * from './dtos/update-skills.dto';
 export * from './dtos/update-projects.dto';
 export * from './dtos/create-profile.dto';
 export * from './dtos/update-certification.dto';
+export * from './dtos/response-profile-names.dto';
+export * from './dtos/response-profile.dto';
