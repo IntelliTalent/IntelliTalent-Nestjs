@@ -9,6 +9,7 @@ import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-l
 import { ApiProfileModule } from '../profile/profile.module';
 import { ApiJobsModule } from '../jobs/jobs.module';
 import { ApiCVGeneratorModule } from '../cv-generator/cv-generator.module';
+import { ApiCvExtractorModule } from '../cv-extractor/cv-extractor.module';
 
 @Module({
   imports: [
@@ -18,12 +19,14 @@ import { ApiCVGeneratorModule } from '../cv-generator/cv-generator.module';
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerRmq(ServiceName.COVER_LETTER_GENERATOR_SERVICE),
     SharedModule.registerRmq(ServiceName.CV_GENERATOR_SERVICE),
+    SharedModule.registerRmq(ServiceName.CV_EXTRACTOR_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_SERVICE),
     ApiAuthModule,
     ApiATSModule,
     ApiCoverLetterGeneratorModule,
     ApiCVGeneratorModule,
     ApiProfileModule,
+    ApiCvExtractorModule,
     ApiJobsModule
   ],
   controllers: [AppController],
