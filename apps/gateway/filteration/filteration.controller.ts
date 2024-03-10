@@ -1,6 +1,7 @@
 import { FilterJobRequestDto } from '@app/services_communications/filteration-service/dtos/requests/filter-job-request.dto';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { GetStageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-stage-response.dto';
+import { UpdateStatusResponseDto } from '@app/services_communications/filteration-service/dtos/responses/update-status-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { ServiceName } from '@app/shared';
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
@@ -76,9 +77,9 @@ export class ApiFilterationController {
 
   @ApiOperation({summary: 'Pass the quiz stage for a certain user in a certain job'})
   @Post(':jobId/:userId/pass-quiz')
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Updated the stage of the user to Interview',
+    type: UpdateStatusResponseDto
   })
   async passQuiz(
     @Param('jobId') jobId: string,
@@ -97,9 +98,9 @@ export class ApiFilterationController {
 
   @ApiOperation({summary: 'Fail the quiz stage for a certain user in a certain job'})
   @Post(':jobId/:userId/fail-quiz')
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Updated the stage of the user to Applied',
+    type: UpdateStatusResponseDto
   })
   async failQuiz(
     @Param('jobId') jobId: string,
@@ -118,9 +119,9 @@ export class ApiFilterationController {
 
   @ApiOperation({summary: 'Pass the interview stage for a certain user in a certain job'})
   @Post(':jobId/:userId/pass-interview')
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Updated the stage of the user to Matched',
+    type: UpdateStatusResponseDto
   })
   async passInterview(
     @Param('jobId') jobId: string,
@@ -139,9 +140,9 @@ export class ApiFilterationController {
 
   @ApiOperation({summary: 'Fail the interview stage for a certain user in a certain job'})
   @Post(':jobId/:userId/fail-interview')
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Updated the stage of the user to Applied',
+    type: UpdateStatusResponseDto
   })
   async failInterview(
     @Param('jobId') jobId: string,
