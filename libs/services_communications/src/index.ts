@@ -7,10 +7,13 @@ export * from './userService/index';
 // auth service
 export * from './authService/index';
 
-// pattern
+// profile service
+export * from './profile/index';
 
-// dtos
+// cover letter generator service
+export * from './cover-letter-generator-service/index';
 
-export * from './cover-letter-generator-service/dtos/generate-cover-letter.dto';
+// cv generator service
+export * from './cv-generator-service/index';
 
 export const HealthCheckPatterns = 'healthCheck';

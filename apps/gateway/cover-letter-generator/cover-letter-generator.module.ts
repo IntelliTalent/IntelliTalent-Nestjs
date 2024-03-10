@@ -5,7 +5,7 @@ import { ApiCoverLetterGeneratorController } from './cover-letter-generator.cont
 @Module({
   // assign the RabbitMQ queues (CoverLetterGenerator) to the CoverLetterGeneratorController
   imports: [
-    SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
+    SharedModule.registerRmq(ServiceName.COVER_LETTER_GENERATOR_SERVICE),
   ],
   controllers: [ApiCoverLetterGeneratorController],
   providers: [],
