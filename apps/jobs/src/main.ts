@@ -18,6 +18,7 @@ async function bootstrap() {
   );
 
   app.startAllMicroservices();
+  app.init()
   console.log('Jobs service is running');
 }
 bootstrap();
