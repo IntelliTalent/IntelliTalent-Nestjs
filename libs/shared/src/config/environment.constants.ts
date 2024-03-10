@@ -54,6 +54,7 @@ export const Constants = {
     USER_QUEUE: 'RABBITMQ_AUTH_QUEUE',
     AUTH_QUEUE: 'RABBITMQ_USERS_QUEUE',
     COVER_LETTER_QUEUE: 'RABBITMQ_COVER_LETTER_QUEUE',
+    CV_EXTRACTOR_QUEUE: 'RABBITMQ_CV_EXTRACTOR_QUEUE',
     ATS_QUEUE: 'RABBITMQ_ATS_QUEUE',
     AUTOFILL_QUEUE: 'RABBITMQ_AUTOFILL_QUEUE',
     JOB_QUEUE: 'RABBITMQ_JOB_QUEUE',
@@ -67,12 +68,12 @@ export const Constants = {
   },
 };
 
-
 export enum ServiceName {
   API_GATEWAY = 'API_GATEWAY',
   USER_SERVICE = 'USER_SERVICE',
   AUTH_SERVICE = 'AUTH_SERVICE',
   COVER_LETTER_SERVICE = 'COVER_LETTER_SERVICE',
+  CV_EXTRACTOR_SERVICE = 'CV_EXTRACTOR_SERVICE',
   ATS_SERVICE = 'ATS_SERVICE',
   AUTOFILL_SERVICE = 'AUTOFILL_SERVICE',
   JOB_SERVICE = 'JOB_SERVICE',
@@ -90,6 +91,8 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.USER_QUEUE);
     case ServiceName.COVER_LETTER_SERVICE:
       return await getConfigVariables(Constants.QUEUES.COVER_LETTER_QUEUE);
+    case ServiceName.CV_EXTRACTOR_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.CV_EXTRACTOR_QUEUE);
     case ServiceName.ATS_SERVICE:
       return await getConfigVariables(Constants.QUEUES.ATS_QUEUE);
     case ServiceName.AUTOFILL_SERVICE:

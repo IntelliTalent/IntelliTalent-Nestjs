@@ -7,6 +7,7 @@ import { ApiAuthModule } from '../auth/auth.module';
 import { ApiATSModule } from '../ats/ats.module';
 import { ApiCoverLetterGeneratorModule } from '../cover-letter-generator/cover-letter-generator.module';
 import { ApiProfileModule } from '../profile/profile.module';
+import { ApiCvExtractorModule } from '../cv-extractor/cv-extractor.module';
 
 @Module({
   imports: [
@@ -14,13 +15,14 @@ import { ApiProfileModule } from '../profile/profile.module';
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerRmq(ServiceName.COVER_LETTER_SERVICE),
+    SharedModule.registerRmq(ServiceName.CV_EXTRACTOR_SERVICE),
     ApiAuthModule,
     ApiATSModule,
     ApiCoverLetterGeneratorModule,
-    ApiProfileModule
+    ApiProfileModule,
+    ApiCvExtractorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
