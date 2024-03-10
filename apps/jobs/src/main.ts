@@ -1,10 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { JobsModule } from './jobs.module';
-import { ServiceName, SharedService, mapServiceNameToQueueName } from '@app/shared';
+import {
+  ServiceName,
+  SharedService,
+  mapServiceNameToQueueName,
+} from '@app/shared';
 
 async function bootstrap() {
   const app = await NestFactory.create(JobsModule);
-
 
   const sharedService = app.get(SharedService);
 
@@ -13,7 +16,6 @@ async function bootstrap() {
       await mapServiceNameToQueueName(ServiceName.JOB_SERVICE),
     ),
   );
-
 
   app.startAllMicroservices();
   app.init()
