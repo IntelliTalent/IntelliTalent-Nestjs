@@ -9,8 +9,6 @@ import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 import { CustomJobsStages } from './custom_jobs_stages.entity';
 
-
-
 @Entity()
 export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')

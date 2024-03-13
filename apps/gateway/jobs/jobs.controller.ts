@@ -44,8 +44,6 @@ export class JobsController {
     description: 'List of jobs returned successfully.',
   })
   async getJobs(@Query() filteration: PageOptionsDto) {
-    // throw new NotImplementedException();
-
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobs },
       filteration,
@@ -62,7 +60,6 @@ export class JobsController {
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
   async getJobById(@Param('jobId') jobId: string) {
-    // throw new NotImplementedException();
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
       jobId,
@@ -74,7 +71,6 @@ export class JobsController {
   @ApiBody({ type: CreateJobDto, description: 'New job details' })
   @ApiCreatedResponse({ description: 'New job created.' })
   async createJob(@Body() newJob: CreateJobDto) {
-    // throw new NotImplementedException();
     return this.jobsService.send(
       { cmd: jobsServicePatterns.createJob },
       newJob,
@@ -91,11 +87,7 @@ export class JobsController {
   })
   @ApiNotFoundResponse({ description: 'Job not found' })
   async updateJob(@Param('jobId') jobId: string, @Body() editJob: EditJobDto) {
-    // throw new NotImplementedException();
     editJob.jobId = jobId;
-    return this.jobsService.send(
-      { cmd: jobsServicePatterns.createJob },
-      editJob,
-    );
+    return this.jobsService.send({ cmd: jobsServicePatterns.editJob }, editJob);
   }
 }

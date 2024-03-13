@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
@@ -12,19 +12,14 @@ import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
-  @Get()
-  getHello(): string {
-    return this.jobsService.getHello();
-  }
-
   @MessagePattern({ cmd: jobsServicePatterns.createJob })
   createJob(@Payload() newJob: CreateJobDto) {
-    return { endpointName: 'create job', data: newJob };
+    return this.jobsService.createJob(newJob);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.editJob })
   editJob(@Payload() editJob: EditJobDto) {
-    return { endpointName: 'edit job', data: editJob };
+    return this.jobsService.editJob(editJob);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobById })

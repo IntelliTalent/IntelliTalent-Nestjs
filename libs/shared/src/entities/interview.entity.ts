@@ -11,7 +11,4 @@ export class Interview extends AbstractEntity {
 
   @Column({ type: 'date' })
   endDate: Date;
-
-  //   @OneToOne(() => CustomJobsStages, (stage) => stage.interview)
-  //   stage: CustomJobsStages;
 }

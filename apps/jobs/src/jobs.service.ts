@@ -1,72 +1,106 @@
-import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { UnstructuredJobs } from '@app/shared';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CustomJobsStages, Interview, StructuredJob } from '@app/shared';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import {
+  CreateJobDto,
+  EditJobDto,
+} from '@app/services_communications/jobs-service';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class JobsService {
   constructor(
-    @InjectModel(UnstructuredJobs.name)
-    private readonly unstructuredJobsModel: Model<UnstructuredJobs>,
-  ) {
-    this.create();
+    @InjectRepository(StructuredJob)
+    private readonly structuredJobRepository: Repository<StructuredJob>,
+    @InjectRepository(CustomJobsStages)
+    private readonly customJobsStagesRepository: Repository<CustomJobsStages>,
+    @InjectRepository(Interview)
+    private readonly interviewRepository: Repository<Interview>,
+  ) {}
+
+  async createJob(newJob: CreateJobDto) {
+    // Check if there is an interview in the new job
+    let interview: Interview | null = null;
+    if (newJob.interview) {
+      interview = this.interviewRepository.create({
+        interviewQuestions: newJob.interview.interviewQuestions,
+        endDate: newJob.interview.endDate,
+      });
+
+      await this.interviewRepository.save(interview);
+    }
+
+    // Create a custom job stage entity
+    const customJobStage = this.customJobsStagesRepository.create({
+      interview: interview,
+      order: newJob.stagesOrder,
+      quizEndDate: newJob.quizEndDate,
+      customFilters: newJob.customFilters,
+    });
+    await this.customJobsStagesRepository.save(customJobStage);
+
+    // Create the structured job entity
+    const structuredJob = this.structuredJobRepository.create({
+      title: newJob.title,
+      company: newJob.company,
+      jobLocation: newJob.jobLocation,
+      type: newJob.type,
+      skills: newJob.skills,
+      description: newJob.description,
+      jobPlace: newJob.jobPlace,
+      neededExperience: newJob.neededExperience,
+      education: newJob.education,
+      csRequired: newJob.csRequired,
+      jobEndDate: newJob.jobEndDate,
+      stages: customJobStage,
+    });
+
+    // Set additional fields
+    structuredJob.url = `http://localhost:5173/jobs/${structuredJob.id}`;
+    structuredJob.publishedAt = new Date();
+    structuredJob.isActive = true;
+    structuredJob.isScrapped = false;
+
+    await this.structuredJobRepository.save(structuredJob);
+
+    return structuredJob;
   }
 
-  async create(): Promise<UnstructuredJobs[]> {
-    const dummyJobs = [
-      {
-        title: 'Software Engineer',
-        company: 'ABC Technologies',
-        jobLocation: 'New York',
-        type: 'Full Time',
-        skills: ['JavaScript', 'Node.js', 'MongoDB'],
-        url: 'https://example.com/job1',
-        description: 'This is a description for the Software Engineer position.',
-        publishedAt: new Date(),
-        scrappedAt: new Date(),
-        jobPlace: 'On Site',
-        numberOfApplicants: 10,
-        neededExperience: 2,
-        education: 'Bachelor\'s Degree',
-      },
-      {
-        title: 'Data Scientist',
-        company: 'XYZ Analytics',
-        jobLocation: 'San Francisco',
-        type: 'Contract',
-        skills: ['Python', 'Machine Learning', 'Data Analysis'],
-        url: 'https://example.com/job2',
-        description: 'This is a description for the Data Scientist position.',
-        publishedAt: new Date(),
-        scrappedAt: new Date(),
-        jobPlace: 'Remote',
-        numberOfApplicants: 5,
-        neededExperience: 3,
-        education: 'Master\'s Degree',
-      },
-      {
-        title: 'UX Designer',
-        company: '123 Design Studio',
-        jobLocation: 'Los Angeles',
-        type: 'Part Time',
-        skills: ['UI/UX Design', 'Prototyping', 'Wireframing'],
-        url: 'https://example.com/job3',
-        description: 'This is a description for the UX Designer position.',
-        publishedAt: new Date(),
-        scrappedAt: new Date(),
-        jobPlace: 'Hybrid',
-        numberOfApplicants: 3,
-        neededExperience: 1,
-        education: 'Bachelor\'s Degree',
-      },
-    ];
+  async editJob(editJob: EditJobDto) {
+    // Check if the job exists
+    const existingJob = await this.structuredJobRepository.findOne({
+      where: { id: editJob.jobId },
+      relations: ['stages'],
+    });
+    if (!existingJob) {
+      throw new RpcException(
+        new NotFoundException(`Can not find a job with id: ${editJob.jobId}`),
+      );
+    }
 
-    // Create dummy jobs
-    const createdJobs = await this.unstructuredJobsModel.create(dummyJobs);
+    // Update the job fields
+    Object.assign(existingJob, editJob);
 
-    return createdJobs;
-  }
-  getHello(): string {
-    return 'Hello World!';
+    // Update related entities
+    if (existingJob.stages) {
+      Object.assign(existingJob.stages, {
+        customFilters: editJob.customFilters,
+        order: editJob.stagesOrder,
+        quizEndDate: editJob.quizEndDate,
+      });
+    }
+
+    if (existingJob.stages && existingJob.stages.interview) {
+      Object.assign(existingJob.stages.interview, {
+        interviewQuestions: editJob.interview.interviewQuestions,
+        endDate: editJob.interview.endDate,
+      });
+    }
+
+    // Save the updated job entity
+    await this.structuredJobRepository.save(existingJob);
+
+    return existingJob;
   }
 }

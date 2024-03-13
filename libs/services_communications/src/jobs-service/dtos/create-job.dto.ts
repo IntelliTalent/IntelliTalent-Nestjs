@@ -1,5 +1,6 @@
 import { JobPlace, JobType, StageType } from '@app/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -9,6 +10,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 
 class CustomFilters {
@@ -96,12 +98,14 @@ export class CreateJobDto {
   csRequired?: boolean;
 
   @ApiProperty({ type: Date, required: false })
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  jobEndDate?: Date;
+  jobEndDate: Date;
 
   @ApiProperty({ type: CustomFilters, required: false })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => CustomFilters)
   customFilters?: CustomFilters;
 
   @ApiProperty({
@@ -122,5 +126,7 @@ export class CreateJobDto {
 
   @ApiProperty({ type: Interview, required: false })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => Interview)
   interview?: Interview;
 }
