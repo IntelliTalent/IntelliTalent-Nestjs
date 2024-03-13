@@ -5,8 +5,10 @@ import { Repository } from 'typeorm';
 import {
   CreateJobDto,
   EditJobDto,
+  IJobs,
 } from '@app/services_communications/jobs-service';
 import { RpcException } from '@nestjs/microservices';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Injectable()
 export class JobsService {
@@ -102,5 +104,99 @@ export class JobsService {
     await this.structuredJobRepository.save(existingJob);
 
     return existingJob;
+  }
+
+  async getJobById(jobId: string) {
+    const job = await this.structuredJobRepository.findOne({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      throw new RpcException(
+        new NotFoundException(`Can not find a job with id: ${jobId}`),
+      );
+    }
+
+    // Map the job entity to IJobs format
+    const responseJob: IJobs = {
+      id: job.id,
+      title: job.title,
+      company: job.company,
+      jobLocation: job.jobLocation,
+      type: job.type,
+      skills: job.skills,
+      url: job.url,
+      description: job.description,
+      publishedAt: job.publishedAt,
+      jobPlace: job.jobPlace,
+      neededExperience: job.neededExperience,
+      education: job.education,
+      csRequired: job.csRequired,
+      isActive: job.isActive,
+    };
+    return responseJob;
+  }
+
+  async getJobs(pageOptions: PageOptionsDto) {
+    const {
+      orderBy,
+      orderDirection,
+      searchField,
+      searchValue,
+      startDate,
+      endDate,
+      skip,
+      take,
+    } = pageOptions;
+
+    const queryBuilder = this.structuredJobRepository.createQueryBuilder('job');
+
+    // Apply orderBy and orderDirection
+    if (orderBy) {
+      queryBuilder.orderBy(`job.${orderBy}`, orderDirection);
+    }
+
+    // Apply searchField and searchValue
+    if (searchField && searchValue) {
+      queryBuilder.where(`job.${searchField} LIKE :searchValue`, {
+        searchValue: `%${searchValue}%`,
+      });
+    }
+
+    // Apply startDate and endDate
+    if (startDate && endDate) {
+      queryBuilder.andWhere('job.publishedAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      });
+    } else if (startDate) {
+      queryBuilder.andWhere('job.publishedAt >= :startDate', { startDate });
+    } else if (endDate) {
+      queryBuilder.andWhere('job.publishedAt <= :endDate', { endDate });
+    }
+
+    // Apply pagination
+    queryBuilder.skip(skip).take(take);
+
+    // Execute query and map the results to IJobs format
+    const jobs = await queryBuilder.getMany();
+
+    const responseJobs: IJobs[] = jobs.map((job) => ({
+      id: job.id,
+      title: job.title,
+      company: job.company,
+      jobLocation: job.jobLocation,
+      type: job.type,
+      skills: job.skills,
+      url: job.url,
+      description: job.description,
+      publishedAt: job.publishedAt,
+      jobPlace: job.jobPlace,
+      neededExperience: job.neededExperience,
+      education: job.education,
+      csRequired: job.csRequired,
+      isActive: job.isActive,
+    }));
+    return responseJobs;
   }
 }

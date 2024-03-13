@@ -24,11 +24,11 @@ export class JobsController {
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobById })
   getJobById(jobId: string) {
-    return { endpointName: 'get job by id', data: jobId };
+    return this.jobsService.getJobById(jobId);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobs })
   getJobs(pageOptions: PageOptionsDto) {
-    return { endpointName: 'get jobs', data: pageOptions };
+    return this.jobsService.getJobs(pageOptions);
   }
 }
