@@ -6,7 +6,7 @@ export class Interview extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('simple-array', { nullable: true, array: true })
+  @Column({ type: 'json', default: [] })
   interviewQuestions: string[];
 
   @Column({ type: 'date' })

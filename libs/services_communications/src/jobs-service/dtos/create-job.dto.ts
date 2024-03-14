@@ -2,6 +2,7 @@ import { JobPlace, JobType, StageType } from '@app/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -27,6 +28,7 @@ class CustomFilters {
   @ApiProperty({ required: false, type: [String] })
   @IsOptional()
   @IsArray()
+  @ArrayNotEmpty()
   @IsString({ each: true })
   languages?: string[];
 
@@ -43,28 +45,31 @@ class CustomFilters {
 
 class Interview {
   @ApiProperty()
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  endDate?: Date;
+  endDate: Date;
 
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
+  @ApiProperty({ type: [String] })
   @IsArray()
+  @ArrayNotEmpty()
   @IsString({ each: true })
-  interviewQuestions?: string[];
+  interviewQuestions: string[];
 }
 
 export class CreateJobDto {
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   title: string;
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   company: string;
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   jobLocation: string;
 
   @ApiProperty({ enum: JobType })
@@ -72,11 +77,14 @@ export class CreateJobDto {
   type: JobType;
 
   @ApiProperty({ type: [String] })
-  @IsNotEmpty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   skills: string[];
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   description: string;
 
   @ApiProperty({ enum: JobPlace })
@@ -90,6 +98,7 @@ export class CreateJobDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsString()
   education?: string;
 
   @ApiProperty({ required: false })
@@ -98,9 +107,9 @@ export class CreateJobDto {
   csRequired?: boolean;
 
   @ApiProperty({ type: Date, required: false })
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
-  jobEndDate: Date;
+  jobEndDate?: Date;
 
   @ApiProperty({ type: CustomFilters, required: false })
   @IsOptional()
@@ -112,10 +121,11 @@ export class CreateJobDto {
     enum: StageType,
     isArray: true,
     required: false,
-    example: '0: INTERVIEW, 1: QUIZ',
+    example: '[0, 1] 0: INTERVIEW, 1: QUIZ',
   })
   @IsOptional()
   @IsArray()
+  @ArrayNotEmpty()
   @IsEnum(StageType, { each: true })
   stagesOrder?: StageType[];
 
