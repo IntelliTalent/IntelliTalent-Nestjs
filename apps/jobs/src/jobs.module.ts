@@ -12,6 +12,7 @@ import {
   CustomJobsStages,
   Interview,
 } from '@app/shared';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
@@ -20,10 +21,11 @@ import {
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
     ]),
     SharedModule.registerPostgres(ServiceName.JOB_SERVICE, [
+      StructuredJob,
       Interview,
       CustomJobsStages,
-      StructuredJob,
     ]),
+    TypeOrmModule.forFeature([StructuredJob, Interview, CustomJobsStages]),
   ],
   controllers: [JobsController],
   providers: [JobsService],
