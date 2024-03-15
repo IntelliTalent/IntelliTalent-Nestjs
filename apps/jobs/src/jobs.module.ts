@@ -19,14 +19,11 @@ import {
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
     ]),
-    SharedModule.registerPostgres(
-      ServiceName.JOB_SERVICE,
-      [
-        Interview,
-        CustomJobsStages,
-        StructuredJob,
-      ],
-    ),
+    SharedModule.registerPostgres(ServiceName.JOB_SERVICE, [
+      Interview,
+      CustomJobsStages,
+      StructuredJob,
+    ]),
   ],
   controllers: [JobsController],
   providers: [JobsService],
