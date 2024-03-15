@@ -39,8 +39,9 @@ export class UnstructuredJobs {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ type: Date })
-  publishedAt: Date;
+  @Prop({ })
+  // format is "YYYY-MM-DD"
+  publishedAt: string;
 
   @Prop({ required: true, default: Date.now() })
   scrappedAt: Date;
