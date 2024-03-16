@@ -30,5 +30,5 @@
 - have guard for check the user is have the required type
 - any public routes that decorator with `@Public()` will not check the user is authenticated or not
 - any routes that decorator with `@Roles([UserType.jobSeeker])` will check the user is have the required type or not and include it will be authenticated
-- any routes that isent decorator with `@Roles([UserType.jobSeeker])` will check the user is authenticated or not only withot check the user type
+- any routes that is not decorator with `@Roles([UserType.jobSeeker])` will check the user is authenticated or not only withot check the user type
 
