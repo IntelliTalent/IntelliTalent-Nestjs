@@ -65,6 +65,10 @@ export const Constants = {
     secret: 'JWT_SECRET',
     expiresIn: 'JWT_EXPIRATION',
     salt: 'BCRYPT_SALT',
+    forgetPasswordExpiresIn: 'FORGET_PASSWORD_EXPIRATION',
+    forgetPasswordSecret: 'FORGET_PASSWORD_SECRET',
+    verifyEmailExpiresIn: 'VERIFY_EMAIL_EXPIRATION',
+    verifyEmailSecret: 'VERIFY_EMAIL_SECRET',
   },
 };
 
