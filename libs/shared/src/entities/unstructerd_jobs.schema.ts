@@ -64,5 +64,4 @@ export class UnstructuredJobs {
 
 export const UnstructuredJobsSchema = SchemaFactory.createForClass(UnstructuredJobs);
 
-// Create unique compound index on title, company, and publishedAt fields
-UnstructuredJobsSchema.index({ title: 1, company: 1, publishedAt: 1 }, { unique: true });
+// Must create unique index in this collection in mongodb on title, company, date
