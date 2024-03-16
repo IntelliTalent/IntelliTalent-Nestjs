@@ -6,4 +6,7 @@ export const userServicePatterns = {
   deleteUser: 'deleteUser',
   getAllUsers: 'getAllUsers',
   validateUser: 'validateUser',
+  changePassword: 'changePassword',
+  resetPassword: 'resetPassword',
+  verifyUser: 'verifyUser',
 };

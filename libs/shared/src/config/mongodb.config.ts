@@ -53,7 +53,6 @@ export const getMongoUrl = async (dbName: string) => {
     MONGO_INITDB_ROOT_USERNAME,
   } = await getMongoDBConfig();
   const url = `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/`;
-  console.log('waer ', url);
 
   return url;
 };

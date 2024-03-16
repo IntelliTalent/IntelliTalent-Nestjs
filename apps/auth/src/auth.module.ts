@@ -6,9 +6,12 @@ import { ConfigService } from '@nestjs/config';
 import { Constants, ServiceName, SharedModule } from '@app/shared';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Token } from '@app/shared/entities/token.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { TokenService } from './token.service';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Token]),
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
     JwtModule.registerAsync({
       useFactory: async () => {
@@ -23,15 +26,10 @@ import { Token } from '@app/shared/entities/token.entity';
       },
       inject: [ConfigService],
     }),
-    SharedModule.registerPostgres(
-      ServiceName.AUTH_SERVICE,
-      [
-        Token
-      ]
-      )
+    SharedModule.registerPostgres(ServiceName.AUTH_SERVICE, [Token]),
   ],
 
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, TokenService],
 })
 export class AuthModule {}

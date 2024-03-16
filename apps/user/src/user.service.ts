@@ -13,7 +13,7 @@ import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
-import { Repository } from 'typeorm';
+import { FindOneOptions, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 
 @Injectable()
@@ -39,35 +39,39 @@ export class UserService {
 
     if (doesUserExist) {
       throw new RpcException(
-        new BadRequestException('User with this email already exists'),
+        new BadRequestException(
+          'User with this email already exists or wait for the email verification to complete',
+        ),
       );
     }
 
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     createUser.password = await bcrypt.hash(createUser.password, salt);
 
-    const creaatedUser = await this.userRepository.create(createUser);
+    const creaatedUser = this.userRepository.create(createUser);
 
     return this.userRepository.save(creaatedUser);
   }
 
-  async findUser(finduser: FindUserInterface): Promise<User> {
-    const user = await this.userRepository.find({
-      where: { ...finduser },
-    });
+  async findUser(finduser: FindOneOptions<User>): Promise<User> {
+    const user = await this.userRepository.findOne(finduser);
 
     if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
+      throw new RpcException(
+        new NotFoundException(
+          `user with ${Object.keys(finduser.where)} : ${Object.values(finduser.where)} not found`,
+        ),
+      );
     }
 
-    return user[0];
+    return user;
   }
 
   // TODO: need to edit for the update password
   async updateUser(updateUser: UpdateUserDto): Promise<User> {
     const { id } = updateUser;
 
-    const updateableFields = getUpdatableFields(updateUser);
+    const updatableFields = getUpdatableFields(updateUser);
 
     const user = await this.userRepository.findOneBy({ id });
 
@@ -75,7 +79,7 @@ export class UserService {
       throw new RpcException(new NotFoundException('User not found'));
     }
 
-    Object.assign(user, updateableFields);
+    Object.assign(user, updatableFields);
 
     return this.userRepository.save(user);
   }
@@ -101,9 +105,8 @@ export class UserService {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.email = :email', { email })
+      .select(['user.password', 'user.isVerified', 'user.id'])
       .getOne();
-
-    console.log('user', user);
 
     if (!user) {
       throw new RpcException(
@@ -111,11 +114,7 @@ export class UserService {
       );
     }
 
-    console.log('user', user);
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    console.log('isPasswordValid', isPasswordValid);
 
     if (!isPasswordValid) {
       throw new RpcException(
@@ -123,8 +122,44 @@ export class UserService {
       );
     }
 
+    if (!user.isVerified) {
+      throw new RpcException(
+        new NotFoundException(
+          'Please verify your email first, check your email for the verification link',
+        ),
+      );
+    }
+
     delete user.password;
 
-    return user;
+    return this.userRepository.findOneBy({ id: user.id });
+  }
+
+  async chagePasswordUsingToken(
+    userId: string,
+    password: string,
+  ): Promise<{ message: string }> {
+    const salt: number = +(await getConfigVariables(Constants.JWT.salt));
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await this.userRepository.update(
+      { id: userId },
+      { password: hashedPassword },
+    );
+    return {
+      message: 'Password changed successfully',
+    };
+  }
+
+  async verifyUser(id: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new RpcException(
+        new NotFoundException(`user with id ${id} not found`),
+      );
+    }
+    user.isVerified = true;
+
+    return this.userRepository.save(user);
   }
 }
