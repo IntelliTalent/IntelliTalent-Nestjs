@@ -1,4 +1,8 @@
-import { Controller } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
@@ -8,8 +12,10 @@ import {
 } from '@app/services_communications';
 import { User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
+import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
 
 @Controller()
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -25,15 +31,18 @@ export class UserController {
 
   @MessagePattern({ cmd: userServicePatterns.findUserById })
   findUserById(@Payload() id: string): Promise<User> {
-    console.log('userId', id);
     return this.userService.findUser({
-      id: id,
+      where: {
+        id,
+      },
     });
   }
 
   @MessagePattern({ cmd: userServicePatterns.findUserByEmail })
   findUserByEmail(@Payload() email: string): Promise<User> {
-    return this.userService.findUser({ email });
+    return this.userService.findUser({
+      where: { email },
+    });
   }
 
   @MessagePattern({ cmd: userServicePatterns.updateUser })
@@ -65,5 +74,18 @@ export class UserController {
     @Payload() { email, password }: { email: string; password: string },
   ): Promise<User> {
     return this.userService.validateUser(email, password);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.resetPassword })
+  changePassword(
+    @Payload()
+    { id, password }: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return this.userService.chagePasswordUsingToken(id, password);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.verifyUser })
+  verifyUser(@Payload() id: string): Promise<User> {
+    return this.userService.verifyUser(id);
   }
 }

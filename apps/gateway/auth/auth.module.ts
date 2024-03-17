@@ -3,6 +3,8 @@ import { ServiceName, SharedModule } from '@app/shared';
 import { JwtStrategy } from './strategies/jwt.staratgy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { ApiAuthController } from './auth.controller';
+import { ForgetPasswordStrategy } from './strategies/forget-password.strategy';
+import { VerificationStrategy } from './strategies/verify-account.strategy';
 
 @Module({
   // assign the RabbitMQ queues (Auth) to the AuthController
@@ -11,6 +13,11 @@ import { ApiAuthController } from './auth.controller';
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
   ],
   controllers: [ApiAuthController],
-  providers: [LocalStrategy, JwtStrategy],
+  providers: [
+    LocalStrategy,
+    JwtStrategy,
+    ForgetPasswordStrategy,
+    VerificationStrategy,
+  ],
 })
 export class ApiAuthModule {}

@@ -18,8 +18,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
   async validate(email: string, password: string): Promise<any> {
     try {
-      console.log('email', email);
-      console.log('passwordddddd', password);
       const user = await firstValueFrom(
         this.userService.send(
           { cmd: userServicePatterns.validateUser },
@@ -27,16 +25,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
         ),
       );
 
-      console.log('user222aewrae', user);
       if (!user) {
         throw new UnauthorizedException();
       }
 
-      console.log(' ia about to retyurn ')
-
       return user;
     } catch (error) {
-      console.log('error', error);
       throw new UnauthorizedException('Invalid credentials provided!');
     }
   }

@@ -77,7 +77,6 @@ export class SharedModule {
         useFactory: async (): Promise<MongooseModuleFactoryOptions> => {
           const monogoDbName = await getMongoDatabase(dbName);
           const url = await getMongoUrl(monogoDbName);
-          console.log(url);
           return {
             dbName: monogoDbName,
             uri: url,
