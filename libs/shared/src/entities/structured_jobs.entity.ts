@@ -15,6 +15,9 @@ export class StructuredJob extends AbstractEntity {
   id: string;
 
   @Column({})
+  jobId: string; // id for the job from the websites (linkedin, etc.)
+
+  @Column({})
   title: string;
 
   @Column({})
