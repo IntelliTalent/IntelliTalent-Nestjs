@@ -60,6 +60,7 @@ export const Constants = {
     NOTIFIER_QUEUE: 'RABBITMQ_NOTIFIER_QUEUE',
     PROFILE_QUEUE: 'RABBITMQ_PROFILE_QUEUE',
     FILTRATION_QUEUE: 'RABBITMQ_FILTRATION_QUEUE',
+    SCRAPPER_QUEUE: 'RABBITMQ_SCRAPPER_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
@@ -85,6 +86,7 @@ export enum ServiceName {
   NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
   PROFILE_SERVICE = 'PROFILE_SERVICE',
   FILTRATION_SERVICE = 'FILTERATION_SERVICE',
+  SCRAPPER_SERVICE = 'SCRAPPER_SERVICE',
 }
 
 export async function mapServiceNameToQueueName(
@@ -115,5 +117,7 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.PROFILE_QUEUE);
     case ServiceName.FILTRATION_SERVICE:
       return await getConfigVariables(Constants.QUEUES.FILTRATION_QUEUE);
+    case ServiceName.SCRAPPER_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.SCRAPPER_QUEUE);
   }
 }

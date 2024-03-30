@@ -7,4 +7,5 @@ export const jobsServicePatterns = {
   // patterns with other services
   extractInfo: 'extractInfo',
   match: 'match',
+  checkActiveJobs: 'checkActiveJobs',
 };

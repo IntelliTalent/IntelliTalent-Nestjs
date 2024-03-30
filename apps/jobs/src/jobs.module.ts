@@ -13,9 +13,11 @@ import {
   Interview,
 } from '@app/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    SharedModule.registerRmq(ServiceName.SCRAPPER_SERVICE),
     SharedModule.registerMongoDB(MonogoDBName.ScrappedJobsDB),
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
@@ -26,6 +28,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       CustomJobsStages,
     ]),
     TypeOrmModule.forFeature([StructuredJob, Interview, CustomJobsStages]),
+    ScheduleModule.forRoot(),
   ],
   controllers: [JobsController],
   providers: [JobsService],

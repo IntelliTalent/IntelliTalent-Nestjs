@@ -1,14 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CustomJobsStages, Interview, StructuredJob } from '@app/shared';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  CustomJobsStages,
+  Interview,
+  ServiceName,
+  StructuredJob,
+} from '@app/shared';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   CreateJobDto,
   EditJobDto,
   IJobs,
+  jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class JobsService {
@@ -19,6 +26,8 @@ export class JobsService {
     private readonly customJobsStagesRepository: Repository<CustomJobsStages>,
     @InjectRepository(Interview)
     private readonly interviewRepository: Repository<Interview>,
+    @Inject(ServiceName.SCRAPPER_SERVICE)
+    private readonly scrapperService: ClientProxy,
   ) {}
 
   async createJob(newJob: CreateJobDto) {
@@ -213,5 +222,38 @@ export class JobsService {
       isActive: job.isActive,
     }));
     return responseJobs;
+  }
+
+  async checkActiveJobs() {
+    // Read all jobs
+    const jobs = await this.structuredJobRepository.find({
+      where: { isActive: true, isScrapped: true },
+    });
+
+    // create an array of job ids, url, and jobId
+    const jobsToCheck = jobs.map((job) => ({
+      id: job.id,
+      jobId: job.jobId,
+      url: job.url,
+    }));
+
+    // Call scrapper service to check the jobs and return list of ids and isActive
+    const updatedJobs = JSON.parse(
+      await firstValueFrom(
+        this.scrapperService.send(
+          {
+            cmd: jobsServicePatterns.checkActiveJobs,
+          },
+          { jobs: jobsToCheck },
+        ),
+      ),
+    );
+
+    // Update the jobs using the ids and isActive
+    const bulkUpdatePromises = updatedJobs['jobs'].map(({ id, isActive }) =>
+      this.structuredJobRepository.update({ id }, { isActive }),
+    );
+
+    await Promise.all(bulkUpdatePromises);
   }
 }

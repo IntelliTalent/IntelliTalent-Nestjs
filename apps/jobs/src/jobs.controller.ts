@@ -7,10 +7,16 @@ import {
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller()
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  checkActiveJobs() {
+    this.jobsService.checkActiveJobs();
+  }
 
   @MessagePattern({ cmd: jobsServicePatterns.createJob })
   createJob(@Payload() newJob: CreateJobDto) {
