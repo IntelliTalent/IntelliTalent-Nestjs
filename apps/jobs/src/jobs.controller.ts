@@ -18,6 +18,11 @@ export class JobsController {
     this.jobsService.checkActiveJobs();
   }
 
+  @Cron(CronExpression.EVERY_4_HOURS)
+  callJobExtractor() {
+    this.jobsService.callJobExtractor();
+  }
+
   @MessagePattern({ cmd: jobsServicePatterns.createJob })
   createJob(@Payload() newJob: CreateJobDto) {
     return this.jobsService.createJob(newJob);

@@ -4,6 +4,7 @@ import {
   Interview,
   ServiceName,
   StructuredJob,
+  UnstructuredJobs,
 } from '@app/shared';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,6 +17,8 @@ import {
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { firstValueFrom } from 'rxjs';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class JobsService {
@@ -26,8 +29,12 @@ export class JobsService {
     private readonly customJobsStagesRepository: Repository<CustomJobsStages>,
     @InjectRepository(Interview)
     private readonly interviewRepository: Repository<Interview>,
+    @InjectModel(UnstructuredJobs.name)
+    private readonly unstructuredJobsModel: Model<UnstructuredJobs>,
     @Inject(ServiceName.SCRAPPER_SERVICE)
     private readonly scrapperService: ClientProxy,
+    @Inject(ServiceName.JOB_EXTRACTOR_SERVICE)
+    private readonly jobExtractorService: ClientProxy,
   ) {}
 
   async createJob(newJob: CreateJobDto) {
@@ -255,5 +262,54 @@ export class JobsService {
     );
 
     await Promise.all(bulkUpdatePromises);
+  }
+
+  private async insertJob(job: any): Promise<void> {
+    try {
+      await this.structuredJobRepository.save(job);
+    } catch (error) {
+      return;
+    }
+  }
+
+  async callJobExtractor() {
+    // Get all the scrapped jobs
+    const unstructuredJobs = await this.unstructuredJobsModel.find({
+      deletedAt: null,
+    });
+
+    // Call the job extractor service
+    const structuredJobs = JSON.parse(
+      await firstValueFrom(
+        this.jobExtractorService.send(
+          {
+            cmd: jobsServicePatterns.extractInfo,
+          },
+          {
+            jobs: unstructuredJobs,
+          },
+        ),
+      ),
+    );
+
+    // Soft delete each unstructured job
+    const bulkDeletePromises = [];
+    for (const job of unstructuredJobs) {
+      job.deletedAt = new Date();
+      bulkDeletePromises.push(job.save());
+    }
+    await Promise.all(bulkDeletePromises);
+
+    // Save the structured jobs
+    const bulkInsertPromises = structuredJobs['jobs'].map((job) =>
+      this.insertJob(job),
+    );
+    await Promise.all(bulkInsertPromises);
+
+    // Insert the new jobs to redis
+    // TODO
+
+    // Fire the matching event to the ATS service
+    // TODO
   }
 }

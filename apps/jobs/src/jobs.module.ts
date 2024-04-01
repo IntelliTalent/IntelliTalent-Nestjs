@@ -18,6 +18,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 @Module({
   imports: [
     SharedModule.registerRmq(ServiceName.SCRAPPER_SERVICE),
+    SharedModule.registerRmq(ServiceName.JOB_EXTRACTOR_SERVICE),
     SharedModule.registerMongoDB(MonogoDBName.ScrappedJobsDB),
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
