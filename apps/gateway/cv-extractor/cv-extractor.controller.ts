@@ -10,8 +10,8 @@ import {
   UseInterceptors,
   UploadedFile,
   Get,
-  StreamableFile,
   Param,
+  Res,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -48,29 +48,33 @@ export class CvExtractorController {
             .map(() => Math.round(Math.random() * 16).toString(16))
             .join('');
 
-          return callback(null, `${randomName}`);
+          return callback(null, `${randomName}.pdf`);
         },
       }),
     }),
   )
   async extractInfo(@UploadedFile() file) {
-    console.log('Going to flask');
-
     return this.cvExtractorService.send(
       { cmd: cvExtractorPattern.extractInfo },
-      { fileId: file.filename },
+      { fileId: file.filename.split('.')[0] },
     );
   }
 
   // TODO: Remove public
   @Public()
   @Get('/:fileId')
-  getFile(@Param('fileId') fileId: string) {
-    const file = createReadStream(
-      join(process.cwd(), `/uploads/${fileId}.pdf`),
-    );
-    console.log('Some one is here !');
+  getFile(@Param('fileId') fileId: string, @Res() res) {
+    const filePath = join(process.cwd(), `/uploads/${fileId}.pdf`);
 
-    return new StreamableFile(file);
+    // Set Content-Type header
+    res.set('Content-Type', 'application/pdf');
+
+    // Set Content-Disposition header to force download
+    // TODO: Change the file name to user's name
+    res.set('Content-Disposition', `attachment; filename="${fileId}.pdf"`);
+
+    const fileStream = createReadStream(filePath);
+
+    fileStream.pipe(res);
   }
 }
