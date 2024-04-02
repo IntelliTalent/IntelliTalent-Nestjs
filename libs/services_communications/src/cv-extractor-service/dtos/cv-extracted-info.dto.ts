@@ -1,9 +1,10 @@
 export class ICvInfo {
   name: string;
   email: string;
-  phone: string;
-  address: string;
-  github: string;
-  linkedin: string;
-  twitter: string;
+  education: string[];
+  languages: string[];
+  skills: string[];
+  projectSkills: Map<string, number>;
+  yearsOfExperience: number;
+  certifications: string[];
 }

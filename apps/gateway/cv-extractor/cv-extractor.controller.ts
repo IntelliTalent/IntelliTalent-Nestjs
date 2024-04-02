@@ -54,6 +54,7 @@ export class CvExtractorController {
     }),
   )
   async extractInfo(@UploadedFile() file) {
+    // TODO: Save the cv link to the user's profile
     return this.cvExtractorService.send(
       { cmd: cvExtractorPattern.extractInfo },
       { fileId: file.filename.split('.')[0] },
