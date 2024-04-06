@@ -36,3 +36,5 @@ export * from './decorators/roles.decorator';
 export * from './config/environment.constants';
 
 export * from './utils/getDateAfter';
+
+export * from './config/redis.key';

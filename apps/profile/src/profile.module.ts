@@ -10,6 +10,9 @@ import {
   ServiceName,
   SharedModule,
 } from '@app/shared';
+import { GithubScrapperModule } from './github-scrapper/github-scrapper.module';
+import { RedisDBName } from '@app/shared/config/redis.config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import {
       Education,
       Experience,
     ]),
+    SharedModule.registerRedis(RedisDBName.profiles_DB),
+    ScheduleModule.forRoot(),
+    GithubScrapperModule,
   ],
   controllers: [ProfileController],
   providers: [ProfileService],

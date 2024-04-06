@@ -21,6 +21,7 @@ async function bootstrap() {
     ),
   );
 
+  console.log('User service is connecting to microservice', await mapServiceNameToQueueName(ServiceName.USER_SERVICE));
 
   app.startAllMicroservices();
   app.init();

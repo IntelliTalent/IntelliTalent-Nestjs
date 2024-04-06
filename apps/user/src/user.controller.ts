@@ -21,6 +21,7 @@ export class UserController {
 
   @MessagePattern({ cmd: HealthCheckPatterns })
   getHello() {
+    console.log('hello from flask');
     return this.userService.getHello();
   }
 
