@@ -26,6 +26,7 @@ export class ApiCoverLetterGeneratorController {
       description: 'The cover letter links and content',
       type: CoverLetterResponseDto,
   })
+  // TODO: Remove
   @Public()
   @Header('content-type', 'application/json')
   @Post('/:profileId')
