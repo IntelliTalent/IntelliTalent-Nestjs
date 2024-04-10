@@ -38,6 +38,7 @@ export class ApiCVGeneratorController {
     const startDate = new Date(2022, 1, 1);
     const endDate = new Date(2024, 1, 1);
 
+    // TODO: Don't just return, also update record in profile db 
     return this.cvGeneratorService.send(
       {
         cmd: cvGeneratorServicePattern.generate,
