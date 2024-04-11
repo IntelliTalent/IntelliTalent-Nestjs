@@ -38,6 +38,9 @@ export class ApiCVGeneratorController {
     const startDate = new Date(2022, 1, 1);
     const endDate = new Date(2024, 1, 1);
 
+    const city = "Cairo";
+    const country = "Egypt";
+
     // TODO: Don't just return, also update record in profile db 
     return this.cvGeneratorService.send(
       {
@@ -48,18 +51,21 @@ export class ApiCVGeneratorController {
         profile: {
           fullName: firstName + " " + lastName,
           email: "moaz25jan2015@gmail.com",
-          address: "Cairo, Egypt",
           phoneNumber: "+201111111111",
+          city,
+          country,
           experiences: [
             {
               jobTitle: "Software Engineer",
               companyName: "Intelli Talent",
+              description: "Description 1",
               startDate,
               endDate,
             },
             {
               jobTitle: "Backend Engineer",
               companyName: "Google",
+              description: "Description 2",
               startDate,
               endDate,
             }
@@ -114,9 +120,9 @@ export class ApiCVGeneratorController {
               url: "https://www.google.com"
             }
           ],
-          summary: "",
-          linkedIn: "",
-          gitHub: "",
+          summary: "I am a software engineer with 5 years of experience in software development.",
+          linkedIn: "https://www.linkedin.com",
+          gitHub: "https://www.github.com",
         }
       },
     );
