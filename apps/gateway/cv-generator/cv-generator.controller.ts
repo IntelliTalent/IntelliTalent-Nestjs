@@ -58,69 +58,64 @@ export class ApiCVGeneratorController {
             {
               jobTitle: "Software Engineer",
               companyName: "Intelli Talent",
-              description: "Description 1",
-              startDate,
-              endDate,
+              description: "Worked on a project that helped to increase company's revenue by 20% in 6 months.",
+              startDate: new Date(2022, 7, 15),
             },
             {
               jobTitle: "Backend Engineer",
               companyName: "Google",
-              description: "Description 2",
-              startDate,
-              endDate,
+              description: "Improved the performance of the backend by 30% in 3 months.",
+              startDate: new Date(2020, 1, 1),
+              endDate: new Date(2022, 7, 1),
             }
           ],
           skills: ["Python", "Flask", "NodeJS", "ExpressJS"],
           educations: [
             {
-              degree: "Bachelor of Computer Science",
-              schoolName: "Cairo University",
+              degree: "Master of Computer Science",
+              schoolName: "University of Engineering and Technology, Lahore",
               description: "Graduated with honors and a GPA of 3.5",
-              startDate,
-              endDate,
+              startDate: new Date(2022, 9, 1)
             },
             {
-              degree: "Master of Computer Science",
-              schoolName: "Cairo University",
+              degree: "Bachelor of Science in Computer Science",
+              schoolName: "University of Engineering and Technology, Lahore",
               description: "Graduated with honors and a GPA of 3.5",
-              startDate,
-              endDate,
+              startDate: new Date(2018, 9, 1),
+              endDate: new Date(2022, 5, 1)
             },
           ],
           languages: ["English", "Arabic"],
           projects: [
             {
-              name: "Project 1",
-              description: "Description 1",
-              skills: ["Python", "Flask"],
+              name: "Intelli Talent",
+              description: "Intelli Talent is a platform that helps companies to hire the best talents, devloped as microservices.",
+              skills: ["Python", "Flask", "NestJS", "TypeORM", "PostgreSQL", "Docker"],
               startDate,
               endDate,
             },
             {
-              name: "Project 2",
-              description: "Description 2",
-              skills: ["NodeJS", "ExpressJS"],
+              name: "Push Sender",
+              description: "It's a project that sends push notifications to users using FCM and APN APIs.",
+              skills: ["NodeJS", "ExpressJS", "MongoDB"],
             }
           ],
           certificates: [
             {
-              title: "Certificate 1",
-              authority: "Authority 1",
+              title: "AWS Cloud Practitioner Certificate",
+              authority: "AWS",
               issuedAt: new Date(2022, 1, 1),
-              // can be null
-              validUntil: new Date(2023, 1, 1),
               url: "https://www.google.com"
             },
             {
-              title: "Certificate 2",
-              authority: "Authority 2",
-              issuedAt: new Date(2022, 1, 1),
-              // can be null
-              validUntil: new Date(2023, 1, 1),
-              url: "https://www.google.com"
+              title: "Graduation Certificate",
+              authority: "Cairo University",
+              issuedAt: new Date(2022, 7, 1),
+              validUntil: new Date(2028, 10, 1),
+              url: "https://www.youtube.com"
             }
           ],
-          summary: "I am a software engineer with 5 years of experience in software development.",
+          summary: "I'm a software engineer with a passion for learning and teaching. I'm currently looking for a full-time software engineering position.",
           linkedIn: "https://www.linkedin.com",
           gitHub: "https://www.github.com",
         }
