@@ -27,6 +27,8 @@ import {
   ApiCreatedResponse,
 } from '@nestjs/swagger';
 
+// TODO: Add user authentication and edit create job with the userId and edit edit job set each parameter manually
+
 @ApiTags('Jobs')
 @Controller('jobs')
 export class JobsController {
