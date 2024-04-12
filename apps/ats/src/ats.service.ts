@@ -1,9 +1,8 @@
 import { userServicePatterns } from '@app/services_communications';
-import { Profile, ServiceName, User, UserType } from '@app/shared';
+import { Filteration, Profile, ServiceName, User, UserType } from '@app/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UUID } from 'bson';
 import { profile } from 'console';
 import { firstValueFrom } from 'rxjs';
 import { In, Repository } from 'typeorm';
@@ -13,8 +12,10 @@ export class AtsService {
   constructor(
     @Inject(ServiceName.USER_SERVICE)
     private readonly userService: ClientProxy,
-    //@InjectRepository(Profile)
-    //private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(Filteration)
+    private readonly filterationRepository: Repository<Filteration>,
   ) {}
   getHello(): string {
     return 'Hello World!';
@@ -43,7 +44,7 @@ export class AtsService {
     // TODO: get jobs from REDIS_JOBS_DB Redis DB, and delete them
     const jobs = [
       {
-        id: 1,
+        id: "81a83064-4759-4dff-97ea-245a13b51f9e",
         title: "Software Engineer",
         company: "Google",
         url: "https://linkedin.com",
@@ -57,7 +58,7 @@ export class AtsService {
         }
       },
       {
-        id: 2,
+        id: "81a83064-4759-4dff-97ea-245a13b51d74",
         title: "Data Scientist",
         company: "Amazon",
         url: "https://wuzzuf.net",
@@ -90,7 +91,7 @@ export class AtsService {
 
     const users: User[] = [
       {
-        id: String(UUID.generate()),
+        id: "81a83574-4759-4dff-97ea-245a13b51d74",
         email: "moaz25jan2015@gmail.com",
         password: "54fasfas",
         firstName: "Moaz",
@@ -108,7 +109,7 @@ export class AtsService {
         photo: null,
       },
       {
-        id: String(UUID.generate()),
+        id: "97a83064-4759-4dff-97ea-245a13b51d74",
         email: "waer@gmail.com",
         password: "54fasfas",
         firstName: "Waer",
@@ -136,7 +137,7 @@ export class AtsService {
 
     const profiles: Profile[] = [
       {
-        id: String(UUID.generate()),
+        id: "81a83064-47e9-4def-97ea-245a13b51d74",
         userId: users[0].id,
         skills: ["Python", "R", "SQL"],
         yearsOfExperience: 5,
@@ -156,7 +157,7 @@ export class AtsService {
         deletedAt: null,
       },
       {
-        id: String(UUID.generate()),
+        id: "81a83064-4759-4dff-97ea-eada13b51d74",
         userId: users[1].id,
         skills: ["Java", "Python", "JavaScript", "React", "Node.js"],
         yearsOfExperience: 3,
@@ -248,7 +249,18 @@ export class AtsService {
 
     // TODO: put these mails in REDIS_MAILING_DB Redis DB in sendmail queue
 
-    // TODO: add records for these matches in filteration DB
+    // add records for these matches in filteration DB
+    const filterations = matchesArray.map(match => {
+      return {
+        jobId: match.jobId,
+        profileId: match.profileId,
+        stageData: {
+          matchScore: match.matchScore,
+        }
+      }
+    });
+
+    await this.filterationRepository.save(filterations);
 
     return {
       status: "matching is done!"
