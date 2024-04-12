@@ -8,7 +8,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
-import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import { FindManyOptions, FindOneOptions, In, Repository } from 'typeorm';
 
 @Injectable()
 export class ProfileService {
@@ -138,9 +138,16 @@ export class ProfileService {
   }
 
   getProfileById(profileId: string): Promise<Profile> {
-    console.log(profileId, 'waer');
     return this.findOneProfile({
       where: { id: profileId },
+    });
+  }
+
+  getProfilesByUsersIds(userIds: string[]) {
+    return this.profileRepository.find({
+      where: {
+        userId: In(userIds),
+      },
     });
   }
 }

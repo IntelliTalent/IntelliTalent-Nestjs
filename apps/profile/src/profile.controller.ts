@@ -13,6 +13,7 @@ import { GithubScrapperService } from './github-scrapper/github-scrapper.service
 import { LinkedinScrapperService } from './linkedin-scrapper/linkedin-scrapper.service';
 import { ProfileService } from './profile.service';
 import { Profile, RpcExceptionsFilter } from '@app/shared';
+import { GetProfilesByUsersIdsDto } from '@app/services_communications/profile/dtos/get-profiles-by-users-ids.dto';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -70,5 +71,10 @@ export class ProfileController {
   @MessagePattern({ cmd: profileServicePattern.getProfileById })
   getProfileById(@Payload() profileId: string) {
     return this.profileService.getProfileById(profileId);
+  }
+
+  @MessagePattern({ cmd: profileServicePattern.getProfilesByUsersIds })
+  getProfilesByUsersIds(@Payload() dto: GetProfilesByUsersIdsDto) {
+    return this.profileService.getProfilesByUsersIds(dto.usersIds);
   }
 }

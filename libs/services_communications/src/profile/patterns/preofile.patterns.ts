@@ -8,4 +8,5 @@ export const profileServicePattern = {
   createProfile: 'createProfile',
   updateProfile: 'updateProfile',
   deleteProfile: 'deleteProfile',
+  getProfilesByUsersIds: 'getProfilesByUsersIds',
 };
