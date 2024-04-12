@@ -40,6 +40,7 @@ export const Constants = {
     dbName: {
       mailingDB: 'REDIS_MAILING_DB',
       jobsDB: 'REDIS_JOBS_DB',
+      profiles_DB: 'REDIS_PROFILES_DB',
     },
   },
   RABBITMQ: {
@@ -69,6 +70,9 @@ export const Constants = {
     forgetPasswordSecret: 'FORGET_PASSWORD_SECRET',
     verifyEmailExpiresIn: 'VERIFY_EMAIL_EXPIRATION',
     verifyEmailSecret: 'VERIFY_EMAIL_SECRET',
+  },
+  SCRAPPER: {
+    GITHUBTOKEN: 'GITHUB_TOKENS',
   },
 };
 
