@@ -24,7 +24,7 @@ export class Profile extends AbstractEntity {
     type: 'json',
     default: [],
   })
-  skills: string;
+  skills: string[];
 
   @Column({
     type: 'smallint',

@@ -1,5 +1,6 @@
 import { atsServicePattern } from '@app/services_communications/ats-service';
 import { ServiceName, User } from '@app/shared';
+import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
   Controller,
   Header,
@@ -25,6 +26,7 @@ export class ApiATSController {
    */
   @ApiOperation({ summary: 'For testing ATS service' })
   @Header('content-type', 'application/json')
+  @Public()
   @Post('match')
   async match() {
     return this.atsService.send(
