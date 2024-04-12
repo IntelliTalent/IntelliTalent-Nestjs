@@ -20,6 +20,7 @@ import { join } from 'path';
 import { diskStorage } from 'multer';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import { createReadStream } from 'fs';
+import { firstValueFrom } from 'rxjs';
 
 @ApiTags('CV Extractor')
 @Controller('cv')
@@ -32,11 +33,10 @@ export class CvExtractorController {
   // TODO: Remove public
   @Public()
   @Post('/info')
-  @ApiOperation({ summary: 'Extract the info from a given cv' })
+  @ApiOperation({ summary: 'Trigger the info extraction process' })
   @ApiResponse({
     status: 200,
-    type: ICvInfo,
-    description: 'Info extracted successfully',
+    description: 'Data is currently being processed.',
   })
   @UseInterceptors(
     FileInterceptor('file', {
@@ -53,12 +53,35 @@ export class CvExtractorController {
       }),
     }),
   )
-  async extractInfo(@UploadedFile() file) {
+  async triggerExtractInfo(@UploadedFile() file) {
     // TODO: Save the cv link to the user's profile
-    return this.cvExtractorService.send(
-      { cmd: cvExtractorPattern.extractInfo },
-      { fileId: file.filename.split('.')[0] },
+
+    this.saveInfo(file.filename.split('.')[0]);
+
+    return 'Data is currently being processed.';
+  }
+
+  private async saveInfo(filename: string) {
+    const data = await firstValueFrom(
+      this.cvExtractorService.send(
+        { cmd: cvExtractorPattern.extractInfo },
+        { fileId: filename },
+      ),
     );
+
+    // TODO: Add the data to redis
+  }
+
+  @Public()
+  @Get('/extract')
+  @ApiOperation({ summary: 'Extract the info from a given cv' })
+  @ApiResponse({
+    status: 200,
+    type: ICvInfo,
+    description: 'Info extracted successfully',
+  })
+  async extractInfo() {
+    // TODO: Get the data from redis and send it back to the user
   }
 
   // TODO: Remove public
