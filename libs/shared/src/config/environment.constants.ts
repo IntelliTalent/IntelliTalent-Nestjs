@@ -73,6 +73,7 @@ export const Constants = {
   },
   SCRAPPER: {
     GITHUBTOKEN: 'GITHUB_TOKENS',
+    RAPIDAPI_KEY: 'RAPIDAPI_KEY'
   },
 };
 

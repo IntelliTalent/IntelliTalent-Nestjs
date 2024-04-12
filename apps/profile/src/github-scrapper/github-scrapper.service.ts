@@ -1,17 +1,18 @@
 import { Constants, getRedisUserNameReposKey } from '@app/shared';
 import getConfigVariables from '@app/shared/config/configVariables.config';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Octokit } from 'octokit';
-import { ResponseScrapGithubProfileDto } from './dtos/scrap-github-profile.dto';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import {
+  getUserRepos,
+  ResponseScrapGithubProfileDto,
+} from '@app/services_communications';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class GithubScrapperService {
-  constructor(@InjectRedis() private readonly redis: Redis) {
-    // this.scrapGithubProfile('mostafa-wael');
-    this.getUserRepos('mostafa-wael');
-  }
+  constructor(@InjectRedis() private readonly redis: Redis) {}
 
   async getOctokit() {
     const githubTokens = (
@@ -25,26 +26,32 @@ export class GithubScrapperService {
 
   async scrapGithubProfile(userName: string) {
     const octokit = await this.getOctokit();
-    const { data } = await octokit.rest.users.getByUsername({
-      username: userName,
-    });
-    const response: ResponseScrapGithubProfileDto = {
-      avatar_url: data.avatar_url,
-      html_url: data.html_url,
-      repos_url: data.repos_url,
-      name: data.name,
-      company: data.company,
-      blog: data.blog,
-      location: data.location,
-      email: data.email,
-      bio: data.bio,
-      public_repos: data.public_repos,
-      followers: data.followers,
-      following: data.following,
-      created_at: data.created_at,
-    };
-    this.storeUserRepos(userName);
-    return response;
+    try {
+      const { data } = await octokit.rest.users.getByUsername({
+        username: userName,
+      });
+      const response: ResponseScrapGithubProfileDto = {
+        avatar_url: data.avatar_url,
+        html_url: data.html_url,
+        repos_url: data.repos_url,
+        name: data.name,
+        company: data.company,
+        blog: data.blog,
+        location: data.location,
+        email: data.email,
+        bio: data.bio,
+        public_repos: data.public_repos,
+        followers: data.followers,
+        following: data.following,
+        created_at: data.created_at,
+      };
+
+      this.storeUserRepos(userName);
+      return response;
+    } catch (error) {
+      console.log('error', error);
+      throw new RpcException(new NotFoundException('User not found on Github'));
+    }
   }
 
   async storeUserRepos(userName: string) {
@@ -69,17 +76,23 @@ export class GithubScrapperService {
     } while (_hasNextPage);
   }
 
-  async getUserRepos(userName: string) {
+  async getUserRepos(payload: getUserRepos) {
+    const { username, pageOptionsDto } = payload;
+    const { page, take } = pageOptionsDto;
+
+    // Calculate start and stop indices for pagination
+    const start = (page - 1) * take;
+    const stop = start + take - 1;
+
     const repos = await this.redis.lrange(
-      getRedisUserNameReposKey(userName),
-      0,
-      -1,
+      getRedisUserNameReposKey(username),
+      start,
+      stop,
     );
     const response = repos.map((repo) => JSON.parse(repo));
     return response;
   }
-
-  async scrapUserRepos(userName: string, pageNumber = 1, perPage = 10) {
+  async scrapUserRepos(userName: string, pageNumber = 1, perPage = 30) {
     const octokit = await this.getOctokit();
 
     const { data } = await octokit.rest.repos.listForUser({
@@ -124,6 +137,7 @@ export class GithubScrapperService {
       stargazers_count: repo.stargazers_count,
       created_at: repo.created_at,
     }));
+
     return {
       response,
       hasNextPage: data.length === perPage,

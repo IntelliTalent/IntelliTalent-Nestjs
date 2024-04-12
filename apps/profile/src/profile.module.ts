@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ProfileController } from './profile.controller';
-import { ProfileService } from './profile.service';
 import {
   Certificate,
   Education,
   Experience,
+  FormField,
+  FormFieldSchema,
   Profile,
   Project,
   ServiceName,
@@ -13,6 +13,12 @@ import {
 import { GithubScrapperModule } from './github-scrapper/github-scrapper.module';
 import { RedisDBName } from '@app/shared/config/redis.config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { LinkedinScrapperModule } from './linkedin-scrapper/linkedin-scrapper.module';
+import { ProfileController } from './profile.controller';
+import { ProfileService } from './profile.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongoDBName } from '@app/shared/config/mongodb.config';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -24,10 +30,23 @@ import { ScheduleModule } from '@nestjs/schedule';
       Experience,
     ]),
     SharedModule.registerRedis(RedisDBName.profiles_DB),
+    SharedModule.registerMongoDB(MongoDBName.FormFieldsDB),
+    MongooseModule.forFeature([
+      { name: FormField.name, schema: FormFieldSchema },
+    ]),
     ScheduleModule.forRoot(),
+    TypeOrmModule.forFeature([
+      Profile,
+      Certificate,
+      Project,
+      Education,
+      Experience,
+    ]),
     GithubScrapperModule,
+    LinkedinScrapperModule,
   ],
   controllers: [ProfileController],
   providers: [ProfileService],
+  exports: [ProfileService],
 })
 export class ProfileModule {}
