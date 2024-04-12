@@ -1,22 +1,22 @@
 import getConfigVariables from './configVariables.config';
 import { Constants } from './environment.constants';
 
-export enum MonogoDBName {
+export enum MongoDBName {
   ScrappedJobsDB = 'ScrappedJobsDB',
   FormFieldsDB = 'FormFieldsDB',
   QuizzesDB = 'QuizzesDB',
   InterviewQuestionsDB = 'InterviewQuestionsDB',
 }
 
-export const getMongoDatabase = async (dbName: MonogoDBName) => {
+export const getMongoDatabase = async (dbName: MongoDBName) => {
   switch (dbName) {
-    case MonogoDBName.ScrappedJobsDB:
+    case MongoDBName.ScrappedJobsDB:
       return await getConfigVariables(Constants.MONGODB.dbName.ScrappedJobsDB);
-    case MonogoDBName.FormFieldsDB:
+    case MongoDBName.FormFieldsDB:
       return await getConfigVariables(Constants.MONGODB.dbName.FormFieldsDB);
-    case MonogoDBName.QuizzesDB:
+    case MongoDBName.QuizzesDB:
       return await getConfigVariables(Constants.MONGODB.dbName.QuizzesDB);
-    case MonogoDBName.InterviewQuestionsDB:
+    case MongoDBName.InterviewQuestionsDB:
       return await getConfigVariables(
         Constants.MONGODB.dbName.InterviewQuestionsDB,
       );

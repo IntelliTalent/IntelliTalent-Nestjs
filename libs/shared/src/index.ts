@@ -38,3 +38,6 @@ export * from './config/environment.constants';
 export * from './utils/getDateAfter';
 
 export * from './config/redis.key';
+
+// filters
+export * from './filters/RPCFilter.filter';
