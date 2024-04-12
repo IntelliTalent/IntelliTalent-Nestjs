@@ -42,7 +42,7 @@ export const getServiceDatabse = async (
       });
     case ServiceName.ATS_SERVICE:
       Object.assign(configObject, {
-        database: await getConfigVariables(Constants.DB.dbName.PROFILEDB),
+        database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),
       });
 
   }

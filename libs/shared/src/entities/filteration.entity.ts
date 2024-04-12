@@ -30,13 +30,11 @@ type StageData = QuizData | InterviewData | MatchData | AppliedData;
 export class Filteration extends AbstractEntity {
 
   @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid' })
   jobId: string;
 
   @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid' })
   profileId: string;
 
   @Column({ type: 'boolean', nullable: false, default: true })

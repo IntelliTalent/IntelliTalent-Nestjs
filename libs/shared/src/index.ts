@@ -9,6 +9,7 @@ export * from './entities/user.entity';
 export * from './entities/interview.entity';
 export * from './entities/custom_jobs_stages.entity';
 export * from './entities/structured_jobs.entity';
+export * from './entities/filteration.entity';
 export * from './entities/token.entity';
 
 export * from './entities/unstructerd_jobs.schema';
