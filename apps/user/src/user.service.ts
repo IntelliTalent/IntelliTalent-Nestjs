@@ -3,7 +3,7 @@ import {
   UpdateUserDto,
   getUpdatableFields,
 } from '@app/services_communications';
-import { Constants, User } from '@app/shared';
+import { Constants, FormField, User } from '@app/shared';
 import {
   BadRequestException,
   Injectable,
@@ -15,12 +15,16 @@ import { FindUserInterface } from '../../../libs/services_communications/src/use
 import * as bcrypt from 'bcryptjs';
 import { FindOneOptions, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectModel(FormField.name)
+    private readonly formFieldModel: Model<FormField>,
   ) {}
 
   getHello(): string {
@@ -48,9 +52,22 @@ export class UserService {
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     createUser.password = await bcrypt.hash(createUser.password, salt);
 
-    const creaatedUser = this.userRepository.create(createUser);
+    const createdUser = this.userRepository.create(createUser);
+    const savedUser = await this.userRepository.save(createdUser);
 
-    return this.userRepository.save(creaatedUser);
+    await this.formFieldModel.create({
+      userId: savedUser.id,
+      firstName: createdUser.firstName,
+      lastName: createdUser.lastName,
+      fullName: `${createdUser.firstName} ${createdUser.lastName}`,
+      email: createdUser.email,
+      phoneNumber: createdUser.phoneNumber,
+      country: createdUser.country,
+      city: createdUser.city,
+      address: createdUser.address,
+    });
+
+    return savedUser;
   }
 
   async findUser(finduser: FindOneOptions<User>): Promise<User> {
