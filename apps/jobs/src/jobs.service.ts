@@ -1,5 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  Constants,
   CustomJobsStages,
   Interview,
   ServiceName,
@@ -19,10 +20,15 @@ import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { firstValueFrom } from 'rxjs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import getConfigVariables from '@app/shared/config/configVariables.config';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class JobsService {
   constructor(
+    @InjectRedis()
+    private readonly redis: Redis,
     @InjectRepository(StructuredJob)
     private readonly structuredJobRepository: Repository<StructuredJob>,
     @InjectRepository(CustomJobsStages)
@@ -35,7 +41,70 @@ export class JobsService {
     private readonly scrapperService: ClientProxy,
     @Inject(ServiceName.JOB_EXTRACTOR_SERVICE)
     private readonly jobExtractorService: ClientProxy,
+    @Inject(ServiceName.ATS_SERVICE)
+    private readonly atsService: ClientProxy,
   ) {}
+
+  private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
+    try {
+      // Convert the jobs array to a string
+      const jobsString = jobs.map((job) =>
+        JSON.stringify({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          url: job.url,
+          skills: job.skills,
+          customFilters: null,
+        }),
+      );
+
+      // Append the jobs to the existing list in Redis
+      await this.redis.rpush('jobs', ...jobsString);
+
+      console.log('Jobs appended successfully.');
+    } catch (error) {
+      console.error(`Error appending jobs: ${error.message}`);
+    }
+  }
+
+  private async insertCreatedJobsToRedis(job: StructuredJob) {
+    try {
+      // Convert the jobs array to a string
+      const jobString = JSON.stringify({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        url: job.url,
+        skills: job.skills,
+        customFilters: job.stages.customFilters,
+      });
+
+      // Append the jobs to the existing list in Redis
+      await this.redis.rpush('jobs', jobString);
+
+      console.log('Job appended successfully.');
+    } catch (error) {
+      console.error(`Error appending jobs: ${error.message}`);
+    }
+  }
+
+  private async callATSService() {
+    try {
+      const length = await this.redis.llen('jobs');
+
+      if (length > 100) {
+        this.atsService.send(
+          {
+            cmd: jobsServicePatterns.match,
+          },
+          {},
+        );
+      }
+    } catch (error) {
+      console.error(`Error calling ATS service: ${error.message}`);
+    }
+  }
 
   async createJob(newJob: CreateJobDto) {
     try {
@@ -85,10 +154,17 @@ export class JobsService {
       const savedJob = await this.structuredJobRepository.save(structuredJob);
 
       // Set the url with the generated id
-      savedJob.url = `http://localhost:5173/jobs/${savedJob.id}`;
+      const frontEndUrl = await getConfigVariables(Constants.FRONT_END_URL);
+      savedJob.url = `${frontEndUrl}/jobs/${savedJob.id}`;
 
       // Update the saved job with the constructed URL
       await this.structuredJobRepository.save(savedJob);
+
+      // Save the structured job to Redis
+      await this.insertCreatedJobsToRedis(savedJob);
+
+      // Fire the matching event to the ATS service
+      await this.callATSService();
 
       return savedJob;
     } catch (error) {
@@ -264,14 +340,6 @@ export class JobsService {
     await Promise.all(bulkUpdatePromises);
   }
 
-  private async insertJob(job: any): Promise<void> {
-    try {
-      await this.structuredJobRepository.save(job);
-    } catch (error) {
-      return;
-    }
-  }
-
   async callJobExtractor() {
     // Get all the scrapped jobs
     const unstructuredJobs = await this.unstructuredJobsModel.find({
@@ -286,7 +354,7 @@ export class JobsService {
             cmd: jobsServicePatterns.extractInfo,
           },
           {
-            jobs: unstructuredJobs,
+            jobs: [unstructuredJobs[0], unstructuredJobs[1]],
           },
         ),
       ),
@@ -301,15 +369,21 @@ export class JobsService {
     await Promise.all(bulkDeletePromises);
 
     // Save the structured jobs
-    const bulkInsertPromises = structuredJobs['jobs'].map((job) =>
-      this.insertJob(job),
-    );
+    const addedJobs = [];
+    const bulkInsertPromises = structuredJobs['jobs'].map(async (job) => {
+      try {
+        await this.structuredJobRepository.save(job as any);
+        addedJobs.push(job);
+      } catch (error) {
+        return;
+      }
+    });
     await Promise.all(bulkInsertPromises);
 
     // Insert the new jobs to redis
-    // TODO
+    await this.insertScrappedJobsToRedis(addedJobs);
 
     // Fire the matching event to the ATS service
-    // TODO
+    await this.callATSService();
   }
 }

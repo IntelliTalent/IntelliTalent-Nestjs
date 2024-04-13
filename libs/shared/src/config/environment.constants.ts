@@ -4,6 +4,7 @@ export const Constants = {
   //basic app info
   APPPORT: 'NODE_PORT',
   BASEURL: 'APP_BASE_URL',
+  FRONT_END_URL: 'FRONT_END_URL',
   //database values
   DB: {
     dbHost: 'DB_HOST',

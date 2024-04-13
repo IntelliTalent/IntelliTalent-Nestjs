@@ -14,11 +14,13 @@ import {
 } from '@app/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RedisDBName } from '@app/shared/config/redis.config';
 
 @Module({
   imports: [
     SharedModule.registerRmq(ServiceName.SCRAPPER_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_EXTRACTOR_SERVICE),
+    SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerMongoDB(MonogoDBName.ScrappedJobsDB),
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
@@ -29,6 +31,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       CustomJobsStages,
     ]),
     TypeOrmModule.forFeature([StructuredJob, Interview, CustomJobsStages]),
+    SharedModule.registerRedis(RedisDBName.jobsDB),
     ScheduleModule.forRoot(),
   ],
   controllers: [JobsController],
