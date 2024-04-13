@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MonogoDBName } from '@app/shared/config/mongodb.config';
+import { MongoDBName } from '@app/shared/config/mongodb.config';
 import {
   UnstructuredJobsSchema,
   SharedModule,
@@ -21,7 +21,7 @@ import { RedisDBName } from '@app/shared/config/redis.config';
     SharedModule.registerRmq(ServiceName.SCRAPPER_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_EXTRACTOR_SERVICE),
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
-    SharedModule.registerMongoDB(MonogoDBName.ScrappedJobsDB),
+    SharedModule.registerMongoDB(MongoDBName.ScrappedJobsDB),
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },
     ]),

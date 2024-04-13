@@ -94,7 +94,7 @@ export class JobsService {
       const length = await this.redis.llen('jobs');
 
       if (length > 100) {
-        this.atsService.send(
+        this.atsService.emit(
           {
             cmd: jobsServicePatterns.match,
           },
