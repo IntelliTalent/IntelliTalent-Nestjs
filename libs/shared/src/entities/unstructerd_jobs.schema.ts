@@ -19,6 +19,9 @@ export enum JobPlace {
 @Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } })
 export class UnstructuredJobs {
   @Prop({ required: true })
+  jobId: string;
+
+  @Prop({ required: true })
   title: string;
 
   @Prop({ required: true })
@@ -39,7 +42,7 @@ export class UnstructuredJobs {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ })
+  @Prop({})
   // format is "YYYY-MM-DD"
   publishedAt: string;
 
@@ -62,6 +65,7 @@ export class UnstructuredJobs {
   deletedAt: Date;
 }
 
-export const UnstructuredJobsSchema = SchemaFactory.createForClass(UnstructuredJobs);
+export const UnstructuredJobsSchema =
+  SchemaFactory.createForClass(UnstructuredJobs);
 
 // Must create unique index in this collection in mongodb on title, company, date

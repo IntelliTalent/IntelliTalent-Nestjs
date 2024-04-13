@@ -4,6 +4,7 @@ export const Constants = {
   //basic app info
   APPPORT: 'NODE_PORT',
   BASEURL: 'APP_BASE_URL',
+  FRONT_END_URL: 'FRONT_END_URL',
   //database values
   DB: {
     dbHost: 'DB_HOST',
@@ -61,6 +62,8 @@ export const Constants = {
     NOTIFIER_QUEUE: 'RABBITMQ_NOTIFIER_QUEUE',
     PROFILE_QUEUE: 'RABBITMQ_PROFILE_QUEUE',
     FILTRATION_QUEUE: 'RABBITMQ_FILTRATION_QUEUE',
+    SCRAPPER_QUEUE: 'RABBITMQ_SCRAPPER_QUEUE',
+    JOB_EXTRACTOR_QUEUE: 'RABBITMQ_JOB_EXTRACTOR_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
@@ -90,6 +93,8 @@ export enum ServiceName {
   NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
   PROFILE_SERVICE = 'PROFILE_SERVICE',
   FILTRATION_SERVICE = 'FILTERATION_SERVICE',
+  SCRAPPER_SERVICE = 'SCRAPPER_SERVICE',
+  JOB_EXTRACTOR_SERVICE = 'JOB_EXTRACTOR_SERVICE',
 }
 
 export async function mapServiceNameToQueueName(
@@ -120,5 +125,9 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.PROFILE_QUEUE);
     case ServiceName.FILTRATION_SERVICE:
       return await getConfigVariables(Constants.QUEUES.FILTRATION_QUEUE);
+    case ServiceName.SCRAPPER_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.SCRAPPER_QUEUE);
+    case ServiceName.JOB_EXTRACTOR_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.JOB_EXTRACTOR_QUEUE);
   }
 }
