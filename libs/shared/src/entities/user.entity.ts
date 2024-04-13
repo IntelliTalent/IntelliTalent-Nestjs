@@ -101,7 +101,6 @@ export class User extends AbstractEntity {
   @Column({ type: 'enum', enum: UserType, default: UserType.jobSeeker })
   type: UserType;
 
-
   @Column({
     type: 'boolean',
     default: false,
