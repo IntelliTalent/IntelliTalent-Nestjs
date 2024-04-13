@@ -26,7 +26,7 @@ export class PageOptionsDto {
   @ApiPropertyOptional({ enum: Order, default: Order.ASC })
   @IsOptional()
   @IsEnum(Order)
-  orderDirection: Order = Order.DESC;
+  orderDirection?: Order = Order.DESC;
 
   @ApiPropertyOptional({
     required: false,

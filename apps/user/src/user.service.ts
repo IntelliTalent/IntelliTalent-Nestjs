@@ -3,7 +3,7 @@ import {
   UpdateUserDto,
   getUpdatableFields,
 } from '@app/services_communications';
-import { Constants, FormField, User } from '@app/shared';
+import { Constants, FormField, User, UserType } from '@app/shared';
 import {
   BadRequestException,
   Injectable,
@@ -17,6 +17,9 @@ import { FindOneOptions, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
+import { PageDto } from '@app/shared/api-features/dtos/page.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Injectable()
 export class UserService {
@@ -178,5 +181,14 @@ export class UserService {
     user.isVerified = true;
 
     return this.userRepository.save(user);
+  }
+
+  async getAllJobSeekers(
+    pageOptionsDto: PageOptionsDto,
+  ): Promise<PageDto<User[]>> {
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.type = :type', { type: UserType.jobSeeker });
+    return applyQueryOptions(query, pageOptionsDto);
   }
 }
