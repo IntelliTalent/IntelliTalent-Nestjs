@@ -9,19 +9,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [
     SharedModule.registerRmq(ServiceName.ATS_SERVICE), 
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
     SharedModule.registerRedis(RedisDBName.jobsDB),
     SharedModule.registerPostgres(ServiceName.ATS_SERVICE, [Filteration]),
-    SharedModule.registerPostgres(ServiceName.PROFILE_SERVICE, [
+    /*SharedModule.registerPostgres(ServiceName.PROFILE_SERVICE, [
       Profile,
       Certificate,
       Project,
       Education,
       Experience,
-    ]),
-    TypeOrmModule.forFeature([Profile, Filteration, Certificate, Project, Education, Experience,]),
-    // TODO: uncomment this
-    /*SharedModule.registerPostgres(ServiceName.ATS_SERVICE, [Profile, Filteration]),
-    TypeOrmModule.forFeature([Profile, Filteration]),*/
+    ]),*/
+    TypeOrmModule.forFeature([Filteration, /*Profile, Certificate, Project, Education, Experience*/]),
   ],
   controllers: [AtsController],
   providers: [AtsService],

@@ -6,6 +6,7 @@ import {
 } from '@app/services_communications/jobs-service';
 import { ServiceName } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
   Controller,
   Get,
@@ -72,6 +73,7 @@ export class JobsController {
   @ApiOperation({ summary: 'Create new job' })
   @ApiBody({ type: CreateJobDto, description: 'New job details' })
   @ApiCreatedResponse({ description: 'New job created.' })
+  @Public()
   async createJob(@Body() newJob: CreateJobDto) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.createJob },

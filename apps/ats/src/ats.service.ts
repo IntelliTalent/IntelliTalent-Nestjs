@@ -1,10 +1,9 @@
-import { userServicePatterns } from '@app/services_communications';
+import { profileServicePattern, userServicePatterns } from '@app/services_communications';
 import { Filteration, Profile, ServiceName, User, UserType } from '@app/shared';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { log, profile } from 'console';
 import { Redis } from 'ioredis';
 import { firstValueFrom } from 'rxjs';
 import { In, Repository } from 'typeorm';
@@ -16,8 +15,8 @@ export class AtsService {
     private readonly redis: Redis,
     @Inject(ServiceName.USER_SERVICE)
     private readonly userService: ClientProxy,
-    @InjectRepository(Profile)
-    private readonly profileRepository: Repository<Profile>,
+    @Inject(ServiceName.PROFILE_SERVICE)
+    private readonly profileService: ClientProxy,
     @InjectRepository(Filteration)
     private readonly filterationRepository: Repository<Filteration>,
   ) {}
@@ -69,104 +68,32 @@ export class AtsService {
 
       await this.deleteJobs();
 
-      // TODO: get all users from Users DB
-      /*const users: User[] = await firstValueFrom(
+      // get all users from Users service
+      const data: any = await firstValueFrom(
         this.userService.send(
           {
-            cmd: userServicePatterns.getAllUsers,
+            cmd: userServicePatterns.getAllJobSeekers,
           },
-          {},
+          {
+            // TODO: just a large number, should be replaced with pagination based on current ATS container @ Waer
+            take: 1000000,
+          },
         ),
-      );*/
+      );
 
-      const users: User[] = [
-        {
-          id: "81a83574-4759-4dff-97ea-245a13b51d74",
-          email: "moaz25jan2015@gmail.com",
-          password: "54fasfas",
-          firstName: "Moaz",
-          lastName: "Mohamed",
-          phoneNumber: "01111111111",
-          dateOfBirth: new Date(),
-          type: UserType.jobSeeker,
-          isVerified: true,
-          country: "Egypt",
-          city: "Cairo",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-          address: null,
-          photo: null,
-        },
-        {
-          id: "97a83064-4759-4dff-97ea-245a13b51d74",
-          email: "waer@gmail.com",
-          password: "54fasfas",
-          firstName: "Waer",
-          lastName: "Alwaer",
-          phoneNumber: "01111111111",
-          dateOfBirth: new Date(),
-          type: UserType.jobSeeker,
-          isVerified: true,
-          country: "Algeria",
-          city: "Algiers",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-          address: null,
-          photo: null,
-        }
-      ]
+      const users: User[] = data.data;
 
-      // TODO: get all profiles of these users from Profiles DB
-      /*const profiles = await this.profileRepository.find({
-        where: {
-          userId: In(users.map(user => user.id)),
-        },
-      });*/
-
-      const profiles: Profile[] = [
-        {
-          id: "81a83064-47e9-4def-97ea-245a13b51d74",
-          userId: users[0].id,
-          skills: ["Python", "R", "SQL"],
-          yearsOfExperience: 5,
-          graduatedFromCS: true,
-          languages: ["English"],
-          jobTitle: "Data Scientist",
-          summary: "I am a data scientist with 5 years of experience in Python, R, and SQL.",
-          cv: "",
-          linkedIn: "",
-          gitHub: "",
-          educations: [],
-          experiences: [],
-          projects: [],
-          certificates: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-        {
-          id: "81a83064-4759-4dff-97ea-eada13b51d74",
-          userId: users[1].id,
-          skills: ["Java", "Python", "JavaScript", "React", "Node.js"],
-          yearsOfExperience: 3,
-          graduatedFromCS: true,
-          languages: ["Arabic", "English"],
-          jobTitle: "Data Scientist",
-          summary: "I am a data scientist with 5 years of experience in Python, R, and SQL.",
-          cv: "",
-          linkedIn: "",
-          gitHub: "",
-          educations: [],
-          experiences: [],
-          projects: [],
-          certificates: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        }
-      ];
+      // get all profiles of these users from Profiles service
+      const profiles = await firstValueFrom(
+        this.profileService.send(
+          {
+            cmd: profileServicePattern.getProfilesByUsersIds,
+          },
+          {
+            usersIds: users.map(user => user.id),
+          },
+        ),
+      );
 
       const profileUsers = profiles.map(profile => {
         const matchedUser = users.find(user => user.id === profile.userId);
@@ -235,14 +162,14 @@ export class AtsService {
         }
       });
 
-      console.log(matchesArray);
+      console.log("matches ", matchesArray);
 
       console.log('matching is done!');
 
       // TODO: put these mails in REDIS_MAILING_DB Redis DB in sendmail queue
 
       // add records for these matches in filteration DB
-      /*const filterations = matchesArray.map(match => {
+      const filterations = matchesArray.map(match => {
         return {
           jobId: match.jobId,
           profileId: match.profileId,
@@ -252,7 +179,7 @@ export class AtsService {
         }
       });
 
-      await this.filterationRepository.save(filterations);*/
+      await this.filterationRepository.save(filterations);
 
       return {
         status: "matching is done!"
