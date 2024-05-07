@@ -58,7 +58,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     description: 'Country of the user',
-    example: 'Palestine',
+    example: 'Egypt',
   })
   @IsNotEmpty()
   @IsString()
@@ -66,7 +66,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     description: 'City of the user',
-    example: 'giza',
+    example: 'Cairo',
   })
   @IsNotEmpty()
   @IsString()

@@ -78,6 +78,13 @@ export class SharedModule {
     };
   }
 
+  static async getRedisDBURL(dbName: RedisDBName): Promise<string> {
+    const redisDBNUm = await getRedisDatabase(dbName);
+    const { HOST, PASSWORD, PORT } = await getRedisConfig();
+    const url = `redis://:${PASSWORD}@${HOST}:${PORT}/${redisDBNUm}`;
+    return url;
+  }
+
   static registerMongoDB(dbName: MongoDBName): DynamicModule {
     const mongoProviders = [
       {

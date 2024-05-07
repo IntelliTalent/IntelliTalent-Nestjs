@@ -4,7 +4,7 @@ import {
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
-import { ServiceName } from '@app/shared';
+import { ServiceName, StructuredJob } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import {
   Controller,
@@ -64,6 +64,22 @@ export class JobsController {
   async getJobById(@Param('jobId') jobId: string) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
+      jobId,
+    );
+  }
+
+  @Get('/:jobId/details')
+  @ApiOperation({ summary: 'Get job details by ID' })
+  @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
+  @ApiResponse({
+    status: 200,
+    type: StructuredJob,
+    description: 'Job details returned successfully.',
+  })
+  @ApiNotFoundResponse({ description: 'Job not found.' })
+  async getJobDetailsById(@Param('jobId') jobId: string) {
+    return this.jobsService.send(
+      { cmd: jobsServicePatterns.getJobDetailsById },
       jobId,
     );
   }

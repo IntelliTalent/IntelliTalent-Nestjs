@@ -244,6 +244,16 @@ export class JobsService {
     return responseJob;
   }
 
+  async getJobDetailsById(jobId: string): Promise<StructuredJob> {
+    // return the job with left joining CustomJobsStages
+    const job = await this.structuredJobRepository.findOne({
+      where: { id: jobId },
+      relations: ['stages'],
+    });
+
+    return job;
+  }
+
   async getJobs(pageOptions: PageOptionsDto) {
     const {
       orderBy,

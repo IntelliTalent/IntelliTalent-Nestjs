@@ -38,6 +38,11 @@ export class JobsController {
     return this.jobsService.getJobById(jobId);
   }
 
+  @MessagePattern({ cmd: jobsServicePatterns.getJobDetailsById })
+  getJobDetailsById(jobId: string) {
+    return this.jobsService.getJobDetailsById(jobId);
+  }
+
   @MessagePattern({ cmd: jobsServicePatterns.getJobs })
   getJobs(pageOptions: PageOptionsDto) {
     return this.jobsService.getJobs(pageOptions);
