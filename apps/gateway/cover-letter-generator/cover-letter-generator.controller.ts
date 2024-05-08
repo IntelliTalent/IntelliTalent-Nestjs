@@ -1,10 +1,12 @@
-import { GenerateCoverLetterDto } from '@app/services_communications';
+import { GenerateCoverLetterDto, userServicePatterns } from '@app/services_communications';
 import { CoverLetterResponseDto, coverLetterGeneratorServicePattern } from '@app/services_communications/cover-letter-generator-service';
-import { ServiceName } from '@app/shared';
+import { profileServicePattern } from '@app/services_communications/profile/patterns/preofile.patterns';
+import { Profile, ServiceName, User } from '@app/shared';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import { Body, Controller, Header, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Cover Letter Generator')
 @Controller('coverLetters')
@@ -12,6 +14,10 @@ export class ApiCoverLetterGeneratorController {
   constructor(
     @Inject(ServiceName.COVER_LETTER_GENERATOR_SERVICE)
     private coverLetterGeneratorService: ClientProxy,
+    @Inject(ServiceName.PROFILE_SERVICE)
+    private profileService: ClientProxy,
+    @Inject(ServiceName.USER_SERVICE)
+    private userService: ClientProxy,
   ) {}
 
   /**
@@ -34,44 +40,60 @@ export class ApiCoverLetterGeneratorController {
     @Param('profileId') profileId: string,
     @Body() generateCoverLetterDto: GenerateCoverLetterDto,
   ) {
-    const firstName = "Moaz";
-    const lastName = "Mohammed";
+    console.log('Generating cover letter for profile:', profileId);
 
-    const startDate = new Date(2022, 1, 1);
-    const endDate = new Date(2024, 1, 1);
-    var companyExperienceYears = endDate.getFullYear() - startDate.getFullYear();
+    const profile: Profile = await firstValueFrom(
+        this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById,
+        },
+        profileId,
+      )
+    );
 
-    companyExperienceYears = companyExperienceYears > 1 ? companyExperienceYears : 1;
+    console.log('profile', profile);
+
+    if (!profile) {
+      console.log('profile not found!');
+      return {
+        status: "profile not found!"
+      };
+    }
+
+    // get user by id from User service
+    const user: User = await firstValueFrom(
+      this.userService.send(
+        {
+          cmd: userServicePatterns.findUserById,
+        },
+        profile.userId,
+      ),
+    );
+
+    if (!user) {
+      console.log('user not found!');
+      return {
+        status: "user not found!"
+      };
+    }
+
+    const profileAndUser = {
+      ...profile,
+      fullName: user.firstName + ' ' + user.lastName,
+      email: user.email,
+      address: user.address,
+      phoneNumber: user.phoneNumber,
+    };
 
     return this.coverLetterGeneratorService.send(
       {
         cmd: coverLetterGeneratorServicePattern.generate,
       },
       {
-        // TODO: get data from profile and user
-        profile: {
-          fullName: firstName + " " + lastName,
-          email: "moaz25jan2015@gmail.com",
-          address: "Cairo, Egypt",
-          phoneNumber: "+201111111111",
-          yearsOfExperience: 5,
-          experiences: [
-            {
-              jobTitle: "Software Engineer",
-              companyName: "Intelli Talent",
-              companyExperienceYears,
-            },
-            {
-              jobTitle: "Backend Engineer",
-              companyName: "Google",
-              companyExperienceYears: companyExperienceYears + 2,
-            }
-          ],
-          skills: ["Python", "Flask", "NodeJS", "ExpressJS"],
-        },
+        profile: profileAndUser,
         jobTitle: generateCoverLetterDto.jobTitle,
         companyName: generateCoverLetterDto.companyName,
-      },
+      }
     );
   }
 }

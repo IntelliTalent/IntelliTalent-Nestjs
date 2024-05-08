@@ -6,6 +6,8 @@ import { ApiCVGeneratorController } from './cv-generator.controller';
   // assign the RabbitMQ queues (CVGenerator) to the CVGeneratorController
   imports: [
     SharedModule.registerRmq(ServiceName.CV_GENERATOR_SERVICE),
+    SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
+    SharedModule.registerRmq(ServiceName.USER_SERVICE),
   ],
   controllers: [ApiCVGeneratorController],
   providers: [],

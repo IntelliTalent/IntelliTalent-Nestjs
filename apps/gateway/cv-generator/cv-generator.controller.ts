@@ -1,9 +1,10 @@
-import { CVResponseDto, cvGeneratorServicePattern } from '@app/services_communications';
-import { CurrentUser, ServiceName, User } from '@app/shared';
+import { CVResponseDto, cvGeneratorServicePattern, profileServicePattern, userServicePatterns } from '@app/services_communications';
+import { Profile, ServiceName, User } from '@app/shared';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import { Controller, Get, Header, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { firstValueFrom } from 'rxjs';
 
 @ApiTags('CV Generator')
 @Controller('cvs')
@@ -11,6 +12,10 @@ export class ApiCVGeneratorController {
   constructor(
     @Inject(ServiceName.CV_GENERATOR_SERVICE)
     private cvGeneratorService: ClientProxy,
+    @Inject(ServiceName.PROFILE_SERVICE)
+    private profileService: ClientProxy,
+    @Inject(ServiceName.USER_SERVICE)
+    private userService: ClientProxy,
   ) {}
 
   /**
@@ -32,94 +37,67 @@ export class ApiCVGeneratorController {
   async generate(
     @Param('profileId') profileId: string,
   ) {
-    const firstName = "Moaz";
-    const lastName = "Mohammed";
+    console.log('Generating CV for profile:', profileId);
+    
+    const profile: Profile = await firstValueFrom(
+        this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById,
+        },
+        profileId,
+      )
+    );
 
-    const startDate = new Date(2022, 1, 1);
-    const endDate = new Date(2024, 1, 1);
+    console.log('profile', profile);
 
-    const city = "Cairo";
-    const country = "Egypt";
+    if (!profile) {
+      console.log('profile not found!');
+      return {
+        status: "profile not found!"
+      };
+    }
+
+    // get user by id from User service
+    const user: User = await firstValueFrom(
+      this.userService.send(
+        {
+          cmd: userServicePatterns.findUserById,
+        },
+        profile.userId,
+      ),
+    );
+
+    if (!user) {
+      console.log('user not found!');
+      return {
+        status: "user not found!"
+      };
+    }
+
+    const profileAndUser = {
+      ...profile,
+      fullName: user.firstName + ' ' + user.lastName,
+      email: user.email,
+      address: user.address,
+      phoneNumber: user.phoneNumber,
+      city: user.city,
+      country: user.country,
+    };
 
     // TODO: Don't just return, also update record in profile db 
-    return this.cvGeneratorService.send(
-      {
-        cmd: cvGeneratorServicePattern.generate,
-      },
-      {
-        // TODO: get data from profile and user
-        profile: {
-          fullName: firstName + " " + lastName,
-          email: "moaz25jan2015@gmail.com",
-          phoneNumber: "+201111111111",
-          city,
-          country,
-          experiences: [
-            {
-              jobTitle: "Software Engineer",
-              companyName: "Intelli Talent",
-              description: "Worked on a project that helped to increase company's revenue by 20% in 6 months.",
-              startDate: new Date(2022, 7, 15),
-            },
-            {
-              jobTitle: "Backend Engineer",
-              companyName: "Google",
-              description: "Improved the performance of the backend by 30% in 3 months.",
-              startDate: new Date(2020, 1, 1),
-              endDate: new Date(2022, 7, 1),
-            }
-          ],
-          skills: ["Python", "Flask", "NodeJS", "ExpressJS"],
-          educations: [
-            {
-              degree: "Master of Computer Science",
-              schoolName: "University of Engineering and Technology, Lahore",
-              description: "Graduated with honors and a GPA of 3.5",
-              startDate: new Date(2022, 9, 1)
-            },
-            {
-              degree: "Bachelor of Science in Computer Science",
-              schoolName: "University of Engineering and Technology, Lahore",
-              description: "Graduated with honors and a GPA of 3.5",
-              startDate: new Date(2018, 9, 1),
-              endDate: new Date(2022, 5, 1)
-            },
-          ],
-          languages: ["English", "Arabic"],
-          projects: [
-            {
-              name: "Intelli Talent",
-              description: "Intelli Talent is a platform that helps companies to hire the best talents, devloped as microservices.",
-              skills: ["Python", "Flask", "NestJS", "TypeORM", "PostgreSQL", "Docker"],
-              startDate,
-              endDate,
-            },
-            {
-              name: "Push Sender",
-              description: "It's a project that sends push notifications to users using FCM and APN APIs.",
-              skills: ["NodeJS", "ExpressJS", "MongoDB"],
-            }
-          ],
-          certificates: [
-            {
-              title: "AWS Cloud Practitioner Certificate",
-              authority: "AWS",
-              issuedAt: new Date(2022, 1, 1),
-              url: "https://www.google.com"
-            },
-            {
-              title: "Graduation Certificate",
-              authority: "Cairo University",
-              issuedAt: new Date(2022, 7, 1),
-              validUntil: new Date(2028, 10, 1),
-              url: "https://www.youtube.com"
-            }
-          ],
-          summary: "I'm a software engineer with a passion for learning and teaching. I'm currently looking for a full-time software engineering position.",
-          linkedIn: "https://www.linkedin.com",
-          gitHub: "https://www.github.com",
-        }
-      },
+    const response = await firstValueFrom(
+      this.cvGeneratorService.send(
+        {
+          cmd: cvGeneratorServicePattern.generate,
+        },
+        {
+          profile: profileAndUser,
+        },
+      )
     );
+
+    console.log('response', response);
+
+    return response;
   }
 }
