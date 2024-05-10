@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ServiceName, SharedModule } from '@app/shared';
 import { ApiCoverLetterGeneratorController } from './cover-letter-generator.controller';
+import { CoverLetterGeneratorService } from './cover-letter-generator.service';
 
 @Module({
   // assign the RabbitMQ queues (CoverLetterGenerator) to the CoverLetterGeneratorController
@@ -10,6 +11,6 @@ import { ApiCoverLetterGeneratorController } from './cover-letter-generator.cont
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
   ],
   controllers: [ApiCoverLetterGeneratorController],
-  providers: [],
+  providers: [CoverLetterGeneratorService],
 })
 export class ApiCoverLetterGeneratorModule {}

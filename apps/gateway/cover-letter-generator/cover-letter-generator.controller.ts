@@ -7,17 +7,13 @@ import { Body, Controller, Header, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
+import { CoverLetterGeneratorService } from './cover-letter-generator.service';
 
 @ApiTags('Cover Letter Generator')
 @Controller('coverLetters')
 export class ApiCoverLetterGeneratorController {
   constructor(
-    @Inject(ServiceName.COVER_LETTER_GENERATOR_SERVICE)
-    private coverLetterGeneratorService: ClientProxy,
-    @Inject(ServiceName.PROFILE_SERVICE)
-    private profileService: ClientProxy,
-    @Inject(ServiceName.USER_SERVICE)
-    private userService: ClientProxy,
+    private readonly coverLetterGeneratorService: CoverLetterGeneratorService,
   ) {}
 
   /**
@@ -25,11 +21,11 @@ export class ApiCoverLetterGeneratorController {
    * The generate method does the following:
    * - Uses the coverLetterGeneratorService to send a 'generate' command as payload to the microservice.
    *
-   * @returns An Observable of the command response.
+   * @returns An the command response.
    */
   @ApiOperation({ summary: 'Generate cover letter for a profile' })
   @ApiOkResponse({
-      description: 'The cover letter links and content',
+      description: 'The cover letter word link and content',
       type: CoverLetterResponseDto,
   })
   @Header('content-type', 'application/json')
@@ -38,60 +34,6 @@ export class ApiCoverLetterGeneratorController {
     @Param('profileId') profileId: string,
     @Body() generateCoverLetterDto: GenerateCoverLetterDto,
   ) {
-    console.log('Generating cover letter for profile:', profileId);
-
-    const profile: Profile = await firstValueFrom(
-        this.profileService.send(
-        {
-          cmd: profileServicePattern.getProfileById,
-        },
-        profileId,
-      )
-    );
-
-    console.log('profile', profile);
-
-    if (!profile) {
-      console.log('profile not found!');
-      return {
-        status: "profile not found!"
-      };
-    }
-
-    // get user by id from User service
-    const user: User = await firstValueFrom(
-      this.userService.send(
-        {
-          cmd: userServicePatterns.findUserById,
-        },
-        profile.userId,
-      ),
-    );
-
-    if (!user) {
-      console.log('user not found!');
-      return {
-        status: "user not found!"
-      };
-    }
-
-    const profileAndUser = {
-      ...profile,
-      fullName: user.firstName + ' ' + user.lastName,
-      email: user.email,
-      address: user.address,
-      phoneNumber: user.phoneNumber,
-    };
-
-    return this.coverLetterGeneratorService.send(
-      {
-        cmd: coverLetterGeneratorServicePattern.generate,
-      },
-      {
-        profile: profileAndUser,
-        jobTitle: generateCoverLetterDto.jobTitle,
-        companyName: generateCoverLetterDto.companyName,
-      }
-    );
+    return await this.coverLetterGeneratorService.generate(profileId, generateCoverLetterDto);
   }
 }
