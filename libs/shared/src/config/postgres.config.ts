@@ -41,6 +41,22 @@ export const getServiceDatabse = async (
       Object.assign(configObject, {
         database: await getConfigVariables(Constants.DB.dbName.STRUCTUREJOBSDB),
       });
+    case ServiceName.FILTRATION_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),
+      });
+      break;
+
+    case ServiceName.QUIZ_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.QUIZDB),
+      });
+      break;
+
+    default:
+      console.log(serviceName, ServiceName.QUIZ_SERVICE);
+      throw new Error('Service not found');
   }
+
   return configObject;
 };
