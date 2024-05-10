@@ -29,8 +29,8 @@
     "test:e2e": "jest --config ./apps/gateway/test/jest-e2e.json"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.17.0",
     "@nestjs-modules/ioredis": "^1.1.2",
-    "@nestjs/azure-storage": "^1.0.1",
     "@nestjs/cache-manager": "^2.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.0",
@@ -41,7 +41,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^2.2.3",
-    "@nestjs/swagger": "^5.0.8",
+    "@nestjs/swagger": "^7.3.1",
     "@nestjs/typeorm": "^7.1.5",
     "@types/bcryptjs": "^2.4.6",
     "amqp-connection-manager": "^4.1.14",
@@ -65,7 +65,8 @@
     "redis": "^4.6.13",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
