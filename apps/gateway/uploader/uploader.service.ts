@@ -11,14 +11,13 @@ export class UploaderService {
   constructor(
     private readonly configService: ConfigService,
   ) {
-    this.blobClientService = this._getBlobServiceInstance();
+    this._getBlobServiceInstance();
   }
   private blobClientService: BlobServiceClient;
 
   private _getBlobServiceInstance() {
     const connectionString = this.configService.get(Constants.AZURE.AZURE_STORAGE_CONNECTION);
-    const blobClientService = BlobServiceClient.fromConnectionString( connectionString, );
-    return blobClientService;
+    this.blobClientService = BlobServiceClient.fromConnectionString(connectionString);
   } 
 
   private async _getBlobClient(fileName: string): Promise<BlockBlobClient> {

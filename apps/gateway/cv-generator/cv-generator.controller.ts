@@ -31,8 +31,6 @@ export class ApiCVGeneratorController {
       type: CVResponseDto,
   })
   @Header('content-type', 'application/json')
-  // TODO: Remove
-  @Public()
   @Post('/:profileId')
   async generate(
     @Param('profileId') profileId: string,
