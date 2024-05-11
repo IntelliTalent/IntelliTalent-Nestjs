@@ -148,6 +148,7 @@ export class ProfileService {
       where: {
         userId: In(userIds),
       },
+      relations: ['projects', 'experiences', 'educations', 'certificates'],
     });
   }
 }

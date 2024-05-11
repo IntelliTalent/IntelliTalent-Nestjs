@@ -60,11 +60,6 @@ export class AtsService {
     return jobs;
   }
 
-  private async _getMailingKeys() {
-    const mailingKeys = await this.mailingRedisDB.keys('*');
-    return mailingKeys;
-  }
-
   private async _deleteJobs() {
     await this.jobsRedisDB.del('jobs');
   }
@@ -197,8 +192,6 @@ export class AtsService {
 
           const matchScore = this._calculateMatchScore(job, profile);
 
-          console.log(`Profile Id: ${profile.id} - Job Id: ${job.id} - Match Score: ${matchScore} - Matching Threshold: ${ATS_CONSTANTS.MATCHING_THRESHOLD}`)
-
           // ATS_CONSTANTS.MATCHING_THRESHOLD is the threshold for matching
           if (matchScore >= ATS_CONSTANTS.MATCHING_THRESHOLD) {
             // don't send matching email to the same email even if 2 profiles with the same mail are matched
@@ -242,7 +235,6 @@ export class AtsService {
                 matchScore,
               }
             });
-            console.log(`job: ${job.title} matches profile: ${profile.email}`);
           }
         });
       });
@@ -253,8 +245,6 @@ export class AtsService {
           data: matchedEmailsContents[email],
         } as TemplateData;
       });
-
-      console.log('matchedEmailsContentsArray', matchedEmailsContentsArray);
 
       const sendEmailsDto: SendEmailsDto = {
         template: EmailTemplates.ATSMATCHED,
@@ -330,7 +320,6 @@ export class AtsService {
       );
 
       if (!user) {
-        console.log('user not found!');
         return {
           status: "user not found!"
         };
@@ -352,8 +341,6 @@ export class AtsService {
       }
 
       const matchScore = this._calculateMatchScore(job, profile);
-
-      console.log(`Profile Id: ${profile.id} - Job Id: ${job.id} - Match Score: ${matchScore}`)
 
       return {
         status: "matching is done!",
