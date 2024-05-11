@@ -14,8 +14,6 @@ export const getMongoDatabase = async (dbName: MongoDBName) => {
       return await getConfigVariables(Constants.MONGODB.dbName.ScrappedJobsDB);
     case MongoDBName.FormFieldsDB:
       return await getConfigVariables(Constants.MONGODB.dbName.FormFieldsDB);
-    case MongoDBName.QuizzesDB:
-      return await getConfigVariables(Constants.MONGODB.dbName.QuizzesDB);
     case MongoDBName.InterviewQuestionsDB:
       return await getConfigVariables(
         Constants.MONGODB.dbName.InterviewQuestionsDB,

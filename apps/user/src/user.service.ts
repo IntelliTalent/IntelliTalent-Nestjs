@@ -188,7 +188,9 @@ export class UserService {
   ): Promise<PageDto<User[]>> {
     const query = this.userRepository
       .createQueryBuilder('user')
-      .where('user.type = :type', { type: UserType.jobSeeker });
+      .select(['user.id', 'user.email', 'user.country', 'user.city'])
+      .where('user.type = :type', { type: UserType.jobSeeker })
+      .andWhere('user.isVerified = :isVerified', { isVerified: true });
     return applyQueryOptions(query, pageOptionsDto);
   }
 }

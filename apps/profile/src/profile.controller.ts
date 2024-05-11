@@ -64,7 +64,6 @@ export class ProfileController {
 
   @MessagePattern({ cmd: profileServicePattern.getUserProfile })
   getUserProfiles(@Payload() userId: string) {
-    console.log('userId', userId);
     return this.profileService.getUserProfiles(userId);
   }
 

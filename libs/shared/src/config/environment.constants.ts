@@ -19,6 +19,7 @@ export const Constants = {
       MATCHESDB: 'MatchesDB',
       FILTERATIONDB: 'FilterationDB',
       CVSDB: 'CVSDB',
+      QUIZDB: 'QuizzesDB',
     },
   },
   MONGODB: {
@@ -30,7 +31,6 @@ export const Constants = {
     dbName: {
       ScrappedJobsDB: 'ScrappedJobsDB',
       FormFieldsDB: 'FormFieldsDB',
-      QuizzesDB: 'QuizzesDB',
       InterviewQuestionsDB: 'InterviewQuestionsDB',
     },
   },
@@ -64,6 +64,8 @@ export const Constants = {
     FILTRATION_QUEUE: 'RABBITMQ_FILTRATION_QUEUE',
     SCRAPPER_QUEUE: 'RABBITMQ_SCRAPPER_QUEUE',
     JOB_EXTRACTOR_QUEUE: 'RABBITMQ_JOB_EXTRACTOR_QUEUE',
+    QUIZ_QUEUE: 'RABBITMQ_QUIZ_QUEUE',
+    QUIZ_GENERATOR_QUEUE: 'RABBITMQ_QUIZ_GENERATOR_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
@@ -76,7 +78,13 @@ export const Constants = {
   },
   SCRAPPER: {
     GITHUBTOKEN: 'GITHUB_TOKENS',
-    RAPIDAPI_KEY: 'RAPIDAPI_KEY'
+    RAPIDAPI_KEY: 'RAPIDAPI_KEY',
+  },
+  EMAIL: {
+    host: 'EMAIL_HOST',
+    port: 'EMAIL_PORT',
+    user: 'EMAIL_USERNAME',
+    pass: 'EMAIL_PASSWORD',
   },
 };
 
@@ -95,6 +103,8 @@ export enum ServiceName {
   FILTRATION_SERVICE = 'FILTERATION_SERVICE',
   SCRAPPER_SERVICE = 'SCRAPPER_SERVICE',
   JOB_EXTRACTOR_SERVICE = 'JOB_EXTRACTOR_SERVICE',
+  QUIZ_SERVICE = 'QUIZ_SERVICE',
+  QUIZ_GENERATOR_SERVICE = 'QUIZ_GENERATOR_SERVICE',
 }
 
 export async function mapServiceNameToQueueName(
@@ -129,5 +139,9 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.SCRAPPER_QUEUE);
     case ServiceName.JOB_EXTRACTOR_SERVICE:
       return await getConfigVariables(Constants.QUEUES.JOB_EXTRACTOR_QUEUE);
+    case ServiceName.QUIZ_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.QUIZ_QUEUE);
+    case ServiceName.QUIZ_GENERATOR_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.QUIZ_GENERATOR_QUEUE);
   }
 }

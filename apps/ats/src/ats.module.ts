@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AtsController } from './ats.controller';
 import { AtsService } from './ats.service';
-import { Education, Experience, Certificate, Filteration, Profile, Project, ServiceName, SharedModule } from '@app/shared';
+import { Filteration, ServiceName, SharedModule } from '@app/shared';
 import { RedisDBName } from '@app/shared/config/redis.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Redis } from 'ioredis';
