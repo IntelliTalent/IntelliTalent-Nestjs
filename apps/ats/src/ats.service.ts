@@ -1,4 +1,5 @@
 import { profileServicePattern, userServicePatterns } from '@app/services_communications';
+import { MATCHING_THRESHOLD } from '@app/services_communications/ats-service';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
 import { Filteration, Profile, ServiceName, StructuredJob, User } from '@app/shared';
 import { Inject, Injectable } from '@nestjs/common';
@@ -110,6 +111,8 @@ export class AtsService {
         const matchedUser = users.find(user => user.id === profile.userId);
         return {
           ...profile,
+          firstName: matchedUser.firstName,
+          lastName: matchedUser.lastName,
           email: matchedUser.email,
           country: matchedUser.country,
           city: matchedUser.city,
@@ -145,21 +148,28 @@ export class AtsService {
             }
           });
 
-          // TODO: revise matchScore with @Waer
+          // TODO: matchedSkills is a number not percentage
+          // TODO: get difference between user's yearsOfExperience and job's yearsOfExperience (default = 0 if not asked)
+          // TODO: add score for job title matching in every experience if the job title is equal to it
+          // TODO: add score for every project, of project skills matching and project size
+          // TODO: think for equation for this
           
           const matchScore = matchedSkills / numOfSkills;
 
-          // 0.5 is the threshold for matching
-          if (matchScore >= 0.5) {
+          // MATCHING_THRESHOLD is the threshold for matching
+          if (matchScore >= MATCHING_THRESHOLD) {
             // don't send matching email to the same email even if 2 profiles with the same mail are matched
             if (!matchedEmailsContents[profile.email]) {
+              // TODO: get from REDIS_MAILING__DB Redis DB the key with the email value, and check for the user matched email is returned or not, if yes, don't put in matched
+              // TODO: put best matching score
               matchedEmailsContents[profile.email] = {
-                jobId: job.id,
-                profileId: profile.id,
                 jobTitle: job.title,
-                company: job.company,
-                url: job.url,
+                jobCompany: job.company,
+                jobUrl: job.url,
                 matchScore,
+                // TODO: increment matchedJobs counter if the email exists
+                firstName: profile.firstName,
+                lastName: profile.lastName,
               }
             }
             filterations.push({
@@ -173,23 +183,18 @@ export class AtsService {
           }
         });
       });
-
-      // TODO: get all emails from REDIS_MAILING_DB Redis DB in both queues sendmail, checkmail, 
-      // and remove any user from matches if his email is in sendmail, or in checkmail with period less than 6 hours,
-      // if it is in checkmail with period more than 6 hours, remove it from checkmail @Waer
-
       
-      // put these mails in REDIS_MAILING_DB Redis DB in sendmail queue
-      // TODO: check this with @Waer
       const matchedEmailsContentsArray = Object.keys(matchedEmailsContents).map((email: string) => {
         return {
           email,
-          content: matchedEmailsContents[email],
+          variables: matchedEmailsContents[email],
         };
       });
 
       console.log('matchedEmailsContentsArray', matchedEmailsContentsArray);
       
+      // TODO: emit event to call Notifier like JobService do to call this event pattern in ATS
+      // TODO: put the templateId = EmailTemplates.ATSMATCHED as a field before the emails array, in the JSON of the rabbit message
       await this._insertMails('sendmail', matchedEmailsContentsArray);
 
       // add records for these matches in filteration DB  
