@@ -1,10 +1,10 @@
-import { profileServicePattern, userServicePatterns } from '@app/services_communications';
+import { NotifierEvents, SendEmailsDto, TemplateData, profileServicePattern, userServicePatterns } from '@app/services_communications';
 import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
 import { jobsServicePatterns } from '@app/services_communications/jobs-service';
 import { EmailTemplates } from '@app/services_communications/notifier/constants/templates';
-import { notifierServicePattern } from '@app/services_communications/notifier/patterns/notifier-service.patterns';
-import { CustomFilters, Experience, Filteration, Profile, Project, ServiceName, StructuredJob, User } from '@app/shared';
+import { atsEmailTemplateData } from '@app/services_communications/notifier/dtos/ats-email.template.dto';
+import { CustomFilters, Experience, Filteration, Profile, Project, ServiceName, StructuredJob, User, recentEmailsKey } from '@app/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -144,13 +144,12 @@ export class AtsService {
         ),
       );
 
-      // get all emails that are not allowed to send to them, because the mail period (e.g. 1 day) didn't pass yet
-      const notAllowedEmails = await this._getMailingKeys();
-
       // make set to hold all allowed emails
       let allowedEmails = new Set();
-      users.forEach(user => {
-        if (!notAllowedEmails.includes(user.email))
+      users.forEach(async (user) => {
+        // the emails that are sent to in the last TIME_WINDOW hours/days exist in the mailing DB in this key, and expire after TIME_WINDOW
+        const exists = await this.mailingRedisDB.hexists(recentEmailsKey, user.email);
+        if (!exists)
           allowedEmails.add(user.email);
       });
 
@@ -178,9 +177,8 @@ export class AtsService {
         }
       });
 
-      // { email1: { job1 data }, email2: { job2 data } }
-      // unique emails, every email with 1 job only
-      let matchedEmailsContents: object = {};
+      // unique emails, every email with 1 job only, the content is of type atsEmailTemplateData
+      let matchedEmailsContents: { [email: string]: atsEmailTemplateData } = {};
 
       // will have all matches even if more than job matched the same profile
       let filterations = [];
@@ -210,15 +208,15 @@ export class AtsService {
                   jobTitle: job.title,
                   jobCompany: job.company,
                   jobUrl: job.url,
-                  matchScore,
-                  matchedJobs: 1,
                   firstName: profile.firstName,
                   lastName: profile.lastName,
-                }
+                  matchedJobsCount: 1,
+                  matchScore,
+                } as atsEmailTemplateData;
               }
               else {
                 // increment the number of matched jobs
-                const newMatchedJobs = matchedEmailsContents[profile.email].matchedJobs++;
+                const newMatchedJobsCount = matchedEmailsContents[profile.email].matchedJobsCount++;
 
                 // if the same email is matched with another job, take the job with the highest matchScore
                 if (matchedEmailsContents[profile.email].matchScore < matchScore) {
@@ -226,14 +224,14 @@ export class AtsService {
                     jobTitle: job.title,
                     jobCompany: job.company,
                     jobUrl: job.url,
-                    matchScore,
-                    matchedJobs: newMatchedJobs,
                     firstName: profile.firstName,
                     lastName: profile.lastName,
-                  }
+                    matchScore,
+                    matchedJobsCount: newMatchedJobsCount,
+                  } as atsEmailTemplateData;
                 }
                 else {
-                  matchedEmailsContents[profile.email].matchedJobs = newMatchedJobs;
+                  matchedEmailsContents[profile.email].matchedJobsCount = newMatchedJobsCount;
                 }
               }
             }
@@ -251,22 +249,24 @@ export class AtsService {
       
       const matchedEmailsContentsArray = Object.keys(matchedEmailsContents).map((email: string) => {
         return {
-          email,
-          variables: matchedEmailsContents[email],
-        };
+          to: email,
+          data: matchedEmailsContents[email],
+        } as TemplateData;
       });
 
       console.log('matchedEmailsContentsArray', matchedEmailsContentsArray);
+
+      const sendEmailsDto: SendEmailsDto = {
+        template: EmailTemplates.ATSMATCHED,
+        templateData: matchedEmailsContentsArray,
+      }
       
       // send emails to the matched profiles
       this.notifierService.emit(
         {
-          cmd: notifierServicePattern.send,
+          cmd: NotifierEvents.sendEmail,
         },
-        {
-          templateId: EmailTemplates.ATSMATCHED,
-          emails: matchedEmailsContentsArray,
-        },
+        sendEmailsDto,
       );
 
       // add records for these matches (all matched not only the sent emails) in filteration DB  

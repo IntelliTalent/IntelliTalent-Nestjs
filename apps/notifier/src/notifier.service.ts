@@ -2,6 +2,8 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
+import { IEmail } from './templates';
+import { recentEmailsExpire, recentEmailsKey } from '@app/shared';
 
 @Injectable()
 export class NotifierService {
@@ -10,17 +12,30 @@ export class NotifierService {
     private readonly mailService: MailerService,
   ) {}
 
-  sendMail() {
-    this.mailService.sendMail({
-      to: 'elwaeryousef1@gmail.com',
-      from: 'elwaeryousef@gmail.com',
-      subject: 'Testing Nest MailerModule ✔',
-      text: 'welcome',
-      html: '<b>welcome</b>',
+  sendEmails(emails: IEmail[]) {
+    emails.forEach(async (email) => {
+      // Check if this email is in Redis
+      const exists = await this.redis.hexists(recentEmailsKey, email.to);
+
+      if (!exists) {
+        // Update this email in Redis to be true
+        await this.redis.hset(recentEmailsKey, email.to, 'true');
+        await this.redis.expire(recentEmailsKey, recentEmailsExpire); // Set the TTL to recentEmailsExpire
+
+        // send the email
+        await this.sendMail(email);
+      }
     });
   }
 
-  getHello(): string {
-    return 'Hello World!';
+  async sendMail(email: IEmail) {
+    console.log('sending email', email);
+
+    // await this.mailService.sendMail({
+    //   to: email.to,
+    //   from: email.from,
+    //   subject: email.subject,
+    //   html: email.html,
+    // });
   }
 }

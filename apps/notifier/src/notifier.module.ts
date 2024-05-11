@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { NotifierController } from './notifier.controller';
 import { NotifierService } from './notifier.service';
 import { Constants, SharedModule } from '@app/shared';
-import { ScheduleModule } from '@nestjs/schedule';
 import { RedisDBName } from '@app/shared/config/redis.config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import getConfigVariables from '@app/shared/config/configVariables.config';
@@ -10,7 +9,6 @@ import getConfigVariables from '@app/shared/config/configVariables.config';
 @Module({
   imports: [
     SharedModule.registerRedis(RedisDBName.mailingDB),
-    ScheduleModule.forRoot(),
     MailerModule.forRootAsync({
       useFactory: async () => ({
         transport: {
