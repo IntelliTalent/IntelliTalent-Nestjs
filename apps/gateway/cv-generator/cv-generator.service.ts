@@ -55,9 +55,11 @@ export class CVGeneratorService {
       cv,
     }
 
-    this.profileService.send(
-      { cmd: profileServicePattern.updateProfile },
-      updateProfileDto,
+    await firstValueFrom(
+      this.profileService.send(
+        { cmd: profileServicePattern.updateProfile },
+        updateProfileDto,
+      )
     );
 
     return response;
