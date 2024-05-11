@@ -54,7 +54,6 @@ export const getServiceDatabse = async (
       break;
 
     default:
-      console.log(serviceName, ServiceName.QUIZ_SERVICE);
       throw new Error('Service not found');
   }
 

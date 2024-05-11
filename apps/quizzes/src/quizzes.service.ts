@@ -115,8 +115,6 @@ export class QuizzesService {
       userId: userId,
     });
 
-    console.log(quiz);
-
     // validate this is existing quiz
     if (!quiz) throw new NotFoundException('Quiz not found');
 
@@ -132,7 +130,6 @@ export class QuizzesService {
     const { questionsAnswers } = quiz;
 
     const score = submitQuiz.userAnswers.reduce((acc, userAnswer, index) => {
-      console.log('userAnswer', userAnswer, questionsAnswers[index]);
       return userAnswer == questionsAnswers[index] ? acc + 1 : acc;
     }, 0);
 
