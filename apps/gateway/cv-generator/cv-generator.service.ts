@@ -54,12 +54,10 @@ export class CVGeneratorService {
       userId: user.id,
       cv,
     }
-
-    await firstValueFrom(
-      this.profileService.send(
-        { cmd: profileServicePattern.updateProfile },
-        updateProfileDto,
-      )
+    
+    this.profileService.emit(
+      { cmd: profileServicePattern.updateProfile },
+      updateProfileDto,
     );
 
     return response;
