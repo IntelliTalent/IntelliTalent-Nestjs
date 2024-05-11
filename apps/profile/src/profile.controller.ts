@@ -1,5 +1,5 @@
 import { Controller, Get, UseFilters } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { profileServicePattern } from '@app/services_communications/profile/patterns/preofile.patterns';
 import {
   CreateProfileDto,
@@ -48,6 +48,7 @@ export class ProfileController {
   }
 
   @MessagePattern({ cmd: profileServicePattern.updateProfile })
+  @EventPattern({ cmd: profileServicePattern.updateProfile })
   updateProfile(@Payload() updateProfileDto: UpdateProfileDto) {
     return this.profileService.update(updateProfileDto);
   }

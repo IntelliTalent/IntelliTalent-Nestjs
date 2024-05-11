@@ -30,6 +30,7 @@
     "test:e2e": "jest --config ./apps/gateway/test/jest-e2e.json"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.17.0",
     "@nestjs-modules/ioredis": "^2.0.1",
     "@nestjs-modules/mailer": "^1.11.2",
     "@nestjs/cache-manager": "^2.2.1",
