@@ -41,3 +41,7 @@ export * from './config/redis.key';
 
 // filters
 export * from './filters/RPCFilter.filter';
+
+// redis
+export * from './redis/redis-keys';
+export * from './redis/expire-constants';
