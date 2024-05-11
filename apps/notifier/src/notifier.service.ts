@@ -1,31 +1,41 @@
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { Redis } from 'ioredis';
+import { IEmail } from './templates';
+import { recentEmailsExpire, recentEmailsKey } from '@app/shared';
 
 @Injectable()
 export class NotifierService {
-  constructor(@InjectRedis() private readonly redis: Redis) {
-    console.log('NotifierService');
-    this.getValue('test');
+  constructor(
+    @InjectRedis() private readonly redis: Redis,
+    private readonly mailService: MailerService,
+  ) {}
+
+  sendEmails(emails: IEmail[]) {
+    emails.forEach(async (email) => {
+      // Check if this email is in Redis
+      const exists = await this.redis.hexists(recentEmailsKey, email.to);
+
+      if (!exists) {
+        // Update this email in Redis to be true
+        await this.redis.hset(recentEmailsKey, email.to, 'true');
+        await this.redis.expire(recentEmailsKey, recentEmailsExpire); // Set the TTL to 6 hours
+
+        // send the email
+        await this.sendMail(email);
+      }
+    });
   }
 
-  getHello(): string {
-    return 'Hello World!';
-  }
+  async sendMail(email: IEmail) {
+    console.log('sending email', email);
 
-
-  // @Cron(CronExpression.EVERY_5_SECONDS)
-  async handleCron() {
-    await this.redis.set('waer', 'wwwaaeerrr');
-    const result = await this.redis.get('waer');
-    console.log('resusdafadsflt', result);
-  }
-
-  async getValue(key: string) {
-    await this.redis.set(key, key);
-    const result = await this.redis.get(key);
-    console.log('result', result);
-    // return result;
+    // await this.mailService.sendMail({
+    //   to: email.to,
+    //   from: email.from,
+    //   subject: email.subject,
+    //   html: email.html,
+    // });
   }
 }

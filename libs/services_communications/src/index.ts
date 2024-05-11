@@ -16,4 +16,10 @@ export * from './cover-letter-generator-service/index';
 // cv generator service
 export * from './cv-generator-service/index';
 
+// quiz generator service
+export * from './quizzes/index';
+
+// notifier service
+export * from './notifier/index';
+
 export const HealthCheckPatterns = 'healthCheck';

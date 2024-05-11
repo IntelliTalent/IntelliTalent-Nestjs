@@ -12,7 +12,6 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-
   const sharedService = app.get(SharedService);
 
   app.connectMicroservice(
@@ -20,8 +19,6 @@ async function bootstrap() {
       await mapServiceNameToQueueName(ServiceName.USER_SERVICE),
     ),
   );
-
-  console.log('User service is connecting to microservice', await mapServiceNameToQueueName(ServiceName.USER_SERVICE));
 
   app.startAllMicroservices();
   app.init();
