@@ -32,7 +32,7 @@ export class QuizzesService {
     @InjectRepository(Quiz)
     private readonly quizRepository: Repository<Quiz>,
     @Inject(ServiceName.QUIZ_GENERATOR_SERVICE)
-    private readonly quizzesService: ClientProxy,
+    private readonly quizzesGenerator: ClientProxy,
   ) {
     // for (let i = 0; i < 30; i++) {
     //   // create array from 1 to 8708dsdssd
@@ -70,7 +70,7 @@ export class QuizzesService {
     };
 
     const rawQuizzes: any[][] = await firstValueFrom(
-      this.quizzesService.send(
+      this.quizzesGenerator.send(
         { cmd: quizzesGeneratorPattern.generateQuizzes },
         payload,
       ),
