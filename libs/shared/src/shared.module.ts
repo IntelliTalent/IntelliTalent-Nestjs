@@ -55,10 +55,11 @@ export class SharedModule {
           const url = `redis://:${PASSWORD}@${HOST}:${PORT}`;
 
           return {
-            config: {
+            options: {
               db: redisDbName,
-              url: url,
             },
+            type: 'single',
+            url: url,
           };
         },
         inject: [ConfigService],
