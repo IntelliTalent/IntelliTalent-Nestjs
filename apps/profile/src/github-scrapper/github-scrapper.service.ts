@@ -49,7 +49,6 @@ export class GithubScrapperService {
       this.storeUserRepos(userName);
       return response;
     } catch (error) {
-      console.log('error', error);
       throw new RpcException(new NotFoundException('User not found on Github'));
     }
   }
@@ -72,7 +71,6 @@ export class GithubScrapperService {
             .exec(),
         ),
       );
-      console.log('done storing repos', getRedisUserNameReposKey(userName));
     } while (_hasNextPage);
   }
 

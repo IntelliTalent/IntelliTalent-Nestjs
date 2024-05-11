@@ -24,17 +24,13 @@ interface AppliedData {
 // Union type for all possible stage data
 type StageData = QuizData | InterviewData | MatchData | AppliedData;
 
-
 @Entity()
-@Unique(['jobId', 'profileId'])
+@Index(['jobId', 'profileId'], { unique: true })
 export class Filteration extends AbstractEntity {
-
-  @Index()
   @PrimaryColumn()
   @Column({ type: 'uuid', nullable: false })
   jobId: string;
 
-  @Index()
   @PrimaryColumn()
   @Column({ type: 'uuid', nullable: false })
   profileId: string;
