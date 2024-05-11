@@ -1,9 +1,15 @@
+export class UserQuizDetailsDto {
+  userId: string;
+
+  email: string;
+}
+
 export class CreateQuizDto {
+  usersDetails: UserQuizDetailsDto[];
+
   name: string;
 
   recruiterId: string;
-
-  usersIds: string[];
 
   jobId: string;
 

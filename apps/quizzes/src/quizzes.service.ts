@@ -17,6 +17,7 @@ import {
   QuizIdentifierDto,
   quizzesGeneratorPattern,
   SubmitQuizDto,
+  UserQuizDetailsDto,
 } from '@app/services_communications';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -35,28 +36,36 @@ export class QuizzesService {
   ) {
     // for (let i = 0; i < 30; i++) {
     //   // create array from 1 to 8708dsdssd
-    //   const usersIds = Array.from({ length: 27 }, (_, i) => (i + 1).toString());
+    //   const usersDetails: UserQuizDetailsDto[] = Array.from(
+    //     { length: 27 },
+    //     (_, i) => {
+    //       return {
+    //         userId: i.toString(),
+    //         email: 'test' + i + '@test.com',
+    //       };
+    //     },
+    //   );
     //   const deadline = new Date();
     //   deadline.setDate(deadline.getDate() + 2);
     //   this.createQuiz({
     //     jobId: i.toString(),
-    //     usersIds: usersIds,
     //     skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
     //     numberOfQuestions: 5,
     //     recruiterId: '1',
     //     deadline,
     //     name: 'Quiz ' + i,
+    //     usersDetails,
     //   });
     // }
   }
 
   async createQuiz(createQuizDto: CreateQuizDto) {
-    const usersIds = createQuizDto.usersIds;
+    const { usersDetails } = createQuizDto;
 
     const payload: IQuizzesGeneratorDto = {
       num_of_contexts: 5,
       number_of_questions_per_context: createQuizDto.numberOfQuestions,
-      number_of_quizzes: usersIds.length,
+      number_of_quizzes: usersDetails.length,
       skills: createQuizDto.skills,
     };
 
@@ -88,11 +97,12 @@ export class QuizzesService {
     const quizzesEntities = [];
     for (let i = 0; i < quizzes.length; i++) {
       const quiz = quizzes[i] as GeneratedQuiz;
-      const user = usersIds[i];
+      const userDetails = usersDetails[i];
 
       quizzesEntities.push(
         this.quizRepository.create({
-          userId: user,
+          userId: userDetails.userId,
+          email: userDetails.email,
           questions: quiz.questions.map((question) => ({
             question: question.question,
             answers: question.options,
@@ -231,6 +241,7 @@ export class QuizzesService {
         'deadline',
         'isTaken',
         'name',
+        'email',
       ],
     });
 

@@ -22,6 +22,9 @@ export class Quiz extends AbstractEntity {
   name: string;
 
   @Column({ type: 'varchar' })
+  email: string;
+
+  @Column({ type: 'varchar' })
   recruiterId: string;
 
   @Column({ type: 'varchar' })
