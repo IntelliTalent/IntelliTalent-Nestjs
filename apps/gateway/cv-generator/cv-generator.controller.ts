@@ -2,6 +2,7 @@ import { CVResponseDto } from '@app/services_communications';
 import { Controller, Header, Param, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CVGeneratorService } from './cv-generator.service';
+import { CurrentUser, User } from '@app/shared';
 
 @ApiTags('CV Generator')
 @Controller('cvs')
@@ -22,11 +23,11 @@ export class ApiCVGeneratorController {
       description: 'The CV word link',
       type: CVResponseDto,
   })
-  @Header('content-type', 'application/json')
   @Post('/:profileId')
   async generate(
     @Param('profileId') profileId: string,
+    @CurrentUser() user: User,
   ) {
-    return await this.cvGeneratorService.generate(profileId);
+    return await this.cvGeneratorService.generate(profileId, user);
   }
 }

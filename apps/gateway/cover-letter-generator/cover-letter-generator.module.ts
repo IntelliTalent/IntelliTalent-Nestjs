@@ -8,7 +8,6 @@ import { CoverLetterGeneratorService } from './cover-letter-generator.service';
   imports: [
     SharedModule.registerRmq(ServiceName.COVER_LETTER_GENERATOR_SERVICE),
     SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
-    SharedModule.registerRmq(ServiceName.USER_SERVICE),
   ],
   controllers: [ApiCoverLetterGeneratorController],
   providers: [CoverLetterGeneratorService],

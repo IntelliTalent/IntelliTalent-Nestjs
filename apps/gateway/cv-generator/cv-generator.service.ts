@@ -1,4 +1,6 @@
 import { UpdateProfileDto, cvGeneratorServicePattern, profileServicePattern, userServicePatterns } from "@app/services_communications";
+import { CVGenerateDto } from "@app/services_communications/cv-generator-service/dtos/cv-generate-command.dto";
+import { CVGeneratorProfileAndUserData } from "@app/services_communications/cv-generator-service/dtos/cv-generator-profile-and-user.dto";
 import { Profile, ServiceName, User } from "@app/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
@@ -11,12 +13,8 @@ export class CVGeneratorService {
     private cvGeneratorService: ClientProxy,
     @Inject(ServiceName.PROFILE_SERVICE)
     private profileService: ClientProxy,
-    @Inject(ServiceName.USER_SERVICE)
-    private userService: ClientProxy,
   ) {}
-  public async generate(profileId: string): Promise<any> {
-    console.log('Generating CV for profile:', profileId);
-    
+  public async generate(profileId: string, user: User): Promise<any> {
     const profile: Profile = await firstValueFrom(
         this.profileService.send(
         {
@@ -26,31 +24,7 @@ export class CVGeneratorService {
       )
     );
 
-    if (!profile) {
-      console.log('profile not found!');
-      return {
-        status: "profile not found!"
-      };
-    }
-
-    // get user by id from User service
-    const user: User = await firstValueFrom(
-      this.userService.send(
-        {
-          cmd: userServicePatterns.findUserById,
-        },
-        profile.userId,
-      ),
-    );
-
-    if (!user) {
-      console.log('user not found!');
-      return {
-        status: "user not found!"
-      };
-    }
-
-    const profileAndUser = {
+    const profileAndUser: CVGeneratorProfileAndUserData = {
       ...profile,
       fullName: user.firstName + ' ' + user.lastName,
       email: user.email,
@@ -60,14 +34,16 @@ export class CVGeneratorService {
       country: user.country,
     };
 
+    const cvGenerateDto: CVGenerateDto = {
+      profile: profileAndUser,
+    }
+
     const response = await firstValueFrom(
       this.cvGeneratorService.send(
         {
           cmd: cvGeneratorServicePattern.generate,
         },
-        {
-          profile: profileAndUser,
-        },
+        cvGenerateDto,
       )
     );
 
@@ -79,14 +55,10 @@ export class CVGeneratorService {
       cv,
     }
 
-    const updatedProfile: Profile = await firstValueFrom(
-      this.profileService.send(
-        { cmd: profileServicePattern.updateProfile },
-        updateProfileDto,
-      )
+    this.profileService.send(
+      { cmd: profileServicePattern.updateProfile },
+      updateProfileDto,
     );
-
-    console.log("updatedProfile", updatedProfile);
 
     return response;
   }
