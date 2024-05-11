@@ -183,14 +183,13 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async getAllJobSeekers(
-    pageOptionsDto: PageOptionsDto,
-  ): Promise<PageDto<User[]>> {
+  async getAllJobSeekers(): Promise<User[]> {
     const query = this.userRepository
       .createQueryBuilder('user')
-      .select(['user.id', 'user.email', 'user.country', 'user.city'])
+      .select(['user.id', 'user.email', 'user.firstName', 'user.lastName', 'user.country', 'user.city'])
       .where('user.type = :type', { type: UserType.jobSeeker })
       .andWhere('user.isVerified = :isVerified', { isVerified: true });
-    return applyQueryOptions(query, pageOptionsDto);
+    
+    return await query.getMany();
   }
 }

@@ -1,9 +1,12 @@
 import { profileServicePattern, userServicePatterns } from '@app/services_communications';
 import { MATCHING_THRESHOLD } from '@app/services_communications/ats-service';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
-import { Filteration, Profile, ServiceName, StructuredJob, User } from '@app/shared';
+import { jobsServicePatterns } from '@app/services_communications/jobs-service';
+import { EmailTemplates } from '@app/services_communications/notifier/constants/templates';
+import { notifierServicePattern } from '@app/services_communications/notifier/patterns/notifier-service.patterns';
+import { CustomFilters, Filteration, Profile, ServiceName, StructuredJob, User } from '@app/shared';
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Redis } from 'ioredis';
 import { firstValueFrom } from 'rxjs';
@@ -22,6 +25,8 @@ export class AtsService {
     private readonly profileService: ClientProxy,
     @Inject(ServiceName.JOB_SERVICE)
     private readonly jobService: ClientProxy,
+    @Inject(ServiceName.NOTIFIER_SERVICE)
+    private readonly notifierService: ClientProxy,
     @InjectRepository(Filteration)
     private readonly filterationRepository: Repository<Filteration>,
   ) {}
@@ -29,13 +34,13 @@ export class AtsService {
     return 'Hello World!';
   }
 
-  private _validateCustomFilters(jobFilters: object, profile: Profile): boolean {
+  private _validateCustomFilters(jobFilters: CustomFilters, profile: Profile): boolean {
     for (const filter in jobFilters) {
       if (filter === 'languages') {
         if (!jobFilters[filter].every((lang: string) => profile.languages.includes(lang))) {
           return false;
         }
-      } else if (filter === 'city' || filter === 'country') {
+      } else if (filter === 'city' || filter === 'country' || filter === 'graduatedFromCS') {
         if (profile[filter] !== jobFilters[filter]) {
           return false;
         }
@@ -55,15 +60,31 @@ export class AtsService {
     return jobs;
   }
 
-  private async _insertMails(key: string, emailContents: Array<object>) {
-    // push every email content to the key in the Redis DB
-    emailContents.forEach(async (emailContent: object) => {
-      await this.mailingRedisDB.rpush(key, JSON.stringify(emailContent));
-    });
+  private async _getMailingKeys() {
+    const mailingKeys = await this.mailingRedisDB.keys('*');
+    return mailingKeys;
   }
 
   private async _deleteJobs() {
     await this.jobsRedisDB.del('jobs');
+  }
+
+  private _calculateMatchScore(job: StructuredJob, profile: any): number {
+    let matchedSkills = 0;
+
+    job.skills.forEach(skill => {
+      if (profile.skills.includes(skill)) {
+        matchedSkills++;
+      }
+    });
+
+    // TODO: matchedSkills is a number not percentage
+    // TODO: get difference between user's yearsOfExperience and job's yearsOfExperience (default = 0 if not asked)
+    // TODO: add score for job title matching in every experience if the job title is equal to it
+    // TODO: add score for every project, of project skills matching and project size
+    // TODO: think for equation for this
+    
+    return matchedSkills / job.skills.length;
   }
 
   async match(): Promise<object> {
@@ -72,7 +93,6 @@ export class AtsService {
       const jobs = await this._getJobs();
 
       if (jobs.length === 0) {
-        console.log('no jobs to match!');
         return {
           status: "no jobs to match!"
         };
@@ -81,19 +101,24 @@ export class AtsService {
       await this._deleteJobs();
 
       // get all users from Users service
-      const data: any = await firstValueFrom(
+      const users: User[] = await firstValueFrom(
         this.userService.send(
           {
             cmd: userServicePatterns.getAllJobSeekers,
           },
-          {
-            // TODO: just a large number, should be replaced with pagination based on current ATS container @Waer
-            take: 1000000,
-          },
+          {},
         ),
       );
 
-      const users: User[] = data.data;
+      // get all emails that are not allowed to send to them, because the mail period (e.g. 1 day) didn't pass yet
+      const notAllowedEmails = await this._getMailingKeys();
+
+      // make set to hold all allowed emails
+      let allowedEmails = new Set();
+      users.forEach(user => {
+        if (!notAllowedEmails.includes(user.email))
+          allowedEmails.add(user.email);
+      });
 
       // get all profiles of these users from Profiles service
       const profiles = await firstValueFrom(
@@ -127,8 +152,6 @@ export class AtsService {
       let filterations = [];
 
       jobs.forEach(job => {
-        const numOfSkills = job.skills.length;
-
         profileUsers.forEach(profile => {
           // check if there is custom filters in the job
           if (job.customFilters) {
@@ -140,36 +163,44 @@ export class AtsService {
             }
           }
 
-          let matchedSkills = 0;
+          const matchScore = this._calculateMatchScore(job, profile);
 
-          job.skills.forEach(skill => {
-            if (profile.skills.includes(skill)) {
-              matchedSkills++;
-            }
-          });
-
-          // TODO: matchedSkills is a number not percentage
-          // TODO: get difference between user's yearsOfExperience and job's yearsOfExperience (default = 0 if not asked)
-          // TODO: add score for job title matching in every experience if the job title is equal to it
-          // TODO: add score for every project, of project skills matching and project size
-          // TODO: think for equation for this
-          
-          const matchScore = matchedSkills / numOfSkills;
+          console.log(`Profile Id: ${profile.id} - Job Id: ${job.id} - Match Score: ${matchScore} - Matching Threshold: ${MATCHING_THRESHOLD}`)
 
           // MATCHING_THRESHOLD is the threshold for matching
           if (matchScore >= MATCHING_THRESHOLD) {
             // don't send matching email to the same email even if 2 profiles with the same mail are matched
-            if (!matchedEmailsContents[profile.email]) {
-              // TODO: get from REDIS_MAILING__DB Redis DB the key with the email value, and check for the user matched email is returned or not, if yes, don't put in matched
-              // TODO: put best matching score
-              matchedEmailsContents[profile.email] = {
-                jobTitle: job.title,
-                jobCompany: job.company,
-                jobUrl: job.url,
-                matchScore,
-                // TODO: increment matchedJobs counter if the email exists
-                firstName: profile.firstName,
-                lastName: profile.lastName,
+            if (allowedEmails.has(profile.email)) {
+              if (!matchedEmailsContents[profile.email]) {
+                matchedEmailsContents[profile.email] = {
+                  jobTitle: job.title,
+                  jobCompany: job.company,
+                  jobUrl: job.url,
+                  matchScore,
+                  matchedJobs: 1,
+                  firstName: profile.firstName,
+                  lastName: profile.lastName,
+                }
+              }
+              else {
+                // increment the number of matched jobs
+                const newMatchedJobs = matchedEmailsContents[profile.email].matchedJobs++;
+
+                // if the same email is matched with another job, take the job with the highest matchScore
+                if (matchedEmailsContents[profile.email].matchScore < matchScore) {
+                  matchedEmailsContents[profile.email] = {
+                    jobTitle: job.title,
+                    jobCompany: job.company,
+                    jobUrl: job.url,
+                    matchScore,
+                    matchedJobs: newMatchedJobs,
+                    firstName: profile.firstName,
+                    lastName: profile.lastName,
+                  }
+                }
+                else {
+                  matchedEmailsContents[profile.email].matchedJobs = newMatchedJobs;
+                }
               }
             }
             filterations.push({
@@ -193,21 +224,29 @@ export class AtsService {
 
       console.log('matchedEmailsContentsArray', matchedEmailsContentsArray);
       
-      // TODO: emit event to call Notifier like JobService do to call this event pattern in ATS
-      // TODO: put the templateId = EmailTemplates.ATSMATCHED as a field before the emails array, in the JSON of the rabbit message
-      await this._insertMails('sendmail', matchedEmailsContentsArray);
+      // send emails to the matched profiles
+      this.notifierService.emit(
+        {
+          cmd: notifierServicePattern.send,
+        },
+        {
+          templateId: EmailTemplates.ATSMATCHED,
+          emails: matchedEmailsContentsArray,
+        },
+      );
 
-      // add records for these matches in filteration DB  
+      // add records for these matches (all matched not only the sent emails) in filteration DB  
       await this.filterationRepository.save(filterations);
       
-      console.log('matching is done!');
       return {
         status: "matching is done!"
       };
     } catch (error) {
-      console.log(error);
+      // TODO: uncomment when fixed
+      // throw new RpcException(error)
       return {
-        status: "error in matching!"
+        status: "error in matching!",
+        error
       };
     }
   }
@@ -218,14 +257,13 @@ export class AtsService {
       const job: StructuredJob = await firstValueFrom(
         this.jobService.send(
           {
-            cmd: 'getJobDetailsById',
+            cmd: jobsServicePatterns.getJobDetailsById,
           },
           profileAndJobDto.jobId
         ),
       );
 
       if (!job) {
-        console.log('job not found!');
         return {
           status: "job not found!"
         };
@@ -242,58 +280,22 @@ export class AtsService {
       );
 
       if (!profile) {
-        console.log('profile not found!');
         return {
           status: "profile not found!"
         };
       }
-
-      // get user by id from User service
-      const user: User = await firstValueFrom(
-        this.userService.send(
-          {
-            cmd: userServicePatterns.findUserById,
-          },
-          profile.userId,
-        ),
-      );
-
-      if (!user) {
-        console.log('user not found!');
-        return {
-          status: "user not found!"
-        };
-      }
-
-      // put email, country, city in the profileAnUser object
-      const profileAnUser = {
-        ...profile,
-        email: user.email,
-        country: user.country,
-        city: user.city,
-      };
-
-      const numOfSkills = job.skills.length;
 
       let isValid: boolean = true;
 
       // check if there is custom filters in the job
       if (job.stages.customFilters) {
         // validate custom filters, if no match, continue to the next profile
-        isValid = this._validateCustomFilters(job.stages.customFilters, profileAnUser);
+        isValid = this._validateCustomFilters(job.stages.customFilters, profile);
       }
 
-      let matchedSkills = 0;
+      const matchScore = this._calculateMatchScore(job, profile);
 
-      job.skills.forEach(skill => {
-        if (profileAnUser.skills.includes(skill)) {
-          matchedSkills++;
-        }
-      });
-
-      // TODO: revise matchScore with @Waer
-      
-      const matchScore = matchedSkills / numOfSkills;
+      console.log(`Profile Id: ${profile.id} - Job Id: ${job.id} - Match Score: ${matchScore}`)
 
       return {
         status: "matching is done!",
@@ -301,9 +303,11 @@ export class AtsService {
         isValid
       };
     } catch (error) {
-      console.log(error);
+      // TODO: uncomment when fixed
+      // throw new RpcException(error)
       return {
-        status: "error in matching!"
+        status: "error in matching!",
+        error
       };
     }
   }

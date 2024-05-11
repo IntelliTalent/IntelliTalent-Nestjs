@@ -12,6 +12,7 @@ import { Redis } from 'ioredis';
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
     SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_SERVICE),
+    SharedModule.registerRmq(ServiceName.NOTIFIER_SERVICE),
     SharedModule.registerPostgres(ServiceName.ATS_SERVICE, [Filteration]),
     TypeOrmModule.forFeature([Filteration]),
   ],

@@ -92,9 +92,8 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: userServicePatterns.getAllJobSeekers })
-  async getAllJobSeekers(
-    @Payload() pageOptionsDto: PageOptionsDto,
-  ): Promise<PageDto<User[]>> {
-    return this.userService.getAllJobSeekers(pageOptionsDto);
+  async getAllJobSeekers(): Promise<User[]> {
+    // used for ATS match command
+    return this.userService.getAllJobSeekers();
   }
 }
