@@ -9,11 +9,7 @@ import {
 async function bootstrap() {
   const app = await NestFactory.create(FilteringModule);
 
-  console.log("Before sharedService");
-
   const sharedService = app.get(SharedService);
-
-  console.log("After sharedService");
 
   app.connectMicroservice(
     await sharedService.getRmqOptions(

@@ -4,7 +4,7 @@ import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/
 import { jobsServicePatterns } from '@app/services_communications/jobs-service';
 import { EmailTemplates } from '@app/services_communications/notifier/constants/templates';
 import { atsEmailTemplateData } from '@app/services_communications/notifier/dtos/ats-email.template.dto';
-import { CustomFilters, Experience, Filteration, Profile, Project, ServiceName, StructuredJob, User, recentEmailsKey } from '@app/shared';
+import { CustomFilters, CustomFiltersEnum, Experience, Filteration, Profile, Project, ServiceName, StructuredJob, User, recentEmailsKey } from '@app/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,9 +15,9 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class AtsService {
   constructor(
-    @Inject('JobsRedisDB') 
+    @Inject(ATS_CONSTANTS.ATS_JOBS_REDIS_DB_PROVIDER) 
     private readonly jobsRedisDB: Redis,
-    @Inject('MailingRedisDB') 
+    @Inject(ATS_CONSTANTS.ATS_MAILING_REDIS_DB_PROVIDER) 
     private readonly mailingRedisDB: Redis,
     @Inject(ServiceName.USER_SERVICE)
     private readonly userService: ClientProxy,
@@ -36,15 +36,15 @@ export class AtsService {
 
   private _validateCustomFilters(jobFilters: CustomFilters, profile: any): boolean {
     for (const filter in jobFilters) {
-      if (filter === 'languages') {
+      if (filter === CustomFiltersEnum.languages) {
         if (!jobFilters[filter].every((lang: string) => profile.languages.includes(lang))) {
           return false;
         }
-      } else if (filter === 'city' || filter === 'country' || filter === 'graduatedFromCS') {
+      } else if (filter === CustomFiltersEnum.city || filter === CustomFiltersEnum.country || filter === CustomFiltersEnum.graduatedFromCS) {
         if (profile[filter] !== jobFilters[filter]) {
           return false;
         }
-      } else if (filter === 'yearsOfExperience') {
+      } else if (filter === CustomFiltersEnum.yearsOfExperience) {
         if (profile[filter] < jobFilters[filter]) {
           return false;
         }
@@ -54,32 +54,30 @@ export class AtsService {
   }
 
   private async _getJobs() {
-    const jobsString = await this.jobsRedisDB.lrange('jobs', 0, -1);
+    const jobsString = await this.jobsRedisDB.lrange(ATS_CONSTANTS.REDIS_JOBS_KEY, 0, -1);
     const jobs = jobsString.map((job) => JSON.parse(job));
 
     return jobs;
   }
 
   private async _deleteJobs() {
-    await this.jobsRedisDB.del('jobs');
+    await this.jobsRedisDB.del(ATS_CONSTANTS.REDIS_JOBS_KEY);
   }
 
   private _calulateMatchedSkills(skills: string[], jobSkills: string[]): number {
-    return skills.filter(skill => jobSkills.includes(skill)).length;
+    return skills.filter(skill => jobSkills.filter(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))).length;
   }
 
   private _hasWorkedJobTitle(experiences: Experience[], jobTitle: string): boolean {
-    return experiences.some(experience => experience.jobTitle === jobTitle);
+    return experiences.some(experience => experience.jobTitle.includes(jobTitle) || jobTitle.includes(experience.jobTitle));
   }
 
   private _calculateMatchedProjectsSkillsScore(projects: Project[], jobSkills: string[]): number {
-    let matchedProjectsSkills = 0;
-    projects.forEach(project => {
-      matchedProjectsSkills += this._calulateMatchedSkills(project.skills, jobSkills);
-    });
-
-    return matchedProjectsSkills;
+    return projects.reduce((acc, project) => {
+        return acc + this._calulateMatchedSkills(project.skills, jobSkills);
+    }, 0);
   }
+
 
   private _calculateMatchScore(job: StructuredJob, profile: any): number {
     // we will assume max score for every part of the total score
@@ -116,7 +114,7 @@ export class AtsService {
     return totalScore;
   }
 
-  async match(): Promise<object> {
+  async match() {
     try {
       // get jobs from REDIS_JOBS_DB Redis DB, and delete them
       const jobs = await this._getJobs();
@@ -160,8 +158,12 @@ export class AtsService {
         ),
       );
 
-      const profileUsers = profiles.map(profile => {
-        const matchedUser = users.find(user => user.id === profile.userId);
+      // create a map of users keyed by ID
+      const userMap = new Map(users.map(user => [user.id, user]));
+
+      // map profiles with user details
+      const profileUsers = profiles.map((profile: Profile) => {
+        const matchedUser = userMap.get(profile.userId);
         return {
           ...profile,
           firstName: matchedUser.firstName,

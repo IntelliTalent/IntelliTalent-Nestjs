@@ -31,12 +31,14 @@ export class ApiATSController {
   @Public()
   @Post('match')
   async match() {
-    return this.atsService.send(
+    this.atsService.emit(
       {
         cmd: atsServicePattern.match,
       },
       {},
     );
+
+    return { message: 'Matching started' }
   }
 
   /**

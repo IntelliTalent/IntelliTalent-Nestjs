@@ -1,5 +1,5 @@
-import { Entity, Column, PrimaryColumn, Index, Unique } from 'typeorm';
-import { StageType } from '../enums/stageType.enum';
+import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
+import { StageType } from '../enums/stage-type.enum';
 import { AbstractEntity } from './abstract.entity';
 
 interface QuizData {

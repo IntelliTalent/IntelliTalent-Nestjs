@@ -1,6 +1,6 @@
 import { Controller, Get, Post, UseFilters } from '@nestjs/common';
 import { AtsService } from './ats.service';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { atsServicePattern } from '@app/services_communications/ats-service';
 import { RpcExceptionsFilter } from '@app/shared/filters/RPCFilter.filter';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
@@ -16,11 +16,11 @@ export class AtsController {
   }
 
   @EventPattern({ cmd: atsServicePattern.match })
-  match(): Promise<object> {
-    return this.atsService.match();
+  match() {
+    this.atsService.match();
   }
 
-  @EventPattern({ cmd: atsServicePattern.matchProfileAndJob })
+  @MessagePattern({ cmd: atsServicePattern.matchProfileAndJob })
   matchProfileAndJob(@Payload() profileAndJobDto: ProfileAndJobDto): Promise<object> {
     return this.atsService.matchProfileAndJob(profileAndJobDto);
   }

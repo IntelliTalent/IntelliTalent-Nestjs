@@ -5,6 +5,7 @@ import { Filteration, ServiceName, SharedModule } from '@app/shared';
 import { RedisDBName } from '@app/shared/config/redis.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Redis } from 'ioredis';
+import { ATS_JOBS_REDIS_DB_PROVIDER, ATS_MAILING_REDIS_DB_PROVIDER } from '@app/services_communications/ats-service';
 
 @Module({
   imports: [
@@ -20,14 +21,14 @@ import { Redis } from 'ioredis';
   providers: [
     AtsService,
     {
-      provide: 'JobsRedisDB', // Provide a token for the jobsRedisDB dependency
+      provide: ATS_JOBS_REDIS_DB_PROVIDER, // provide a token for the jobsRedisDB dependency
       useFactory: async () => {
         const redisUrl = await SharedModule.getRedisDBURL(RedisDBName.jobsDB);
         return new Redis(redisUrl);
       },
     },
     {
-      provide: 'MailingRedisDB', // Provide a token for the mailingRedisDB dependency
+      provide: ATS_MAILING_REDIS_DB_PROVIDER, // provide a token for the mailingRedisDB dependency
       useFactory: async () => {
         const redisUrl = await SharedModule.getRedisDBURL(RedisDBName.mailingDB);
         return new Redis(redisUrl);

@@ -30,7 +30,9 @@ export * from './config/environment.constants';
 
 export * from './decorators/user.decorator';
 
-export * from './enums/userType.enum';
+export * from './enums/user-type.enum';
+
+export * from './enums/custom-filters.enum';
 
 export * from './decorators/roles.decorator';
 
