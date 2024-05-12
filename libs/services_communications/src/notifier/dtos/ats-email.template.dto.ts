@@ -5,4 +5,5 @@ export class atsEmailTemplateData {
   firstName: string;
   lastName: string;
   matchedJobsCount: number;
+  matchScore: number;
 }

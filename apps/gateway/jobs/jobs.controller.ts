@@ -4,7 +4,7 @@ import {
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
-import { ServiceName } from '@app/shared';
+import { ServiceName, StructuredJob } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import {
   Controller,
@@ -27,6 +27,8 @@ import {
   ApiCreatedResponse,
 } from '@nestjs/swagger';
 
+// TODO: Add user authentication and edit create job with the userId and edit edit job set each parameter manually
+
 @ApiTags('Jobs')
 @Controller('jobs')
 export class JobsController {
@@ -44,8 +46,6 @@ export class JobsController {
     description: 'List of jobs returned successfully.',
   })
   async getJobs(@Query() filteration: PageOptionsDto) {
-    // throw new NotImplementedException();
-
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobs },
       filteration,
@@ -62,9 +62,24 @@ export class JobsController {
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
   async getJobById(@Param('jobId') jobId: string) {
-    // throw new NotImplementedException();
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
+      jobId,
+    );
+  }
+
+  @Get('/:jobId/details')
+  @ApiOperation({ summary: 'Get job details by ID' })
+  @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
+  @ApiResponse({
+    status: 200,
+    type: StructuredJob,
+    description: 'Job details returned successfully.',
+  })
+  @ApiNotFoundResponse({ description: 'Job not found.' })
+  async getJobDetailsById(@Param('jobId') jobId: string) {
+    return this.jobsService.send(
+      { cmd: jobsServicePatterns.getJobDetailsById },
       jobId,
     );
   }
@@ -74,7 +89,6 @@ export class JobsController {
   @ApiBody({ type: CreateJobDto, description: 'New job details' })
   @ApiCreatedResponse({ description: 'New job created.' })
   async createJob(@Body() newJob: CreateJobDto) {
-    // throw new NotImplementedException();
     return this.jobsService.send(
       { cmd: jobsServicePatterns.createJob },
       newJob,
@@ -91,11 +105,7 @@ export class JobsController {
   })
   @ApiNotFoundResponse({ description: 'Job not found' })
   async updateJob(@Param('jobId') jobId: string, @Body() editJob: EditJobDto) {
-    // throw new NotImplementedException();
     editJob.jobId = jobId;
-    return this.jobsService.send(
-      { cmd: jobsServicePatterns.createJob },
-      editJob,
-    );
+    return this.jobsService.send({ cmd: jobsServicePatterns.editJob }, editJob);
   }
 }

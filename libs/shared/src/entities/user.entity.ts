@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { UserType } from '../enums/userType.enum';
+import { UserType } from '../enums/user-type.enum';
 import { AbstractEntity } from './abstract.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';

@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AllExceptionsFilter } from '@app/shared/filters/all-exception.filter';
+import getConfigVariables from '@app/shared/config/configVariables.config';
+import { Constants } from '@app/shared';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -45,7 +47,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/v1/docs', app, document);
 
-  await app.listen(3000);
+  await app.listen(await getConfigVariables(Constants.APPPORT));
 }
 
 bootstrap();

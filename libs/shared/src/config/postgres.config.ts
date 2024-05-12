@@ -41,6 +41,11 @@ export const getServiceDatabse = async (
       Object.assign(configObject, {
         database: await getConfigVariables(Constants.DB.dbName.STRUCTUREJOBSDB),
       });
+    case ServiceName.ATS_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),
+      });
+
     case ServiceName.FILTRATION_SERVICE:
       Object.assign(configObject, {
         database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),

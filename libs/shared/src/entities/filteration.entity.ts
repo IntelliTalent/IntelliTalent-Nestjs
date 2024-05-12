@@ -1,5 +1,5 @@
-import { Entity, Column, PrimaryColumn, Index, Unique } from 'typeorm';
-import { StageType } from '../enums/stageType.enum';
+import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
+import { StageType } from '../enums/stage-type.enum';
 import { AbstractEntity } from './abstract.entity';
 
 interface QuizData {
@@ -27,12 +27,10 @@ type StageData = QuizData | InterviewData | MatchData | AppliedData;
 @Entity()
 @Index(['jobId', 'profileId'], { unique: true })
 export class Filteration extends AbstractEntity {
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid' })
   jobId: string;
 
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid' })
   profileId: string;
 
   @Column({ type: 'boolean', nullable: false, default: true })

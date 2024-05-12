@@ -20,7 +20,7 @@ export class NotifierService {
       if (!exists) {
         // Update this email in Redis to be true
         await this.redis.hset(recentEmailsKey, email.to, 'true');
-        await this.redis.expire(recentEmailsKey, recentEmailsExpire); // Set the TTL to 6 hours
+        await this.redis.expire(recentEmailsKey, recentEmailsExpire); // Set the TTL to recentEmailsExpire
 
         // send the email
         await this.sendMail(email);

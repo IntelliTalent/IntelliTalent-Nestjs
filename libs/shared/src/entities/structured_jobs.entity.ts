@@ -4,17 +4,23 @@ import {
   Column,
   JoinColumn,
   OneToOne,
+  Index,
 } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 import { CustomJobsStages } from './custom_jobs_stages.entity';
 
-
-
 @Entity()
+@Index(['title', 'company', 'publishedAt'], { unique: true })
 export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ nullable: true })
+  jobId: string; // id for the job from the websites (linkedin, etc.)
+
+  @Column({ nullable: true })
+  userId: string; // id for the recruiter
 
   @Column({})
   title: string;
@@ -40,7 +46,7 @@ export class StructuredJob extends AbstractEntity {
   @Column({ type: Date })
   publishedAt: Date;
 
-  @Column({ type: 'enum', enum: JobPlace })
+  @Column({ type: 'enum', enum: JobPlace, nullable: true })
   jobPlace: JobPlace;
 
   @Column({ nullable: true })
