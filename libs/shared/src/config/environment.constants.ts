@@ -86,6 +86,10 @@ export const Constants = {
     user: 'EMAIL_USERNAME',
     pass: 'EMAIL_PASSWORD',
   },
+  AZURE: {
+    AZURE_STORAGE_CONNECTION: 'AZURE_STORAGE_CONNECTION',
+    AZURE_STORAGE_CONTAINER: 'AZURE_STORAGE_CONTAINER',
+  },
 };
 
 export enum ServiceName {
