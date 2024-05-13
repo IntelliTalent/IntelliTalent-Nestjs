@@ -1,11 +1,13 @@
+import { AUTH_HEADER } from '@app/services_communications';
 import {
   CreateJobDto,
   EditJobDto,
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
-import { ServiceName, StructuredJob } from '@app/shared';
+import { Roles, ServiceName, StructuredJob, UserType } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
   Controller,
   Get,
@@ -25,9 +27,8 @@ import {
   ApiParam,
   ApiBody,
   ApiCreatedResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-
-// TODO: Add user authentication and edit create job with the userId and edit edit job set each parameter manually
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -38,6 +39,7 @@ export class JobsController {
   ) {}
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Get all jobs' })
   @ApiResponse({
     status: 200,
@@ -53,6 +55,7 @@ export class JobsController {
   }
 
   @Get('/:jobId')
+  @Public()
   @ApiOperation({ summary: 'Get job by ID' })
   @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
   @ApiResponse({
@@ -69,6 +72,7 @@ export class JobsController {
   }
 
   @Get('/:jobId/details')
+  @Public()
   @ApiOperation({ summary: 'Get job details by ID' })
   @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
   @ApiResponse({
@@ -85,9 +89,11 @@ export class JobsController {
   }
 
   @Post()
+  @Roles([UserType.recruiter])
   @ApiOperation({ summary: 'Create new job' })
   @ApiBody({ type: CreateJobDto, description: 'New job details' })
   @ApiCreatedResponse({ description: 'New job created.' })
+  @ApiBearerAuth(AUTH_HEADER)
   async createJob(@Body() newJob: CreateJobDto) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.createJob },
@@ -96,6 +102,7 @@ export class JobsController {
   }
 
   @Put('/:jobId')
+  @Roles([UserType.recruiter])
   @ApiOperation({ summary: 'Update job by ID' })
   @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
   @ApiBody({ type: EditJobDto, description: 'Updated job details' })
@@ -103,6 +110,7 @@ export class JobsController {
     status: 200,
     description: 'Job updated successfully.',
   })
+  @ApiBearerAuth(AUTH_HEADER)
   @ApiNotFoundResponse({ description: 'Job not found' })
   async updateJob(@Param('jobId') jobId: string, @Body() editJob: EditJobDto) {
     editJob.jobId = jobId;

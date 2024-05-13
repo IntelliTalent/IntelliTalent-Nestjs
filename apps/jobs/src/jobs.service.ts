@@ -1,4 +1,10 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   Constants,
   CustomJobsStages,
@@ -15,7 +21,7 @@ import {
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { firstValueFrom } from 'rxjs';
 import { InjectModel } from '@nestjs/mongoose';
@@ -168,7 +174,7 @@ export class JobsService {
 
       return savedJob;
     } catch (error) {
-      throw new RpcException(error.message);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -180,9 +186,14 @@ export class JobsService {
         relations: ['stages'],
       });
       if (!existingJob) {
-        throw new RpcException(
-          new NotFoundException(`Can not find a job with id: ${editJob.jobId}`),
+        throw new NotFoundException(
+          `Can not find a job with id: ${editJob.jobId}`,
         );
+      }
+
+      // Check if the user is the owner of the job
+      if (existingJob.userId !== editJob.userId) {
+        throw new ForbiddenException('Can not edit a job of another user');
       }
 
       // Update the job fields
@@ -209,7 +220,7 @@ export class JobsService {
 
       return existingJob;
     } catch (error) {
-      throw new RpcException(error.message);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -219,9 +230,7 @@ export class JobsService {
     });
 
     if (!job) {
-      throw new RpcException(
-        new NotFoundException(`Can not find a job with id: ${jobId}`),
-      );
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
     }
 
     // Map the job entity to IJobs format
@@ -314,7 +323,10 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
     }));
-    return responseJobs;
+
+    return {
+      jobs: responseJobs,
+    };
   }
 
   async checkActiveJobs() {
