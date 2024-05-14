@@ -13,6 +13,8 @@ import { ApiCvExtractorModule } from '../cv-extractor/cv-extractor.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '@app/shared/guards/jwt-auth.guard';
 import { RolesGuard } from '@app/shared/guards/roles.guard';
+import { ApiUploaderModule } from '../uploader/uploader.module';
+import { ApiQuizModule } from '../quiz/quiz.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { RolesGuard } from '@app/shared/guards/roles.guard';
     ApiProfileModule,
     ApiCvExtractorModule,
     ApiJobsModule,
+    ApiUploaderModule,
+    ApiQuizModule,
   ],
   controllers: [AppController],
   providers: [

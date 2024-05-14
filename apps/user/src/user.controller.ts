@@ -13,6 +13,8 @@ import {
 import { User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { PageDto } from '@app/shared/api-features/dtos/page.dto';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -87,5 +89,11 @@ export class UserController {
   @MessagePattern({ cmd: userServicePatterns.verifyUser })
   verifyUser(@Payload() id: string): Promise<User> {
     return this.userService.verifyUser(id);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.getAllJobSeekers })
+  async getAllJobSeekers(): Promise<User[]> {
+    // used for ATS match command
+    return this.userService.getAllJobSeekers();
   }
 }

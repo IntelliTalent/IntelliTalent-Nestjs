@@ -1,130 +1,192 @@
 import {
   CreateProfileDto,
-  ResponseProfileDto,
-  ResponseProfileNames,
-  UpdateCertificationsDto,
-  UpdateEducationsDto,
-  UpdateExperienceDto,
-  UpdatePersonalInfoDto,
-  UpdateProjectsDto,
-  UpdateSkillsDto,
+  profileServicePattern,
+  ResponseScrapGithubRepoSto,
+  ScrapeProfile,
+  getUserRepos,
+  AUTH_HEADER,
+  DeleteProfileDto,
+  UpdateProfileDto,
 } from '@app/services_communications';
-import { CurrentUser, User } from '@app/shared';
+import { ResponseScrapeProfileDto } from '@app/services_communications/profile/dtos/response-scrape-profile.dto';
+import { CurrentUser, Profile, ServiceName, User } from '@app/shared';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
+import { IsUUIDDto } from '@app/shared/dtos/uuid.dto';
 import {
   Controller,
   Get,
   Post,
-  Put,
   Param,
-  NotFoundException,
   Body,
+  Inject,
+  Query,
+  Patch,
+  Delete,
   NotImplementedException,
 } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiNotFoundResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Profiles')
 @Controller('profiles')
 export class ProfileController {
+  constructor(
+    @Inject(ServiceName.PROFILE_SERVICE) private profileService: ClientProxy,
+  ) {}
+
+  //  TODO: we need to apply rate limit here for profile
+  @Post('scrape')
+  @ApiOperation({ summary: 'Scrape profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Scraped profile',
+    type: ResponseScrapeProfileDto,
+  })
+  @Public()
+  async scrapeProfile(
+    @Body() scrapeProfileDto: ScrapeProfile,
+  ): Promise<ResponseScrapeProfileDto> {
+    return firstValueFrom(
+      this.profileService.send(
+        { cmd: profileServicePattern.scrapeProfile },
+        scrapeProfileDto,
+      ),
+    );
+  }
+
+  @Post('create')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Create a new profile' })
+  @ApiResponse({
+    status: 201,
+    description: 'Profile created successfully',
+    type: Profile,
+  })
+  createProfile(
+    @CurrentUser() user: User,
+    @Body() createProfileDto: CreateProfileDto,
+  ) {
+    createProfileDto.userId = user.id;
+    return this.profileService.send(
+      { cmd: profileServicePattern.createProfile },
+      createProfileDto,
+    );
+  }
+
+  @ApiBearerAuth(AUTH_HEADER)
+  @Get('repos/:username')
+  @ApiOperation({ summary: 'Get user repos' })
+  @ApiResponse({
+    status: 200,
+    isArray: true,
+    type: ResponseScrapGithubRepoSto,
+  })
+  async getUserRepos(
+    @Query() pageOptionsDto: PageOptionsDto,
+    @Param('username') userName: string,
+  ) {
+    const payload: getUserRepos = {
+      username: userName,
+      pageOptionsDto: pageOptionsDto,
+    };
+    return this.profileService.send(
+      { cmd: profileServicePattern.getUserRepos },
+      payload,
+    );
+  }
+
+  @Get('cv/result')
+  getCvExtractorResult() {
+    throw new NotImplementedException('Not implemented');
+  }
+
   @Get('cards')
+  @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'Get profile cards' })
   @ApiResponse({
     status: 200,
     description: 'Returns profile cards',
-    type: ResponseProfileDto,
+    type: Profile,
     isArray: true,
   })
-  async getProfileCards(@CurrentUser() user: User) {
-    throw new NotImplementedException();
+  getProfileCards(@CurrentUser() user: User) {
+    return this.profileService.send(
+      { cmd: profileServicePattern.getUserProfileCard },
+      user.id,
+    );
   }
 
-  @Get('names')
-  @ApiOperation({ summary: 'Get profile names' })
+  @Get('all')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Get user profiles' })
   @ApiResponse({
     status: 200,
-    description: 'Returns profile names',
+    description: 'Returns user profiles',
+    type: Profile,
     isArray: true,
-    type: ResponseProfileNames,
   })
-  async getProfileNames(@CurrentUser() user: User) {
-    throw new NotImplementedException();
+  getUserProfiles(@CurrentUser() user: User) {
+    return this.profileService.send(
+      { cmd: profileServicePattern.getUserProfile },
+      user.id,
+    );
   }
 
   @Get(':id')
+  @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'Get profile by ID' })
   @ApiNotFoundResponse({ description: 'Profile not found' })
   @ApiResponse({
-    type: ResponseProfileDto
+    type: Profile,
   })
-  async getProfileById(@CurrentUser() user: User, @Param('id') id: string) {
-    throw new NotFoundException();
+  getProfileById(@Param() dto: IsUUIDDto) {
+    return this.profileService.send(
+      { cmd: profileServicePattern.getProfileById },
+      dto.id,
+    );
   }
 
-  @Post('create')
-  @ApiOperation({ summary: 'Create a new profile' })
-  @ApiResponse({ status: 201, description: 'Profile created successfully' })
-  async createProfile(
+  @Patch(':id')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Update a profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    type: Profile,
+  })
+  async updateProfile(
     @CurrentUser() user: User,
-    @Body() createProfileDto: CreateProfileDto,
+    @Param() dto: IsUUIDDto,
+    @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    throw new NotImplementedException();
+    updateProfileDto.userId = user.id;
+    updateProfileDto.profileId = dto.id;
+    return this.profileService.send(
+      { cmd: profileServicePattern.updateProfile },
+      updateProfileDto,
+    );
   }
 
-  @Put(':id/update-personal-info')
-  @ApiOperation({ summary: 'Update personal information of a profile' })
-  async updatePersonalInfo(
-    @Param('id') id: string,
-    @Body() personalInfo: UpdatePersonalInfoDto,
-  ) {
-    throw new NotImplementedException();
-  }
-
-  @Put(':id/update-experience')
-  @ApiOperation({ summary: 'Update experience of a profile' })
-  async updateExperience(
-    @Param('id') id: string,
-    @Body() updateExperienceDto: UpdateExperienceDto,
-  ) {
-    throw new NotImplementedException();
-  }
-
-  @Put(':id/update-education')
-  @ApiOperation({ summary: 'Update education of a profile' })
-  async updateEducation(
-    @Param('id') id: string,
-    @Body() updateEducation: UpdateEducationsDto,
-  ) {
-    throw new NotImplementedException();
-  }
-
-  @Put(':id/update-projects')
-  @ApiOperation({ summary: 'Update projects of a profile' })
-  async updateProjects(
-    @Param('id') id: string,
-    @Body() updateProjectsdto: UpdateProjectsDto,
-  ) {
-    throw new NotImplementedException();
-  }
-
-  @Put(':id/update-skills')
-  @ApiOperation({ summary: 'Update skills of a profile' })
-  async updateSkills(
-    @Param('id') id: string,
-    @Body() updateskills: UpdateSkillsDto,
-  ) {
-    throw new NotImplementedException();
-  }
-
-  @Put(':id/update-certificates')
-  @ApiOperation({ summary: 'Update certificates of a profile' })
-  async updateCertificates(
-    @Param('id') id: string,
-    @Body() certificates: UpdateCertificationsDto,
-  ) {
-    throw new NotImplementedException();
+  @Delete(':id')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Delete a profile' })
+  @ApiResponse({ status: 200, description: 'Profile deleted successfully' })
+  deleteProfile(@CurrentUser() user: User, @Param() dto: IsUUIDDto) {
+    const deleteProfileDto: DeleteProfileDto = {
+      userId: user.id,
+      profileId: dto.id,
+    };
+    return this.profileService.send(
+      { cmd: profileServicePattern.deleteProfile },
+      deleteProfileDto,
+    );
   }
 }

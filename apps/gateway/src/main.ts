@@ -1,9 +1,10 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { ErrorInterceptor } from '@app/shared/interceptors/error.interceptor';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AllExceptionsFilter } from '@app/shared/filters/all-exception.filter';
+import getConfigVariables from '@app/shared/config/configVariables.config';
+import { Constants } from '@app/shared';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,8 @@ async function bootstrap() {
 
   // Catch general exceptions
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   // use swagger documentation
   const config = new DocumentBuilder()
@@ -44,7 +47,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/v1/docs', app, document);
 
-  await app.listen(3000);
+  await app.listen(await getConfigVariables(Constants.APPPORT));
 }
 
 bootstrap();

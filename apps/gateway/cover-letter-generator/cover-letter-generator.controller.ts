@@ -1,16 +1,15 @@
 import { GenerateCoverLetterDto } from '@app/services_communications';
-import { CoverLetterResponseDto, coverLetterGeneratorServicePattern } from '@app/services_communications/cover-letter-generator-service';
-import { ServiceName } from '@app/shared';
+import { CoverLetterResponseDto } from '@app/services_communications/cover-letter-generator-service';
 import { Body, Controller, Header, Inject, Param, Post } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CoverLetterGeneratorService } from './cover-letter-generator.service';
+import { CurrentUser, User } from '@app/shared';
 
 @ApiTags('Cover Letter Generator')
 @Controller('coverLetters')
 export class ApiCoverLetterGeneratorController {
   constructor(
-    @Inject(ServiceName.COVER_LETTER_GENERATOR_SERVICE)
-    private coverLetterGeneratorService: ClientProxy,
+    private readonly coverLetterGeneratorService: CoverLetterGeneratorService,
   ) {}
 
   /**
@@ -18,28 +17,19 @@ export class ApiCoverLetterGeneratorController {
    * The generate method does the following:
    * - Uses the coverLetterGeneratorService to send a 'generate' command as payload to the microservice.
    *
-   * @returns An Observable of the command response.
+   * @returns An the command response.
    */
   @ApiOperation({ summary: 'Generate cover letter for a profile' })
   @ApiOkResponse({
-      description: 'The cover letter links and content',
+      description: 'The cover letter word link and content',
       type: CoverLetterResponseDto,
   })
-  @Header('content-type', 'application/json')
   @Post('/:profileId')
   async generate(
     @Param('profileId') profileId: string,
     @Body() generateCoverLetterDto: GenerateCoverLetterDto,
+    @CurrentUser() user: User,
   ) {
-    return this.coverLetterGeneratorService.send(
-      {
-        cmd: coverLetterGeneratorServicePattern.generate,
-      },
-      {
-        profileId,
-        jobTitle: generateCoverLetterDto.jobTitle,
-        companyName: generateCoverLetterDto.companyName,
-      },
-    );
+    return await this.coverLetterGeneratorService.generate(profileId, generateCoverLetterDto, user);
   }
 }

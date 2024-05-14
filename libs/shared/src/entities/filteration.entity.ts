@@ -1,5 +1,5 @@
-import { Entity, Column, PrimaryColumn, Index, Unique } from 'typeorm';
-import { StageType } from '../enums/stageType.enum';
+import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
+import { StageType } from '../enums/stage-type.enum';
 import { AbstractEntity } from './abstract.entity';
 
 interface QuizData {
@@ -24,19 +24,13 @@ interface AppliedData {
 // Union type for all possible stage data
 type StageData = QuizData | InterviewData | MatchData | AppliedData;
 
-
 @Entity()
-@Unique(['jobId', 'profileId'])
+@Index(['jobId', 'profileId'], { unique: true })
 export class Filteration extends AbstractEntity {
-
-  @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid' })
   jobId: string;
 
-  @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid' })
   profileId: string;
 
   @Column({ type: 'boolean', nullable: false, default: true })

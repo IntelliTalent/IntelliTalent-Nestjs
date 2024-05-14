@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
@@ -7,33 +7,44 @@ import {
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller()
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
-  @Get()
-  getHello(): string {
-    return this.jobsService.getHello();
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  checkActiveJobs() {
+    this.jobsService.checkActiveJobs();
+  }
+
+  @Cron(CronExpression.EVERY_4_HOURS)
+  callJobExtractor() {
+    this.jobsService.callJobExtractor();
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.createJob })
   createJob(@Payload() newJob: CreateJobDto) {
-    return { endpointName: 'create job', data: newJob };
+    return this.jobsService.createJob(newJob);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.editJob })
   editJob(@Payload() editJob: EditJobDto) {
-    return { endpointName: 'edit job', data: editJob };
+    return this.jobsService.editJob(editJob);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobById })
   getJobById(jobId: string) {
-    return { endpointName: 'get job by id', data: jobId };
+    return this.jobsService.getJobById(jobId);
+  }
+
+  @MessagePattern({ cmd: jobsServicePatterns.getJobDetailsById })
+  getJobDetailsById(jobId: string) {
+    return this.jobsService.getJobDetailsById(jobId);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobs })
   getJobs(pageOptions: PageOptionsDto) {
-    return { endpointName: 'get jobs', data: pageOptions };
+    return this.jobsService.getJobs(pageOptions);
   }
 }
