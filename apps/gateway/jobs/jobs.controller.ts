@@ -5,7 +5,14 @@ import {
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
-import { Roles, ServiceName, StructuredJob, UserType } from '@app/shared';
+import {
+  CurrentUser,
+  Roles,
+  ServiceName,
+  StructuredJob,
+  User,
+  UserType,
+} from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
@@ -94,7 +101,9 @@ export class JobsController {
   @ApiBody({ type: CreateJobDto, description: 'New job details' })
   @ApiCreatedResponse({ description: 'New job created.' })
   @ApiBearerAuth(AUTH_HEADER)
-  async createJob(@Body() newJob: CreateJobDto) {
+  async createJob(@Body() newJob: CreateJobDto, @CurrentUser() user: User) {
+    newJob.userId = user.id;
+
     return this.jobsService.send(
       { cmd: jobsServicePatterns.createJob },
       newJob,
@@ -112,8 +121,13 @@ export class JobsController {
   })
   @ApiBearerAuth(AUTH_HEADER)
   @ApiNotFoundResponse({ description: 'Job not found' })
-  async updateJob(@Param('jobId') jobId: string, @Body() editJob: EditJobDto) {
+  async updateJob(
+    @Param('jobId') jobId: string,
+    @Body() editJob: EditJobDto,
+    @CurrentUser() user: User,
+  ) {
     editJob.jobId = jobId;
+    editJob.userId = user.id;
     return this.jobsService.send({ cmd: jobsServicePatterns.editJob }, editJob);
   }
 }

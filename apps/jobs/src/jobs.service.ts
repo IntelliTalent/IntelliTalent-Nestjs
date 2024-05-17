@@ -148,6 +148,7 @@ export class JobsService {
         csRequired: newJob.csRequired,
         jobEndDate: newJob.jobEndDate,
         stages: customJobStage,
+        userId: newJob.userId,
       });
 
       // Set additional fields
