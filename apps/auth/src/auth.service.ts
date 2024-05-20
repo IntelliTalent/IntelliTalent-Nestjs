@@ -105,11 +105,14 @@ export class AuthService {
         },
         to: user.email,
       };
-      const sedEmailDto: SendEmailsDto = {
+      const sendEmailDto: SendEmailsDto = {
         template: EmailTemplates.VERIFYEMAIL,
         templateData: [emailData],
       };
-      this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sedEmailDto);
+      this.notifierService.emit(
+        { cmd: NotifierEvents.sendEmail },
+        sendEmailDto,
+      );
 
       return {
         message: `welcome to InteliTalent, ${user.firstName} ${user.lastName}! Please verify your email to continue. A verification link has been sent to ${user.email}`,
@@ -157,12 +160,15 @@ export class AuthService {
         },
         to: user.email,
       };
-      const sedEmailDto: SendEmailsDto = {
+      const sendEmailDto: SendEmailsDto = {
         template: EmailTemplates.FORGETPASSWORD,
         templateData: [emailData],
       };
 
-      this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sedEmailDto);
+      this.notifierService.emit(
+        { cmd: NotifierEvents.sendEmail },
+        sendEmailDto,
+      );
 
       return {
         message: `A password reset link has been sent to ${user.email}`,
