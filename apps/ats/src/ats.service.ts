@@ -127,7 +127,7 @@ export class AtsService {
     }, 0);
   }
 
-  async emailExists(email: string): Promise<boolean> {
+  private async _emailExists(email: string): Promise<boolean> {
     const rank = await this.mailingRedisDB.zrank(
       recentEmailsKey,
       JSON.stringify(email),
@@ -225,10 +225,7 @@ export class AtsService {
       const allowedEmails = new Set();
       users.forEach(async (user) => {
         // the emails that are sent to in the last TIME_WINDOW hours/days exist in the mailing DB in this key, and expire after TIME_WINDOW
-        const exists = await this.mailingRedisDB.hexists(
-          recentEmailsKey,
-          user.email,
-        );
+        const exists = await this._emailExists(user.email);
         if (!exists) allowedEmails.add(user.email);
       });
 
