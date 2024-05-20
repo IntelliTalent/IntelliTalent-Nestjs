@@ -39,3 +39,5 @@ db/*
 monitoring/data/*
 
 .env
+
+package-lock.json
