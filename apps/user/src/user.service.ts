@@ -181,12 +181,12 @@ export class UserService {
       },
       to: user.email,
     };
-    const sedEmailDto: SendEmailsDto = {
+    const sendEmailDto: SendEmailsDto = {
       template: EmailTemplates.RESETPASSWORD,
       templateData: [emailData],
     };
-    console.log('sending email to user', sedEmailDto);
-    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sedEmailDto);
+    console.log('sending email to user', sendEmailDto);
+    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
 
     return {
       message: 'Password changed successfully',

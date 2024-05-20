@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { IEmail } from './templates';
 import { recentEmailsExpire, recentEmailsKey } from '@app/shared';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class NotifierService {
@@ -13,14 +14,21 @@ export class NotifierService {
   ) {}
 
   sendEmails(emails: IEmail[]) {
+    const now = Date.now();
     emails.forEach(async (email) => {
       // Update this email in Redis to be true
-      await this.redis.hset(recentEmailsKey, email.to, 'true');
-      await this.redis.expire(recentEmailsKey, recentEmailsExpire); // Set the TTL to recentEmailsExpire
+      const score = now + recentEmailsExpire; // score as future timestamp
+      await this.redis.zadd(recentEmailsKey, score, email.to); // Add to sorted set
 
       // send the email
       await this.sendMail(email);
     });
+  }
+
+  @Cron('0 0 * * * *') // Every hour
+  async cleanupExpiredEmails() {
+    const now = Date.now();
+    await this.redis.zremrangebyscore(recentEmailsKey, '-inf', now); // Removes all past timestamps
   }
 
   async sendMail(email: IEmail) {

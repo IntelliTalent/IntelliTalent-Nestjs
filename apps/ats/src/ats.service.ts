@@ -127,6 +127,14 @@ export class AtsService {
     }, 0);
   }
 
+  async emailExists(email: string): Promise<boolean> {
+    const rank = await this.mailingRedisDB.zrank(
+      recentEmailsKey,
+      JSON.stringify(email),
+    );
+    return rank !== null;
+  }
+
   private _calculateMatchScore(job: StructuredJob, profile: any): number {
     // we will assume max score for every part of the total score
     // then get the percentage of every part of the part max score
