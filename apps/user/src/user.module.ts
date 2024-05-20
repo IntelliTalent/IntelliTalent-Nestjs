@@ -15,6 +15,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forFeature([
       { name: FormField.name, schema: FormFieldSchema },
     ]),
+    SharedModule.registerRmq(ServiceName.NOTIFIER_SERVICE),
   ],
   controllers: [UserController],
   providers: [UserService],

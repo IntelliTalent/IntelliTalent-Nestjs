@@ -1,4 +1,4 @@
-export class atsEmailTemplateData {
+export class AtsEmailTemplateData {
   jobTitle: string;
   jobCompany: string;
   jobUrl: string;

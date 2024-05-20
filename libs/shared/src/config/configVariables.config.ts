@@ -11,7 +11,7 @@ export const currentEnvironment = () => {
   return configService.get(ENV_CONSTANT);
 };
 
-const getConfigVariables = async (variableName: string) => {
+const getConfigVariables = (variableName: string) => {
   const environment = currentEnvironment();
 
   switch (environment) {
@@ -21,7 +21,7 @@ const getConfigVariables = async (variableName: string) => {
     case TEST_ENVIRONMENT:
     default:
       const configService: ConfigService = new ConfigService();
-      return await configService.get(variableName);
+      return configService.get(variableName);
   }
 };
 

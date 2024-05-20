@@ -13,9 +13,10 @@ import { TokenService } from './token.service';
   imports: [
     TypeOrmModule.forFeature([Token]),
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    SharedModule.registerRmq(ServiceName.NOTIFIER_SERVICE),
     JwtModule.registerAsync({
       useFactory: async () => {
-        const jwtSecret = await getConfigVariables(Constants.JWT.secret);
+        const jwtSecret = getConfigVariables(Constants.JWT.secret);
         const jwtExpiresIn = await getConfigVariables(Constants.JWT.expiresIn);
         return {
           secret: jwtSecret,

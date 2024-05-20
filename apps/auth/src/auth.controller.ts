@@ -10,7 +10,7 @@ import {
   ForgetPasswordToken,
   authServicePattern,
 } from '@app/services_communications/authService';
-import { CurrentUser, User } from '@app/shared';
+import { User } from '@app/shared';
 
 @Controller()
 export class AuthController {
