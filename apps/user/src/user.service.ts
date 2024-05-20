@@ -66,15 +66,10 @@ export class UserService {
     const savedUser = await this.userRepository.save(createdUser);
 
     await this.formFieldModel.create({
+      ...createdUser,
+      type: createUser.userType,
       userId: savedUser.id,
-      firstName: createdUser.firstName,
-      lastName: createdUser.lastName,
       fullName: `${createdUser.firstName} ${createdUser.lastName}`,
-      email: createdUser.email,
-      phoneNumber: createdUser.phoneNumber,
-      country: createdUser.country,
-      city: createdUser.city,
-      address: createdUser.address,
     });
 
     return savedUser;
