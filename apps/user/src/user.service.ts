@@ -1,15 +1,20 @@
 import {
   CreateUserDto,
+  EmailTemplates,
+  NotifierEvents,
+  SendEmailsDto,
+  TemplateData,
   UpdateUserDto,
   getUpdatableFields,
 } from '@app/services_communications';
-import { Constants, FormField, User, UserType } from '@app/shared';
+import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
@@ -28,6 +33,8 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     @InjectModel(FormField.name)
     private readonly formFieldModel: Model<FormField>,
+    @Inject(ServiceName.NOTIFIER_SERVICE)
+    private readonly notifierService: ClientProxy,
   ) {}
 
   getHello(): string {
@@ -59,15 +66,10 @@ export class UserService {
     const savedUser = await this.userRepository.save(createdUser);
 
     await this.formFieldModel.create({
+      ...createdUser,
+      type: createUser.userType,
       userId: savedUser.id,
-      firstName: createdUser.firstName,
-      lastName: createdUser.lastName,
       fullName: `${createdUser.firstName} ${createdUser.lastName}`,
-      email: createdUser.email,
-      phoneNumber: createdUser.phoneNumber,
-      country: createdUser.country,
-      city: createdUser.city,
-      address: createdUser.address,
     });
 
     return savedUser;
@@ -165,6 +167,27 @@ export class UserService {
       { id: userId },
       { password: hashedPassword },
     );
+
+    const user = await this.findUser({
+      where: {
+        id: userId,
+      },
+    });
+
+    const emailData: TemplateData = {
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      to: user.email,
+    };
+    const sedEmailDto: SendEmailsDto = {
+      template: EmailTemplates.RESETPASSWORD,
+      templateData: [emailData],
+    };
+    console.log('sending email to user', sedEmailDto);
+    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sedEmailDto);
+
     return {
       message: 'Password changed successfully',
     };
@@ -186,10 +209,17 @@ export class UserService {
   async getAllJobSeekers(): Promise<User[]> {
     const query = this.userRepository
       .createQueryBuilder('user')
-      .select(['user.id', 'user.email', 'user.firstName', 'user.lastName', 'user.country', 'user.city'])
+      .select([
+        'user.id',
+        'user.email',
+        'user.firstName',
+        'user.lastName',
+        'user.country',
+        'user.city',
+      ])
       .where('user.type = :type', { type: UserType.jobSeeker })
       .andWhere('user.isVerified = :isVerified', { isVerified: true });
-    
+
     return await query.getMany();
   }
 }
