@@ -5,6 +5,7 @@ import { Constants, SharedModule } from '@app/shared';
 import { RedisDBName } from '@app/shared/config/redis.config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import getConfigVariables from '@app/shared/config/configVariables.config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import getConfigVariables from '@app/shared/config/configVariables.config';
         },
       }),
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [NotifierController],
   providers: [NotifierService],
