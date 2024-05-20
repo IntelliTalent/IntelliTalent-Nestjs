@@ -34,7 +34,7 @@ export class CvExtractorController {
 
   @Get('/extract')
   @Public()
-  // @Roles([UserType.jobSeeker])
+  @Roles([UserType.jobSeeker])
   @ApiOperation({ summary: 'Extract the info from a given cv' })
   @ApiResponse({
     status: 200,
@@ -42,9 +42,7 @@ export class CvExtractorController {
     description: 'Info extracted successfully',
   })
   @ApiBearerAuth(AUTH_HEADER)
-  // async extractInfo(@CurrentUser() user: User) {
-  async extractInfo() {
-    // return this.cvExtractorService.extractInfo(user.id);
-    return this.cvExtractorService.extractInfo('1');
+  async extractInfo(@CurrentUser() user: User) {
+    return this.cvExtractorService.extractInfo(user.id);
   }
 }

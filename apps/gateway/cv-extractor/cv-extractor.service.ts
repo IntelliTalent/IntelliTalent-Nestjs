@@ -1,4 +1,7 @@
-import { cvExtractorPattern } from '@app/services_communications/cv-extractor-service';
+import {
+  CvInfo,
+  cvExtractorPattern,
+} from '@app/services_communications/cv-extractor-service';
 import { ServiceName } from '@app/shared';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Inject, Injectable } from '@nestjs/common';
@@ -16,7 +19,7 @@ export class CvExtractorService {
   ) {}
 
   private async saveInfo(userId: string, cvLink: string) {
-    const data = await firstValueFrom(
+    const data: CvInfo = await firstValueFrom(
       this.cvExtractorService.send(
         { cmd: cvExtractorPattern.extractInfo },
         { cvLink },
@@ -32,7 +35,7 @@ export class CvExtractorService {
     return 'Data is currently being processed.';
   }
 
-  async extractInfo(userId: string) {
+  async extractInfo(userId: string): Promise<CvInfo> {
     const data = await this.redis.get(userId);
 
     // Remove the user id from redis
