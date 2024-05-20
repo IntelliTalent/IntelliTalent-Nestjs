@@ -1,25 +1,28 @@
 import {
   ClassSerializerInterceptor,
   Controller,
+  Inject,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateUserDto,
   HealthCheckPatterns,
   userServicePatterns,
 } from '@app/services_communications';
-import { User } from '@app/shared';
+import { ServiceName, User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
-import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
-import { PageDto } from '@app/shared/api-features/dtos/page.dto';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    @Inject(ServiceName.NOTIFIER_SERVICE)
+    private readonly notifierService: ClientProxy,
+  ) {}
 
   @MessagePattern({ cmd: HealthCheckPatterns })
   getHello() {

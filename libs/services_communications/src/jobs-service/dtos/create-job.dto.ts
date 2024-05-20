@@ -57,6 +57,8 @@ class Interview {
 }
 
 export class CreateJobDto {
+  userId?: string;
+
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
