@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseFilters } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
@@ -8,8 +8,10 @@ import {
 } from '@app/services_communications/jobs-service';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { RpcExceptionsFilter } from '@app/shared';
 
 @Controller()
+@UseFilters(RpcExceptionsFilter)
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
