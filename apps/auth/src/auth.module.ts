@@ -17,7 +17,7 @@ import { TokenService } from './token.service';
     JwtModule.registerAsync({
       useFactory: async () => {
         const jwtSecret = getConfigVariables(Constants.JWT.secret);
-        const jwtExpiresIn = await getConfigVariables(Constants.JWT.expiresIn);
+        const jwtExpiresIn = getConfigVariables(Constants.JWT.expiresIn);
         return {
           secret: jwtSecret,
           signOptions: {

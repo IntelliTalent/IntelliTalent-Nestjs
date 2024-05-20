@@ -33,7 +33,7 @@ import { ApiQuizModule } from '../quiz/quiz.module';
     ApiProfileModule,
     ApiCvExtractorModule,
     ApiJobsModule,
-    // ApiUploaderModule,
+    ApiUploaderModule,
     ApiQuizModule,
   ],
   controllers: [AppController],
