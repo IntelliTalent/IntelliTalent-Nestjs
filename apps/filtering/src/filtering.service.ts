@@ -1,16 +1,18 @@
-import { userServicePatterns } from '@app/services_communications';
 import { MATCHING_THRESHOLD, atsServicePattern } from '@app/services_communications/ats-service';
+import { MatchProfileAndJobData } from '@app/services_communications/ats-service/interfaces/match.interface';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { jobsServicePatterns } from '@app/services_communications/jobs-service';
-import { JobType, ServiceName, StructuredJob } from '@app/shared';
+import { ServiceName, StructuredJob } from '@app/shared';
 import { Filteration, QuizData, StageData } from '@app/shared/entities/filteration.entity';
-import { StageType } from '@app/shared/enums/stageType.enum';
+import { StageType } from '@app/shared/enums/stage-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { firstValueFrom } from 'rxjs';
+import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
+import { StageType as CustomStageType } from '@app/shared';
 
 @Injectable()
 export class FilteringService {
@@ -49,7 +51,7 @@ export class FilteringService {
     if (!filteration) {
 
       // call the  ATS service to match the user with the job to ensure the user passed the match score and custom filters
-      const matchingResult: object = await firstValueFrom(
+      const matchingResult: MatchProfileAndJobData = await firstValueFrom(
         this.atsService.send(
           {
             cmd: atsServicePattern.matchProfileAndJob,
@@ -60,23 +62,34 @@ export class FilteringService {
           },
         ),
       );
-      if (matchingResult['status'] != 'matching is done!') {
-        throw new BadRequestException(matchingResult['status']);
+
+      const { status, ...matchData } = matchingResult;
+
+      if (status != ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS) {
+        // TODO : edit it to rbc exception
+        throw new BadRequestException(status);
       }
 
       const newFilteration = await this.filterationModel.create({
         jobId,
         profileId,
         currentStage: StageType.applied,
-        matchData: matchingResult,
-        isQualified: !matchingResult['isValid'] || !(matchingResult['matchScore'] > MATCHING_THRESHOLD),
+        matchData,
+        isQualified: matchData.isValid && (matchData.matchScore > MATCHING_THRESHOLD),
         appliedData: {
           appliedAt: new Date()
         }
       });
 
-      // // check if the job has enabled the quiz stage
-      // if ()
+      // check if the job has enabled the quiz stage
+      if (job.stages.order.includes(CustomStageType.QUIZ)) {
+        // TODO:  generate Quiz from quiz service
+      }
+
+      if (job.stages.order.includes(CustomStageType.INTERVIEW)) {
+        // TODO: generate the interview questions from the interview service
+      }
+
 
       return {
         message: 'User applied to the job',
@@ -107,24 +120,36 @@ export class FilteringService {
   }
 
   async getAppliedUsers(jobId: string, page: number, limit: number): Promise<GetAppliedUsersResponseDto> {
-    const results = await this.filterationModel.find({ jobId }).skip((page - 1) * limit).limit(limit).exec();
-    const count = await this.filterationModel.countDocuments({ jobId });
-    return {
-      metadata: {
-        count,
-        page
+    
+    const results =  await this.filterationModel.aggregate([
+      {
+        $match: {
+          jobId
+        }
       },
-      appliedUsers: results.map(result => ({
-        userId: result.jobId,
-        stage: result.currentStage
-      }))
-    }
+      {
+        $facet: {
+          metadata: [{ $count: 'count' }, { $addFields: { page } }],
+          appliedUsers: [{ $skip: (page - 1) * limit }, { $limit: limit }, {
+            $project: {
+              profileId: 1,
+              stage: "$currentStage"
+            }
+          }]
+        }
+      }
+    ]);
+
+    return {
+      metadata: results[0].metadata[0],
+      appliedUsers: results[0].appliedUsers
+    };
   }
 
-  async getUserStage(jobId: string, userId: string): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, userId });
+  async getUserStage(jobId: string, profileId: string): Promise<StageResponseDto> {
+    const filteration = await this.filterationModel.findOne({ jobId, profileId });
     if (!filteration) {
-      throw new BadRequestException('User did not apply to the job');
+      throw new BadRequestException('User did not apply or matched to the job');
     }
 
     let stageData: StageData = null;
@@ -175,8 +200,8 @@ export class FilteringService {
     }
   }
 
-  async failQuiz(jobId: string, userId: string, grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: userId });
+  async failQuiz(jobId: string, profileId: string, grade: number): Promise<StageResponseDto> {
+    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
     if (!filteration) {
       throw new BadRequestException('User did not apply to the job');
     }
@@ -196,8 +221,8 @@ export class FilteringService {
     }
   }
 
-  async passInterview(jobId: string, userId: string, answers: string[], grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: userId });
+  async passInterview(jobId: string, profileId: string, answers: string[], grade: number): Promise<StageResponseDto> {
+    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
     if (!filteration) {
       throw new BadRequestException('User did not apply to the job');
     }
@@ -217,8 +242,8 @@ export class FilteringService {
     }
   }
 
-  async failInterview(jobId: string, userId: string, answers: string[], grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: userId });
+  async failInterview(jobId: string, profileId: string, answers: string[], grade: number): Promise<StageResponseDto> {
+    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
     if (!filteration) {
       throw new BadRequestException('User did not apply to the job');
     }
@@ -238,8 +263,8 @@ export class FilteringService {
     }
   }
 
-  async selectProfile(jobId: string, userId: string): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: userId });
+  async selectProfile(jobId: string, profileId: string): Promise<StageResponseDto> {
+    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
     if (!filteration) {
       throw new BadRequestException('User did not apply to the job');
     }
@@ -251,7 +276,7 @@ export class FilteringService {
       selectedAt: new Date()
     }
     filteration.isClosed = true;
-    await this.filterationModel.updateMany({ jobId, profileId: { $ne: userId } }, { currentStage: StageType.failed }).exec();
+    await this.filterationModel.updateMany({ jobId, profileId: { $ne: profileId } }, { currentStage: StageType.failed }).exec();
     await filteration.save();
     return {
       message: 'User selected for the job',

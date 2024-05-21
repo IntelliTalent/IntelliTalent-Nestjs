@@ -1,4 +1,4 @@
-import { StageType } from "@app/shared/enums/stageType.enum";
+import { StageType } from "@app/shared/enums/stage-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class GetStageResponseDto {

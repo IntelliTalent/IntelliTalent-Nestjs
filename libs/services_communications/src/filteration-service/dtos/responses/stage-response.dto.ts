@@ -1,5 +1,5 @@
 import { StageData } from "@app/shared/entities/filteration.entity";
-import { StageType } from "@app/shared/enums/stageType.enum";
+import { StageType } from "@app/shared/enums/stage-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class StageResponseDto {
