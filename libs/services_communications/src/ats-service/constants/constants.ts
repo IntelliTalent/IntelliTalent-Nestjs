@@ -15,3 +15,10 @@ export const ATS_JOBS_REDIS_DB_PROVIDER = 'ATS_JOBS_REDIS_DB_PROVIDER';
 export const ATS_MAILING_REDIS_DB_PROVIDER = 'ATS_MAILING_REDIS_DB_PROVIDER';
 
 export const REDIS_JOBS_KEY = 'jobs';
+
+export const ATS_JOB_NOT_FOUND_ERROR = 'job not found';
+export const ATS_USER_NOT_FOUND_ERROR = 'user not found';
+export const ATS_PROFILE_NOT_FOUND_ERROR = 'profile not found';
+export const ATS_NO_JOBS_ERROR = 'no jobs found';
+export const ATS_MATCHING_DONE_STATUS = 'matching is done!';
+export const ATS_MATCHING_ERROR_STATUS = 'error in matching';
