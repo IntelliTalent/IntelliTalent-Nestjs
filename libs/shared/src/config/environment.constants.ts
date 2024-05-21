@@ -104,7 +104,7 @@ export enum ServiceName {
   JOB_SERVICE = 'JOB_SERVICE',
   NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
   PROFILE_SERVICE = 'PROFILE_SERVICE',
-  FILTRATION_SERVICE = 'FILTERATION_SERVICE',
+  FILTERATION_SERVICE = 'FILTERATION_SERVICE',
   SCRAPPER_SERVICE = 'SCRAPPER_SERVICE',
   JOB_EXTRACTOR_SERVICE = 'JOB_EXTRACTOR_SERVICE',
   QUIZ_SERVICE = 'QUIZ_SERVICE',
@@ -137,7 +137,7 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.NOTIFIER_QUEUE);
     case ServiceName.PROFILE_SERVICE:
       return await getConfigVariables(Constants.QUEUES.PROFILE_QUEUE);
-    case ServiceName.FILTRATION_SERVICE:
+    case ServiceName.FILTERATION_SERVICE:
       return await getConfigVariables(Constants.QUEUES.FILTRATION_QUEUE);
     case ServiceName.SCRAPPER_SERVICE:
       return await getConfigVariables(Constants.QUEUES.SCRAPPER_QUEUE);
