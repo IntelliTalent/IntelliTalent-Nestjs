@@ -8,6 +8,10 @@ import {
 } from '@app/services_communications';
 import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
+import {
+  MatchData,
+  MatchProfileAndJobData,
+} from '@app/services_communications/ats-service/interfaces/match.interface';
 import { jobsServicePatterns } from '@app/services_communications/jobs-service';
 import { EmailTemplates } from '@app/services_communications/notifier/constants/templates';
 import {
@@ -205,7 +209,7 @@ export class AtsService {
 
       if (jobs.length === 0) {
         return {
-          status: 'no jobs to match!',
+          status: ATS_CONSTANTS.ATS_NO_JOBS_ERROR,
         };
       }
 
@@ -356,13 +360,13 @@ export class AtsService {
       await this.filterationRepository.save(filterations);
 
       return {
-        status: 'matching is done!',
-      };
+        status: ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS,
+      } as MatchData;
     } catch (error) {
       // TODO: uncomment when fixed
       // throw new RpcException(error)
       return {
-        status: 'error in matching!',
+        status: ATS_CONSTANTS.ATS_MATCHING_ERROR_STATUS,
         error,
       };
     }
@@ -384,7 +388,7 @@ export class AtsService {
 
       if (!job) {
         return {
-          status: 'job not found!',
+          status: ATS_CONSTANTS.ATS_JOB_NOT_FOUND_ERROR,
         };
       }
 
@@ -400,7 +404,7 @@ export class AtsService {
 
       if (!profile) {
         return {
-          status: 'profile not found!',
+          status: ATS_CONSTANTS.ATS_PROFILE_NOT_FOUND_ERROR,
         };
       }
 
@@ -416,7 +420,7 @@ export class AtsService {
 
       if (!user) {
         return {
-          status: 'user not found!',
+          status: ATS_CONSTANTS.ATS_USER_NOT_FOUND_ERROR,
         };
       }
 
@@ -441,15 +445,15 @@ export class AtsService {
       const matchScore = this._calculateMatchScore(job, profile);
 
       return {
-        status: 'matching is done!',
+        status: ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS,
         matchScore,
         isValid,
-      };
+      } as MatchProfileAndJobData;
     } catch (error) {
       // TODO: uncomment when fixed
       // throw new RpcException(error)
       return {
-        status: 'error in matching!',
+        status: ATS_CONSTANTS.ATS_MATCHING_ERROR_STATUS,
         error,
       };
     }

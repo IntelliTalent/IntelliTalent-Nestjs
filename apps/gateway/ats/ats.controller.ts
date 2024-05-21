@@ -1,16 +1,12 @@
 import { atsServicePattern } from '@app/services_communications/ats-service';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
+import { MatchProfileAndJobData } from '@app/services_communications/ats-service/interfaces/match.interface';
 import { ServiceName } from '@app/shared';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
-import {
-  Body,
-  Controller,
-  Header,
-  Inject,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Header, Inject, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { firstValueFrom } from 'rxjs';
 
 @ApiTags('ATS')
 @Controller('ats')
@@ -38,7 +34,7 @@ export class ApiATSController {
       {},
     );
 
-    return { message: 'Matching started' }
+    return { message: 'Matching started' };
   }
 
   /**
@@ -53,11 +49,15 @@ export class ApiATSController {
   @Public()
   @Post('matchProfileAndJob')
   async matchProfileAndJob(@Body() profileAndJobDto: ProfileAndJobDto) {
-    return this.atsService.send(
-      {
-        cmd: atsServicePattern.matchProfileAndJob,
-      },
-      profileAndJobDto,
+    const result: MatchProfileAndJobData = await firstValueFrom(
+      this.atsService.send(
+        {
+          cmd: atsServicePattern.matchProfileAndJob,
+        },
+        profileAndJobDto,
+      ),
     );
+
+    const score = result.matchScore;
   }
 }
