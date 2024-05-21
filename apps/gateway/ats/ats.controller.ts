@@ -49,15 +49,11 @@ export class ApiATSController {
   @Public()
   @Post('matchProfileAndJob')
   async matchProfileAndJob(@Body() profileAndJobDto: ProfileAndJobDto) {
-    const result: MatchProfileAndJobData = await firstValueFrom(
-      this.atsService.send(
-        {
-          cmd: atsServicePattern.matchProfileAndJob,
-        },
-        profileAndJobDto,
-      ),
+    return this.atsService.send(
+      {
+        cmd: atsServicePattern.matchProfileAndJob,
+      },
+      profileAndJobDto,
     );
-
-    const score = result.matchScore;
   }
 }
