@@ -1,7 +1,8 @@
+import { AuthFormFieldsDto } from '@app/services_communications/autofill/dtos/auth-form-fields.dto';
 import { FormFieldsDto } from '@app/services_communications/autofill/dtos/form-fields.dto';
 import { AutofillServicePattern } from '@app/services_communications/autofill/patterns/autofill-service.pattern';
-import { CurrentUser, ServiceName } from '@app/shared';
-import { Body, Controller, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
+import { CurrentUser, ServiceName, User } from '@app/shared';
+import { Body, Controller, Get, Inject, Patch, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -12,7 +13,7 @@ export class ApiAutofillController {
     constructor(
         @Inject(ServiceName.AUTOFILL_SERVICE)
         private autoFillService: ClientProxy,
-    ) {}
+    ) { }
 
 
     @ApiOperation({ summary: 'Init the profile data' })
@@ -21,17 +22,17 @@ export class ApiAutofillController {
     })
     @Post()
     async initProfile(
-        @CurrentUser('id') userId,
+        @CurrentUser() user: User,
         @Body() formFields: FormFieldsDto
-        ) {
+    ) {
         return this.autoFillService.send(
             {
                 cmd: AutofillServicePattern.init,
             },
             {
-                userId:userId.id,
-                formFields
-            },
+                userId: user.id,
+                ...formFields
+            } as AuthFormFieldsDto,
         );
     }
 
@@ -42,38 +43,38 @@ export class ApiAutofillController {
     })
     @Get()
     async getFormFields(
-        @CurrentUser('id') userId,
+        @CurrentUser() user: User,
         @Query('fields') fields: [string]
-        ) {
+    ) {
         return this.autoFillService.send(
             {
                 cmd: AutofillServicePattern.getFields,
             },
             {
-                userId:userId.id,
+                userId: user.id,
                 fields
             },
         );
     }
-    
-    
+
+
     @ApiOperation({ summary: 'Patch the profile data' })
     @ApiOkResponse({
         description: 'The profile data has been patched',
     })
     @Patch()
     async patchFormFields(
-        @CurrentUser('id') userId,
+        @CurrentUser() user: User,
         @Body() formFields: FormFieldsDto
-        ) {
+    ) {
         return this.autoFillService.send(
             {
                 cmd: AutofillServicePattern.patchFields,
             },
             {
-                userId:userId.id,
-                formFields
-            },
+                userId: user.id,
+                ...formFields
+            } as AuthFormFieldsDto,
         );
     }
 }
