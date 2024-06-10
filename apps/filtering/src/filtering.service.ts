@@ -6,28 +6,32 @@ import { jobsServicePatterns } from '@app/services_communications/jobs-service';
 import { ServiceName, StructuredJob } from '@app/shared';
 import { Filteration, QuizData, StageData } from '@app/shared/entities/filteration.entity';
 import { StageType } from '@app/shared/enums/stage-type.enum';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { firstValueFrom } from 'rxjs';
 import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
-import { StageType as CustomStageType } from '@app/shared';
-
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
+import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
+import * as FILTERATION_CONSTANTS from '@app/services_communications/filteration-service/constants/constants';
+import { profileServicePattern } from '@app/services_communications';
 @Injectable()
 export class FilteringService {
 
   constructor(
     @Inject(ServiceName.ATS_SERVICE) private readonly atsService: ClientProxy,
     @Inject(ServiceName.JOB_SERVICE) private readonly jobService: ClientProxy,
-    @InjectModel('Filteration') private readonly filterationModel: Model<Filteration>,
+    @Inject(ServiceName.NOTIFIER_SERVICE) private readonly notifierService: ClientProxy,
+    @Inject(ServiceName.PROFILE_SERVICE) private readonly profileService: ClientProxy,
+    @InjectRepository(Filteration) private readonly filterationRepository: Repository<Filteration>,
   ) { }
   getHello(): string {
     return 'Hello World!';
   }
 
-  async applyJob(profileId: string, jobId: string): Promise<StageResponseDto> {
 
+  async applyJob(profileId: string, jobId: string): Promise<StageResponseDto> {
     // get the job details
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -39,17 +43,16 @@ export class FilteringService {
         },
       ),
     );
-
     // check if the job exists and is open
     if (!job || !job.isActive) {
-      throw new BadRequestException('Job not found or closed');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
+      return null;
     }
-
     // check if user applied to the job before
-    const filteration = await this.filterationModel.findOne({ jobId, profileId });
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     // create a new filteration
     if (!filteration) {
-
       // call the  ATS service to match the user with the job to ensure the user passed the match score and custom filters
       const matchingResult: MatchProfileAndJobData = await firstValueFrom(
         this.atsService.send(
@@ -62,15 +65,13 @@ export class FilteringService {
           },
         ),
       );
-
       const { status, ...matchData } = matchingResult;
-
       if (status != ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS) {
         // TODO : edit it to rbc exception
-        throw new BadRequestException(status);
+        // throw new BadRequestException(status);
+        console.log(status);
       }
-
-      const newFilteration = await this.filterationModel.create({
+      const newFilteration = this.filterationRepository.create({
         jobId,
         profileId,
         currentStage: StageType.applied,
@@ -80,78 +81,152 @@ export class FilteringService {
           appliedAt: new Date()
         }
       });
-
-      // check if the job has enabled the quiz stage
-      if (job.stages.order.includes(CustomStageType.QUIZ)) {
-        // TODO:  generate Quiz from quiz service
-      }
-
-      if (job.stages.order.includes(CustomStageType.INTERVIEW)) {
-        // TODO: generate the interview questions from the interview service
-      }
-
-
+      const savedFilteration = await this.filterationRepository.save(newFilteration);
       return {
-        message: 'User applied to the job',
+        message: FILTERATION_CONSTANTS.USER_APPLIED,
         stage: StageType.applied,
-        stageData: newFilteration.appliedData
+        stageData: savedFilteration.appliedData
       }
-
     } else if (filteration.currentStage === StageType.matched) {
       // check if the user passed the match score and custom filters
       filteration.currentStage = StageType.applied;
       filteration.appliedData = {
         appliedAt: new Date()
       };
-
       filteration.isQualified = filteration.matchData.matchScore > MATCHING_THRESHOLD && filteration.matchData.isValid;
-
-      await filteration.save();
-
+      await this.filterationRepository.save(filteration);
       return {
-        message: 'User applied to the job',
+        message: FILTERATION_CONSTANTS.USER_APPLIED,
         stage: StageType.applied,
         stageData: filteration.appliedData
       }
-
     } else {
-      throw new BadRequestException('User already applied to the job');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
+      console.log(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
+      return null;
     }
   }
 
-  async getAppliedUsers(jobId: string, page: number, limit: number): Promise<GetAppliedUsersResponseDto> {
-    
-    const results =  await this.filterationModel.aggregate([
-      {
-        $match: {
+  async beginCurrentStage(jobId: string): Promise<StageResponseDto> {
+    // get the job details from the job service
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        {
           jobId
-        }
-      },
-      {
-        $facet: {
-          metadata: [{ $count: 'count' }, { $addFields: { page } }],
-          appliedUsers: [{ $skip: (page - 1) * limit }, { $limit: limit }, {
-            $project: {
-              profileId: 1,
-              stage: "$currentStage"
-            }
-          }]
-        }
-      }
-    ]);
-
+        },
+      ),
+    );
+    // check if the job exists and is open
+    if (!job || !job.isActive) {
+      // throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
+      return null;
+    }
+    switch (job.currentStage) {
+      case StageType.quiz:
+        // TODO:  call the quiz service to get the urls of the generated quizzes        
+        break;
+      case StageType.interview:
+        // TODO: call the mail service to send the mails to the users to start the interview
+        break;
+      default:
+        // throw new BadRequestException('Not valid stage to begin');
+        console.log(FILTERATION_CONSTANTS.NOT_VALID_STAGE);
+        return null;
+    }
     return {
-      metadata: results[0].metadata[0],
-      appliedUsers: results[0].appliedUsers
-    };
+      message: FILTERATION_CONSTANTS.STAGE_STARTED,
+      stage: job.currentStage
+    }
   }
 
-  async getUserStage(jobId: string, profileId: string): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId });
-    if (!filteration) {
-      throw new BadRequestException('User did not apply or matched to the job');
+  async getAppliedUsers(userId: string, jobId: string, page: number, limit: number): Promise<GetAppliedUsersResponseDto> {
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        {
+          jobId
+        },
+      ),
+    );
+    console.log('job', job);
+    if (!job || job.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
     }
+    page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
+    limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
+    page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
+    limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
+    limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+    console.log('page', page);
 
+    // Step 1: Count the total number of documents matching the jobId
+    const totalCount = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.jobId = :jobId', { jobId })
+      .getCount();
+
+    // Step 2: Get the applied users with pagination
+    const appliedUsers = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.jobId = :jobId', { jobId })
+      .skip((page - 1) * limit)
+      .take(limit)
+      .select(['filteration.profileId', 'filteration.currentStage'])
+      .getMany();
+
+    // Step 3: Construct the final result in the desired format
+    const results = {
+      metadata: {
+        count: totalCount,
+        page: page,
+      },
+      appliedUsers: appliedUsers.map(user => ({
+        profileId: user.profileId,
+        stage: user.currentStage,
+      })),
+    };
+
+    return results;
+  }
+
+  async getUserStage(userId: string, jobId: string, profileId: string): Promise<StageResponseDto> {
+    // check the user is the owner of the profile
+    // call the profile service to get the profile details
+    const profile = await firstValueFrom(
+      this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById
+        },
+        profileId,
+      ),
+    );
+    if (!profile) {
+      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      return null;
+    }
+    // check if the user is the owner of the profile
+    if (profile.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      return null;
+    }
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
+
+    if (!filteration) {
+      // throw new BadRequestException('User did not apply or matched to the job');
+      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      return null;
+    }
     let stageData: StageData = null;
     switch (filteration.currentStage) {
       case StageType.matched:
@@ -173,113 +248,231 @@ export class FilteringService {
         break;
     }
     return {
-      message: 'User stage in the job',
+      message: FILTERATION_CONSTANTS.CURRENT_STAGE,
       stage: filteration.currentStage,
       stageData
     }
   }
 
-  async passQuiz(jobId: string, userId: string, grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: userId });
+  async passQuiz(userId: string, jobId: string, profileId: string, grade: number): Promise<StageResponseDto> {
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        {
+          jobId
+        },
+      ),
+    );
+    if (!job || job.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
+    }
+
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      throw new BadRequestException('User did not apply to the job');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      return null;
     }
     if (filteration.currentStage !== StageType.quiz) {
-      throw new BadRequestException('User is not in the quiz stage');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
+      return null;
     }
     filteration.quizData = {
       grade,
       quizDate: new Date()
     } as QuizData;
     filteration.currentStage = StageType.interview;
-    await filteration.save();
+    await this.filterationRepository.save(filteration);
     return {
-      message: 'User passed the quiz',
+      message: FILTERATION_CONSTANTS.USER_PASSED_QUIZ,
       stage: filteration.currentStage,
       stageData: filteration.quizData
     }
   }
 
-  async failQuiz(jobId: string, profileId: string, grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
+  async failQuiz(userId:string, jobId: string, profileId: string, grade: number): Promise<StageResponseDto> {
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        {
+          jobId
+        },
+      ),
+    );
+    if (!job || job.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
+    }
+
+    
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId: profileId });
     if (!filteration) {
-      throw new BadRequestException('User did not apply to the job');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      return null;
     }
     if (filteration.currentStage !== StageType.quiz) {
-      throw new BadRequestException('User is not in the quiz stage');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
+      return null;
     }
     filteration.quizData = {
       grade,
       quizDate: new Date()
     } as QuizData;
     filteration.currentStage = StageType.failed;
-    await filteration.save();
+    await this.filterationRepository.save(filteration);
     return {
-      message: 'User failed the quiz',
+      message:FILTERATION_CONSTANTS.USER_FAILED_QUIZ,
       stage: filteration.currentStage,
       stageData: filteration.quizData
     }
   }
 
-  async passInterview(jobId: string, profileId: string, answers: string[], grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
+
+  async submitInterview(userId: string, jobId: string, profileId: string, interview: InterviewAnswersDto): Promise<StageResponseDto> {
+    // call the profile service to get the profile details
+    const profile = await firstValueFrom(
+      this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById
+        },
+        profileId,
+      ),
+    );
+    if (!profile) {
+      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      return null;
+    }
+    // check if the user is the owner of the profile
+    if (profile.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      return null;
+    }
+
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      throw new BadRequestException('User did not apply to the job');
+      // throw new BadRequestException('User did not apply to the job');
+      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      return null;
     }
+
     if (filteration.currentStage !== StageType.interview) {
-      throw new BadRequestException('User is not in the interview stage');
+      // throw new BadRequestException('User is not in the interview stage');
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      return null;
     }
+
     filteration.interviewData = {
-      answers,
-      grade,
+      answers: interview.answers,
+      recordedAnswers: interview.recordedAnswers,
       interviewDate: new Date()
     };
-    filteration.currentStage = StageType.candidate;
+    await this.filterationRepository.save(filteration);
     return {
-      message: 'User passed the interview',
+      message: FILTERATION_CONSTANTS.USER_SUBMITTED_INTERVIEW,
       stage: filteration.currentStage,
       stageData: filteration.interviewData
     }
   }
 
-  async failInterview(jobId: string, profileId: string, answers: string[], grade: number): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
+  async reviewAnswers(userId: string, reviewAnswers: ReviewAnswersDto): Promise<StageResponseDto> {
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        {
+          jobId: reviewAnswers.jobId
+        },
+      ),
+    );
+    if (!job || job.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
+    }
+
+    const { jobId, profileId, grades } = reviewAnswers;
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      throw new BadRequestException('User did not apply to the job');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      return null;
     }
     if (filteration.currentStage !== StageType.interview) {
-      throw new BadRequestException('User is not in the interview stage');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      return null;
     }
-    filteration.interviewData = {
-      answers,
-      grade,
-      interviewDate: new Date()
-    };
-    filteration.currentStage = StageType.failed;
+    if (filteration.interviewData.answers.length !== grades.length) {
+      // throw new BadRequestException(FILTERATION_CONSTANTS.ANSWERS_AND_QUESTIONS_NOT_MATCHED);
+      console.log(FILTERATION_CONSTANTS.ANSWERS_AND_QUESTIONS_NOT_MATCHED);
+      return null;
+    }
+    const totalGrade = grades.reduce((acc, grade) => acc + grade, 0);
+    filteration.interviewData.grade = totalGrade / grades.length;
+    filteration.currentStage = filteration.interviewData.grade > 50 ? StageType.candidate : StageType.failed;
+    await this.filterationRepository.save(filteration);
     return {
-      message: 'User failed the interview',
+      message: FILTERATION_CONSTANTS.RECRUITER_REVIEWED_INTERVIEW,
       stage: filteration.currentStage,
       stageData: filteration.interviewData
     }
   }
 
-  async selectProfile(jobId: string, profileId: string): Promise<StageResponseDto> {
-    const filteration = await this.filterationModel.findOne({ jobId, profileId: profileId });
+
+  async selectProfile(userId: string, jobId: string, profileId: string): Promise<StageResponseDto> {
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        {
+          jobId
+        },
+      ),
+    );
+    if (!job || job.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
+    }
+
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      throw new BadRequestException('User did not apply to the job');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+      return null;
     }
     if (filteration.currentStage !== StageType.candidate) {
-      throw new BadRequestException('User is not in the candidate stage');
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_CANDIDATE);
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_CANDIDATE);
+      return null;
     }
     filteration.currentStage = StageType.selected;
     filteration.selectionData = {
       selectedAt: new Date()
     }
     filteration.isClosed = true;
-    await this.filterationModel.updateMany({ jobId, profileId: { $ne: profileId } }, { currentStage: StageType.failed }).exec();
-    await filteration.save();
+
+    await this.filterationRepository.save(filteration);
     return {
-      message: 'User selected for the job',
+      message: FILTERATION_CONSTANTS.RECRUITER_SELECTED_CANDIDATE,
       stage: filteration.currentStage,
       stageData: filteration.selectionData
     }

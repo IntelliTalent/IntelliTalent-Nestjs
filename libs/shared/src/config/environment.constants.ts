@@ -1,3 +1,4 @@
+import { Filteration } from '../entities/filteration.entity';
 import getConfigVariables from './configVariables.config';
 
 export const Constants = {
@@ -32,6 +33,7 @@ export const Constants = {
       ScrappedJobsDB: 'ScrappedJobsDB',
       FormFieldsDB: 'FormFieldsDB',
       InterviewQuestionsDB: 'InterviewQuestionsDB',
+      FilterationDB: 'FilterationDB',
     },
   },
   REDIS: {
@@ -105,6 +107,7 @@ export enum ServiceName {
   NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
   PROFILE_SERVICE = 'PROFILE_SERVICE',
   FILTERATION_SERVICE = 'FILTERATION_SERVICE',
+  CUSTOM_JOB_SERVICE = 'CUSTOM_JOB_SERVICE',
   SCRAPPER_SERVICE = 'SCRAPPER_SERVICE',
   JOB_EXTRACTOR_SERVICE = 'JOB_EXTRACTOR_SERVICE',
   QUIZ_SERVICE = 'QUIZ_SERVICE',

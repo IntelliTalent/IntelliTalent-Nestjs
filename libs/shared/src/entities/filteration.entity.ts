@@ -9,7 +9,8 @@ export interface QuizData {
 
 export interface InterviewData {
   answers: string[];
-  grade: number;
+  recordedAnswers: string[];
+  grade?: number;
   interviewDate: Date;
 }
 
@@ -37,13 +38,11 @@ export type StageData = QuizData | InterviewData | MatchData | AppliedData | Sel
 export class Filteration extends AbstractEntity {
 
   @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid', nullable: false })
   jobId: string;
 
   @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid', nullable: false })
   profileId: string;
 
   @Column({ type: 'boolean', nullable: false, default: true })
@@ -70,3 +69,4 @@ export class Filteration extends AbstractEntity {
   @Column({ type: 'boolean', nullable: false, default: false })
   isClosed: boolean;
 }
+

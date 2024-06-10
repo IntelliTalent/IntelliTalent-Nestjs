@@ -1,10 +1,18 @@
 import { ApplyJobRequest } from '@app/services_communications/filteration-service/dtos/requests/apply-job-request.dto';
+import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
+import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
+import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
+import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
+import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
+import { PaginatedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-job.dto';
+import { QuizDto } from '@app/services_communications/filteration-service/dtos/requests/quiz.dto';
+import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { GetStageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-stage-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
-import { CurrentUser, ServiceName } from '@app/shared';
-import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
+import { CurrentUser, ServiceName, User } from '@app/shared';
+import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
@@ -22,27 +30,38 @@ export class ApiFilterationController {
   @ApiOkResponse({
     description: 'filteration of the job under processing ...',
   })
-  /**
-   * This function is responsible for applying the user to a certain job and setting the stage to applied
-   * The cases the function should handle are:
-   *  - if the user applied to the job before, the function should throw an error
-   *  - if the user didn't apply to the job before:
-   *   - if the user is matched to the job and passed the the match score and custom filters the function should update the stage to applied
-   *   - if the user is matched to the job and failed the the match score and custom filters the function should update the stage to failed
-   * @returns The message of the response, stage type and the stage data of the user
-   */
   async filterJob(
     @Body() filterJob: ApplyJobRequest,
-    @CurrentUser('id') userId: string,
+    @CurrentUser() user: User,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.filterJob,
       },
       {
-        userId: userId,
+        userId: user.id,
+        profileId: filterJob.profileId,
         jobId: filterJob.jobId,
       } as ApplyJobRequest,
+    );
+  }
+
+  @ApiOperation({ summary: 'Begin the current stage for a certain job' })
+  @Post(':jobId/begin')
+  @ApiOkResponse({
+    description: 'The current stage has been started',
+    type: StageResponseDto
+  })
+  async beginCurrentStage(
+    @Param('jobId') jobId: string,
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.beginCurrentStage,
+      },
+      {
+        jobId,
+      } as JobDto,
     );
   }
 
@@ -53,150 +72,149 @@ export class ApiFilterationController {
     description: 'The applied users for the job',
   })
   async getAppliedUsers(
+    @CurrentUser() user: User,
     @Param('jobId') jobId: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.getAppliedUsers,
       },
       {
-        jobId: jobId,
-      },
+        userId: user.id,
+        jobId,
+        page,
+        limit,
+      } as PaginatedJobDto,
     );
   }
 
   @ApiOperation({ summary: 'Get the stage of a certain user in a certain job' })
-  @Get(':jobId/:userId')
+  @Get(':jobId/:profileId')
   @ApiOkResponse({
     description: 'The stage of the user in the job',
     type: GetStageResponseDto,
   })
   async getStage(
+    @CurrentUser() user: User,
     @Param('jobId') jobId: string,
-    @Param('userId') userId: string,
+    @Param('profileId') profileId: string,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.getUserStage,
       },
       {
-        jobId: jobId,
-        userId: userId,
-      },
+        userId: user.id,
+        jobId,
+        profileId,
+      } as ApplyJobRequest,
     );
   }
 
   @ApiOperation({ summary: 'Pass the quiz stage for a certain user in a certain job' })
-  @Post(':jobId/:userId/pass-quiz')
+  @Post('pass-quiz')
   @ApiOkResponse({
     description: 'Updated the stage of the user to Interview',
     type: StageResponseDto
   })
   async passQuiz(
-    @Param('jobId') jobId: string,
-    @Param('userId') userId: string,
-    @Body('grade') grade: number,
+    @Body() quizDto: QuizDto,
+    @CurrentUser() user: User,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.passQuiz,
       },
       {
-        jobId: jobId,
-        userId: userId,
-        grade
-      },
+        ...quizDto,
+        userId: user.id,
+      } as AuthQuizDto
     );
   }
 
   @ApiOperation({ summary: 'Fail the quiz stage for a certain user in a certain job' })
-  @Post(':jobId/:userId/fail-quiz')
+  @Post('fail-quiz')
   @ApiOkResponse({
     description: 'Updated the stage of the user to Applied',
     type: StageResponseDto
   })
   async failQuiz(
-    @Param('jobId') jobId: string,
-    @Param('userId') userId: string,
-    @Body('grade') grade: number,
+    @Body() quizDto: QuizDto,
+    @CurrentUser() user: User,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.failQuiz,
       },
       {
-        jobId: jobId,
-        userId: userId,
-        grade
-      },
+        ...quizDto,
+        userId: user.id,
+      } as AuthQuizDto
     );
   }
 
-  @ApiOperation({ summary: 'Pass the interview stage for a certain user in a certain job' })
-  @Post(':jobId/:userId/pass-interview')
+  @ApiOperation({ summary: 'Submit the interview stage for a certain user in a certain job' })
+  @Post('submit-interview')
   @ApiOkResponse({
-    description: 'Updated the stage of the user to Matched',
+    description: 'Updated the stage of the user to Review',
     type: StageResponseDto
   })
-  async passInterview(
-    @Param('jobId') jobId: string,
-    @Param('userId') userId: string,
-    @Body('answers') answers: string[],
-    @Body('grade') grade: number,
+  async submitInterview(
+    @Body() interviewAnswers: InterviewAnswersDto,
+    @CurrentUser() user: User,
   ) {
     return this.filterationService.send(
       {
-        cmd: FilterationServicePattern.passInterview,
+        cmd: FilterationServicePattern.submitInterview,
       },
       {
-        jobId: jobId,
-        userId: userId,
-        answers,
-        grade
-      },
+        ...interviewAnswers,
+        userId: user.id,
+      } as AuthInterviewAnswersDto
+
     );
   }
 
-  @ApiOperation({ summary: 'Fail the interview stage for a certain user in a certain job' })
-  @Post(':jobId/:userId/fail-interview')
+  @ApiOperation({ summary: 'Review the interview stage for a certain user in a certain job' })
+  @Post('review-interview')
   @ApiOkResponse({
-    description: 'Updated the stage of the user to Applied',
+    description: 'Updated the stage of the user to Selected or Failed',
     type: StageResponseDto
   })
-  async failInterview(
-    @Param('jobId') jobId: string,
-    @Param('userId') userId: string,
+  async reviewInterview(
+    @Body() reviewAnswers: ReviewAnswersDto,
+    @CurrentUser() user: User,
   ) {
     return this.filterationService.send(
       {
-        cmd: FilterationServicePattern.failInterview,
+        cmd: FilterationServicePattern.reviewInterview,
       },
-      {
-        jobId: jobId,
-        userId: userId,
-      },
+      { ...reviewAnswers,
+        userId: user.id,
+       } as AuthReviewAnswersDto,
     );
   }
 
   @ApiOperation({ summary: 'select certain one as selected profile to the job' })
-  @Post(':jobId/:userId/select')
+  @Post('select')
   @ApiOkResponse({
     description: 'Updated the stage of the user to Selected',
     type: StageResponseDto
   })
   async selectProfile(
-    @Param('jobId') jobId: string,
-    @Param('userId') userId: string,
+    @Body() selectProfile: ApplyJobRequest,
+    @CurrentUser() user: User,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.selectProfile,
       },
       {
-        jobId: jobId,
-        userId: userId,
-      },
+        ...selectProfile,
+        userId: user.id,
+      } as ApplyJobRequest,
     );
   }
-
 }

@@ -4,11 +4,11 @@ import { ApiProperty } from "@nestjs/swagger";
 
 class AppliedUser {
     @ApiProperty({
-        description: 'The id of the user',
+        description: 'The id of the profile',
         type: 'UUID',
         example: '123e4567-e89b-12d3-a456-426614174000'
     })
-    userId: string;
+    profileId: string;
 
     @ApiProperty({
         description: 'The Stage of the user in the job',

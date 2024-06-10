@@ -225,10 +225,12 @@ export class JobsService {
     }
   }
 
-  async getJobById(jobId: string) {
+  async getJobById(jobId) {
+    console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId },
+      where: { id: jobId.jobId },
     });
+    console.log('job: ', job);
 
     if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
