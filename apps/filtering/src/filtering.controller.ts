@@ -1,7 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { FilteringService } from './filtering.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
+import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
+import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
+import { ApplyJobRequest } from '@app/services_communications/filteration-service/dtos/requests/apply-job-request.dto';
+import { PaginatedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-job.dto';
+import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
+import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
+import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
 
 @Controller()
 export class FilteringController {
@@ -12,45 +19,50 @@ export class FilteringController {
     return this.filteringService.getHello();
   }
 
-  @MessagePattern({ cmd: 'filterJob' })
-  applyJob(data: {profileId: string, jobId: string}): Promise<StageResponseDto> {
-    const { profileId, jobId } = data;
-    return this.filteringService.applyJob(profileId, jobId);
+  @MessagePattern({ cmd: FilterationServicePattern.filterJob })
+  applyJob(@Payload() data: ApplyJobRequest): Promise<StageResponseDto> {
+    return this.filteringService.applyJob(data.profileId, data.jobId);
   }
 
-  @MessagePattern({ cmd: 'getAppliedUsers' })
-  getAppliedUsers(jobId: string, page: number, limit: number) {
-    return this.filteringService.getAppliedUsers(jobId, page, limit);
+  @MessagePattern({ cmd: FilterationServicePattern.beginCurrentStage })
+  beginCurrentStage(@Payload() data: JobDto) {
+    return this.filteringService.beginCurrentStage(data.jobId);
   }
 
-  @MessagePattern({ cmd: 'getUserStage' })
-  getUserStage(jobId: string, userId: string) {
-    return this.filteringService.getUserStage(jobId, userId);
+  @MessagePattern({ cmd: FilterationServicePattern.getAppliedUsers })
+  getAppliedUsers(@Payload() data: PaginatedJobDto) {
+    return this.filteringService.getAppliedUsers(data.userId, data.jobId, data.page, data.limit);
   }
 
-  @MessagePattern({ cmd: 'passQuiz' })
-  passQuiz(jobId: string, userId: string, grade: number) {
-    return this.filteringService.passQuiz(jobId, userId, grade);
+  @MessagePattern({ cmd: FilterationServicePattern.getUserStage })
+  getUserStage(@Payload() data:ApplyJobRequest) {
+    return this.filteringService.getUserStage(data.userId, data.jobId, data.profileId);
   }
 
-  @MessagePattern({ cmd: 'failQuiz' })
-  failQuiz(jobId: string, userId: string, grade: number) {
-    return this.filteringService.failQuiz(jobId, userId, grade);
+  @MessagePattern({ cmd: FilterationServicePattern.passQuiz })
+  passQuiz(@Payload() data: AuthQuizDto) {
+    return this.filteringService.passQuiz(data.userId, data.jobId, data.profileId, data.grade);
   }
 
-  @MessagePattern({ cmd: 'passInterview' })
-  passInterview(jobId: string, userId: string,answers: string[], grade: number) {
-    return this.filteringService.passInterview(jobId, userId, answers,grade);
+  @MessagePattern({ cmd: FilterationServicePattern.failQuiz })
+  failQuiz(@Payload() data: AuthQuizDto) {
+    return this.filteringService.failQuiz(data.userId, data.jobId, data.profileId, data.grade);
   }
 
-  @MessagePattern({ cmd: 'failInterview' })
-  failInterview(jobId: string, userId: string, answers: string[], grade: number) {
-    return this.filteringService.failInterview(jobId, userId, answers,grade);
+  @MessagePattern({ cmd: FilterationServicePattern.submitInterview })
+  submitInterview(@Payload() interviewAnswers:AuthInterviewAnswersDto) {
+    return this.filteringService.submitInterview(interviewAnswers.userId, interviewAnswers.jobId, interviewAnswers.profileId,interviewAnswers);
   }
 
-  @MessagePattern({ cmd: 'selectProfile' })
-  selectProfile(jobId: string, userId: string) {
-    return this.filteringService.selectProfile(jobId, userId);
+  @MessagePattern({ cmd: FilterationServicePattern.reviewInterview })
+  reviewInterview(@Payload() data: AuthReviewAnswersDto) {
+    const {userId, ...answers} = data;
+    return this.filteringService.reviewAnswers(userId, answers);
+  }
+
+  @MessagePattern({ cmd: FilterationServicePattern.selectProfile })
+  selectProfile(@Payload() data: ApplyJobRequest) {
+    return this.filteringService.selectProfile(data.userId, data.jobId, data.profileId);
   }
 
 
