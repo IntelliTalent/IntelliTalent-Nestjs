@@ -1,6 +1,7 @@
 import {
   CreateUserDto,
   LoginDto,
+  UpdateUserDto,
   userServicePatterns,
 } from '@app/services_communications';
 import {
@@ -23,6 +24,7 @@ import {
   Controller,
   Get,
   Inject,
+  Patch,
   Post,
   Res,
   UseGuards,
@@ -43,6 +45,7 @@ import { ForgetPasswordDto } from '@app/services_communications/authService/dtos
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
 import { JWTVerificationGuard } from '@app/shared/guards/verify-account.guard';
 import { firstValueFrom } from 'rxjs';
+import { changePasswordDto } from '@app/services_communications/userService/dtos/change-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -176,6 +179,41 @@ export class ApiAuthController {
         cmd: userServicePatterns.resetPassword,
       },
       payload,
+    );
+  }
+
+  @ApiProperty({ description: 'change the password of the user' })
+  @ApiCreatedResponse({ description: 'password changed successfully' })
+  @ApiUnauthorizedResponse({ description: 'wrong password' })
+  @Patch('change-password')
+  @ApiBearerAuth(AUTH_HEADER)
+  async changePassword(
+    @Body() dto: changePasswordDto,
+    @CurrentUser() user: User,
+  ) {
+    dto.userId = user.id;
+    return this.userService.send(
+      {
+        cmd: userServicePatterns.changePassword,
+      },
+      dto,
+    );
+  }
+
+  @ApiProperty({ description: 'update the user data' })
+  @ApiCreatedResponse({
+    description: 'User registered successfully',
+    type: User,
+  })
+  @Patch('update-me')
+  @ApiBearerAuth(AUTH_HEADER)
+  async updateMe(@Body() dto: UpdateUserDto, @CurrentUser() currentUser: User) {
+    dto.id = currentUser.id;
+    return this.userService.send(
+      {
+        cmd: userServicePatterns.updateUser,
+      },
+      dto,
     );
   }
 

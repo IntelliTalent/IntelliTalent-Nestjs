@@ -2,6 +2,7 @@ export * from './dtos/Create-User.dto';
 export * from './dtos/updateUser.dto';
 export * from './dtos/login.dto';
 export * from './dtos/user.dto';
+export * from './dtos/change-password.dto';
 
 export * from './patterns/userService.pattern';
 

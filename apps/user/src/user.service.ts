@@ -6,6 +6,7 @@ import {
   SendEmailsDto,
   TemplateData,
   UpdateUserDto,
+  changePasswordDto,
   getUpdatableFields,
 } from '@app/services_communications';
 import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
@@ -97,17 +98,15 @@ export class UserService {
 
   // TODO: need to edit for the update password
   async updateUser(updateUser: UpdateUserDto): Promise<User> {
+    delete updateUser.password;
+    delete updateUser.email;
+    delete updateUser.type;
+
     const { id } = updateUser;
 
-    const updatableFields = getUpdatableFields(updateUser);
+    const user = await this.findUser({ where: { id } });
 
-    const user = await this.userRepository.findOneBy({ id });
-
-    if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
-    }
-
-    Object.assign(user, updatableFields);
+    Object.assign(user, updateUser);
 
     return this.userRepository.save(user);
   }
@@ -116,10 +115,10 @@ export class UserService {
     TakenActionId: string,
     deletedUserId: string,
   ): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id: deletedUserId });
+    const user = await this.findUser({ where: { id: deletedUserId } });
 
     if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
+      throw new NotFoundException('User not found');
     }
 
     await this.userRepository.delete({ id: deletedUserId });
@@ -192,6 +191,30 @@ export class UserService {
       templateData: [emailData],
     };
     this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
+
+    return {
+      message: 'Password changed successfully',
+    };
+  }
+
+  async changePassword(dto: changePasswordDto): Promise<{ message: string }> {
+    const { currentPassword, newPassword, userId } = dto;
+
+    const user = await this.findUser({
+      where: {
+        id: userId,
+      },
+    });
+
+    await this.validateUser(user.email, currentPassword);
+
+    const salt: number = +(await getConfigVariables(Constants.JWT.salt));
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await this.userRepository.update(
+      { id: userId },
+      { password: hashedPassword },
+    );
 
     return {
       message: 'Password changed successfully',
