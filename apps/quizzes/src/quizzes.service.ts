@@ -11,6 +11,7 @@ import { ServiceName } from '@app/shared';
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CreateQuizDto,
+  GetQuizSlugsDto,
   GetUserQuizzesDto,
   IQuizzesGeneratorDto,
   JobQuizzesIdentifierDto,
@@ -34,29 +35,29 @@ export class QuizzesService {
     @Inject(ServiceName.QUIZ_GENERATOR_SERVICE)
     private readonly quizzesGenerator: ClientProxy,
   ) {
-    // for (let i = 0; i < 30; i++) {
-    //   // create array from 1 to 8708dsdssd
-    //   const usersDetails: UserQuizDetailsDto[] = Array.from(
-    //     { length: 27 },
-    //     (_, i) => {
-    //       return {
-    //         userId: i.toString(),
-    //         email: 'test' + i + '@test.com',
-    //       };
-    //     },
-    //   );
-    //   const deadline = new Date();
-    //   deadline.setDate(deadline.getDate() + 2);
-    //   this.createQuiz({
-    //     jobId: i.toString(),
-    //     skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
-    //     numberOfQuestions: 5,
-    //     recruiterId: '1',
-    //     deadline,
-    //     name: 'Quiz ' + i,
-    //     usersDetails,
-    //   });
-    // }
+    for (let i = 0; i < 30; i++) {
+      // create array from 1 to 8708dsdssd
+      const usersDetails: UserQuizDetailsDto[] = Array.from(
+        { length: 27 },
+        (_, i) => {
+          return {
+            userId: i.toString(),
+            email: 'test' + i + '@test.com',
+          };
+        },
+      );
+      const deadline = new Date();
+      deadline.setDate(deadline.getDate() + 2);
+      this.createQuiz({
+        jobId: '109de94e-1a1b-46c0-9371-3162129dcd7e',
+        skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
+        numberOfQuestions: 5,
+        recruiterId: '1',
+        deadline,
+        name: 'Quiz ' + i,
+        usersDetails,
+      });
+    }
   }
 
   async createQuiz(createQuizDto: CreateQuizDto) {
@@ -246,5 +247,16 @@ export class QuizzesService {
     });
 
     return quezzies;
+  }
+
+  async getQuizSlugs(getQuiz: GetQuizSlugsDto) {
+    const quizSlugs = await this.quizRepository.find({
+      where: {
+        jobId: getQuiz.jobId,
+      },
+      select: ['randomSlug', 'userId'],
+    });
+
+    return quizSlugs;
   }
 }

@@ -2,6 +2,8 @@ import {
   AtsEmailTemplateData,
   EmailTemplates,
   ForgetPasswordTemplateData,
+  InterviewTemplateData,
+  QuizEmailTemplateData,
   ResetPasswordTemplateData,
   SendEmailsDto,
   senderEmail,
@@ -56,6 +58,24 @@ export function handleTemplate(data: SendEmailsDto): IEmail[] {
           to: mailData.to,
           from: senderEmail,
           ...resetPasswordTemplate(mailData.data as ResetPasswordTemplateData),
+        };
+      });
+
+    case EmailTemplates.QUIZ:
+      return data.templateData.map((mailData) => {
+        return {
+          to: mailData.to,
+          from: senderEmail,
+          ...quizEmailTemplate(mailData.data as QuizEmailTemplateData),
+        };
+      });
+
+    case EmailTemplates.INTERVIEW:
+      return data.templateData.map((mailData) => {
+        return {
+          to: mailData.to,
+          from: senderEmail,
+          ...interviewEmailTemplate(mailData.data as InterviewTemplateData),
         };
       });
   }
@@ -117,5 +137,30 @@ export function resetPasswordTemplate(
     <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
     <p> Your password has been reset successfully</p>
     `;
+  return { subject, html };
+}
+
+export function quizEmailTemplate(
+  templateData: QuizEmailTemplateData,
+): IEmailTemplate {
+  const subject = 'Quiz Email';
+  const quizUrl = `${getConfigVariables(Constants.FRONT_END_URL)}/quiz/${templateData.quizSlug}`;
+  const html = `
+      <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
+      <p> Quiz Slug: ${quizUrl}</p>
+      <p> Job Title: ${templateData.jobTitle}</p>
+      `;
+  return { subject, html };
+}
+
+export function interviewEmailTemplate(
+  templateData: InterviewTemplateData,
+): IEmailTemplate {
+  const subject = 'Interview Email';
+  const html = `
+      <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
+      <p> Job Title: ${templateData.jobTitle}</p>
+      <p> Job Url: ${templateData.jobUrl}</p>
+      `;
   return { subject, html };
 }

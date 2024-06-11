@@ -134,7 +134,7 @@ export class QuizController {
     };
 
     return this.quizzesService.send(
-      { cmd: quizzesPattern.getUsersScores },
+      { cmd: quizzesPattern.getQuizSlugs },
       payload,
     );
   }

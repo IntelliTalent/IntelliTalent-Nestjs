@@ -8,6 +8,7 @@ import { QuizzesService } from './quizzes.service';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateQuizDto,
+  GetQuizSlugsDto,
   GetUserQuizzesDto,
   JobQuizzesIdentifierDto,
   QuizIdentifierDto,
@@ -46,6 +47,11 @@ export class QuizzesController {
   @MessagePattern({ cmd: quizzesPattern.getUsersScores })
   async getUsersScores(@Payload() correctQuiz: JobQuizzesIdentifierDto) {
     return this.quizzesService.getUsersScores(correctQuiz);
+  }
+
+  @MessagePattern({ cmd: quizzesPattern.getQuizSlugs })
+  async getQuizSlugs(@Payload() getQuiz: GetQuizSlugsDto) {
+    return this.quizzesService.getQuizSlugs(getQuiz);
   }
 
   @EventPattern({ cmd: quizzesEvents.createQuiz })
