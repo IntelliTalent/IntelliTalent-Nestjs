@@ -3,8 +3,9 @@ import {
   DeleteProfileDto,
   UpdateProfileDto,
 } from '@app/services_communications';
-import { FormField, Profile } from '@app/shared';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { FormField, Profile, ServiceName } from '@app/shared';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
@@ -17,6 +18,7 @@ export class ProfileService {
     private profileRepository: Repository<Profile>,
     @InjectModel(FormField.name)
     private readonly formFieldModel: Model<FormField>,
+    @Inject(ServiceName.AUTOFILL_SERVICE) private autoFillService: ClientProxy,
   ) {}
 
   async create(createProfileDto: CreateProfileDto): Promise<Profile> {
@@ -29,6 +31,7 @@ export class ProfileService {
     const savedProfile = await this.profileRepository.save(profile);
 
     // Update the FormField entry with the new profile data
+    // send to Nabil Here autoFillService
     await this.formFieldModel.updateOne(
       { userId: createProfileDto.userId },
       {

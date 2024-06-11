@@ -3,6 +3,7 @@ export const quizzesPattern = {
   getQuizWithAnswers: 'getQuizWithAnswers', // Get a quiz with answers by userId and JobId
   getUsersScores: 'getUsersScores', // Get all users scores for a job
   getUserQuizzes: 'getUserQuizzes', // Get all quizzes for a user
+  getQuizSlugs: 'getQuizSlugs', // Get all quiz slugs for a job
 };
 
 export const quizzesEvents = {

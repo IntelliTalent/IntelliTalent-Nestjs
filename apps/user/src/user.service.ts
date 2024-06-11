@@ -1,10 +1,12 @@
 import {
+  AllowedUserTypes,
   CreateUserDto,
   EmailTemplates,
   NotifierEvents,
   SendEmailsDto,
   TemplateData,
   UpdateUserDto,
+  changePasswordDto,
   getUpdatableFields,
 } from '@app/services_communications';
 import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
@@ -22,9 +24,6 @@ import { FindOneOptions, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
-import { PageDto } from '@app/shared/api-features/dtos/page.dto';
-import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Injectable()
 export class UserService {
@@ -62,12 +61,20 @@ export class UserService {
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     createUser.password = await bcrypt.hash(createUser.password, salt);
 
-    const createdUser = this.userRepository.create(createUser);
+    const databaseUserType =
+      createUser.type === AllowedUserTypes.jobSeeker
+        ? UserType.jobSeeker
+        : UserType.recruiter;
+
+    const createdUser = this.userRepository.create({
+      ...createUser,
+      type: databaseUserType,
+    });
+
     const savedUser = await this.userRepository.save(createdUser);
 
     await this.formFieldModel.create({
       ...createdUser,
-      type: createUser.userType,
       userId: savedUser.id,
       fullName: `${createdUser.firstName} ${createdUser.lastName}`,
     });
@@ -91,17 +98,15 @@ export class UserService {
 
   // TODO: need to edit for the update password
   async updateUser(updateUser: UpdateUserDto): Promise<User> {
+    delete updateUser.password;
+    delete updateUser.email;
+    delete updateUser.type;
+
     const { id } = updateUser;
 
-    const updatableFields = getUpdatableFields(updateUser);
+    const user = await this.findUser({ where: { id } });
 
-    const user = await this.userRepository.findOneBy({ id });
-
-    if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
-    }
-
-    Object.assign(user, updatableFields);
+    Object.assign(user, updateUser);
 
     return this.userRepository.save(user);
   }
@@ -110,10 +115,10 @@ export class UserService {
     TakenActionId: string,
     deletedUserId: string,
   ): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id: deletedUserId });
+    const user = await this.findUser({ where: { id: deletedUserId } });
 
     if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
+      throw new NotFoundException('User not found');
     }
 
     await this.userRepository.delete({ id: deletedUserId });
@@ -185,8 +190,31 @@ export class UserService {
       template: EmailTemplates.RESETPASSWORD,
       templateData: [emailData],
     };
-    console.log('sending email to user', sendEmailDto);
     this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
+
+    return {
+      message: 'Password changed successfully',
+    };
+  }
+
+  async changePassword(dto: changePasswordDto): Promise<{ message: string }> {
+    const { currentPassword, newPassword, userId } = dto;
+
+    const user = await this.findUser({
+      where: {
+        id: userId,
+      },
+    });
+
+    await this.validateUser(user.email, currentPassword);
+
+    const salt: number = +(await getConfigVariables(Constants.JWT.salt));
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await this.userRepository.update(
+      { id: userId },
+      { password: hashedPassword },
+    );
 
     return {
       message: 'Password changed successfully',
