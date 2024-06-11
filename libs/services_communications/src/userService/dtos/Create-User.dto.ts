@@ -100,5 +100,5 @@ export class CreateUserDto {
     example: AllowedUserTypes.jobSeeker,
   })
   @IsEnum(AllowedUserTypes)
-  userType: AllowedUserTypes;
+  type: AllowedUserTypes;
 }

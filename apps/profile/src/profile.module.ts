@@ -31,6 +31,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     ]),
     SharedModule.registerRedis(RedisDBName.profiles_DB),
     SharedModule.registerMongoDB(MongoDBName.FormFieldsDB),
+    SharedModule.registerRmq(ServiceName.AUTOFILL_SERVICE),
     MongooseModule.forFeature([
       { name: FormField.name, schema: FormFieldSchema },
     ]),

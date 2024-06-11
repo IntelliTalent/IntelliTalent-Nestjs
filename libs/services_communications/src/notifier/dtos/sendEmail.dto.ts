@@ -9,12 +9,12 @@ import { VerifyEmailTemplateData } from './verify-email-template-data.dto';
 export class TemplateData {
   to: string;
   data:
-    | AtsEmailTemplateData
     | VerifyEmailTemplateData
     | ForgetPasswordTemplateData
     | ResetPasswordTemplateData
     | InterviewTemplateData
-    | QuizEmailTemplateData;
+    | QuizEmailTemplateData
+    | AtsEmailTemplateData;
 }
 
 export class SendEmailsDto {

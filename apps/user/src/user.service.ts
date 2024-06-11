@@ -1,4 +1,5 @@
 import {
+  AllowedUserTypes,
   CreateUserDto,
   EmailTemplates,
   NotifierEvents,
@@ -22,9 +23,6 @@ import { FindOneOptions, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
-import { PageDto } from '@app/shared/api-features/dtos/page.dto';
-import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Injectable()
 export class UserService {
@@ -62,12 +60,20 @@ export class UserService {
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     createUser.password = await bcrypt.hash(createUser.password, salt);
 
-    const createdUser = this.userRepository.create(createUser);
+    const databaseUserType =
+      createUser.type === AllowedUserTypes.jobSeeker
+        ? UserType.jobSeeker
+        : UserType.recruiter;
+
+    const createdUser = this.userRepository.create({
+      ...createUser,
+      type: databaseUserType,
+    });
+
     const savedUser = await this.userRepository.save(createdUser);
 
     await this.formFieldModel.create({
       ...createdUser,
-      type: createUser.userType,
       userId: savedUser.id,
       fullName: `${createdUser.firstName} ${createdUser.lastName}`,
     });
@@ -185,7 +191,6 @@ export class UserService {
       template: EmailTemplates.RESETPASSWORD,
       templateData: [emailData],
     };
-    console.log('sending email to user', sendEmailDto);
     this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
 
     return {

@@ -13,7 +13,15 @@ import {
   SubmitQuizDto,
 } from '@app/services_communications';
 import { CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
-import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
   ApiBearerAuth,
@@ -114,6 +122,31 @@ export class QuizController {
     );
   }
 
+  @Get('/job-slugs/:jobId')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'get job quizzes slugs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Job quizzes slugs',
+    type: ResponseJobQuizzesScore,
+    isArray: true,
+  })
+  @Roles([UserType.recruiter])
+  getSlugs(
+    @CurrentUser() user: User,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+  ) {
+    const payload: JobQuizzesIdentifierDto = {
+      jobId: jobId,
+      recruiterId: user.id,
+    };
+
+    return this.quizzesService.send(
+      { cmd: quizzesPattern.getQuizSlugs },
+      payload,
+    );
+  }
+
   @Get('/job-scores/:jobId')
   @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'get job quizzes scores' })
@@ -126,7 +159,7 @@ export class QuizController {
   @Roles([UserType.recruiter])
   getJobQuizzesScores(
     @CurrentUser() user: User,
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
   ) {
     const payload: JobQuizzesIdentifierDto = {
       jobId: jobId,
@@ -134,7 +167,7 @@ export class QuizController {
     };
 
     return this.quizzesService.send(
-      { cmd: quizzesPattern.getQuizSlugs },
+      { cmd: quizzesPattern.getUsersScores },
       payload,
     );
   }
