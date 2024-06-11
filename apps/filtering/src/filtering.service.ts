@@ -117,6 +117,7 @@ export class FilteringService {
         {
           jobId
         },
+        // TODO : send it without object
       ),
     );
     // check if the job exists and is open

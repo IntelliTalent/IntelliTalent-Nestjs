@@ -228,7 +228,7 @@ export class JobsService {
   async getJobById(jobId) {
     console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId.jobId },
+      where: { id: jobId},
     });
     console.log('job: ', job);
 
