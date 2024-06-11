@@ -217,7 +217,7 @@ export class AtsService {
       await this._deleteJobs();
 
       let page = 0;
-      const take = 1;
+      const take = 200;
 
       while (true) {
         page++;
