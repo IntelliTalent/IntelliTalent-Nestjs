@@ -8,7 +8,6 @@ import {
 import { AbstractEntity } from './abstract.entity';
 import { Interview } from './interview.entity';
 
-
 export interface CustomFilters {
   yearsOfExperience?: number;
   graduatedFromCS?: boolean;
@@ -17,17 +16,12 @@ export interface CustomFilters {
   city?: string;
 }
 
-export enum StageType {
-  INTERVIEW = 0,
-  QUIZ = 1,
-}
-
 @Entity()
 export class CustomJobsStages extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Interview,  {
+  @OneToOne(() => Interview, {
     cascade: true,
   })
   @JoinColumn()
@@ -38,11 +32,4 @@ export class CustomJobsStages extends AbstractEntity {
 
   @Column({ type: 'date', nullable: true })
   quizEndDate: Date;
-
-  @Column({
-    type: 'enum',
-    enum: StageType,
-    array: true,
-  })
-  order: StageType[];
 }
