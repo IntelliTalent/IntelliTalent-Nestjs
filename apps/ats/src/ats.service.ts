@@ -26,6 +26,7 @@ import {
   User,
   recentEmailsKey,
 } from '@app/shared';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -215,149 +216,162 @@ export class AtsService {
 
       await this._deleteJobs();
 
-      // get all users from Users service
-      const users: User[] = await firstValueFrom(
-        this.userService.send(
-          {
-            cmd: userServicePatterns.getAllJobSeekers,
-          },
-          {},
-        ),
-      );
+      let page = 0;
+      const take = 200;
 
-      // make set to hold all allowed emails
-      const allowedEmails = new Set();
-      users.forEach(async (user) => {
-        // the emails that are sent to in the last TIME_WINDOW hours/days exist in the mailing DB in this key, and expire after TIME_WINDOW
-        const exists = await this._emailExists(user.email);
-        if (!exists) allowedEmails.add(user.email);
-      });
+      while (true) {
+        page++;
 
-      // get all profiles of these users from Profiles service
-      const profiles = await firstValueFrom(
-        this.profileService.send(
-          {
-            cmd: profileServicePattern.getProfilesByUsersIds,
-          },
-          {
-            usersIds: users.map((user) => user.id),
-          },
-        ),
-      );
+        // get all users from Users service
+        const users: User[] = await firstValueFrom(
+          this.userService.send(
+            {
+              cmd: userServicePatterns.getAllJobSeekers,
+            },
+            {
+              page,
+              take,
+            } as PageOptionsDto,
+          ),
+        );
 
-      // create a map of users keyed by ID
-      const userMap = new Map(users.map((user) => [user.id, user]));
+        if (users.length === 0) break;
 
-      // map profiles with user details
-      const profileUsers = profiles.map((profile: Profile) => {
-        const matchedUser = userMap.get(profile.userId);
-        return {
-          ...profile,
-          firstName: matchedUser.firstName,
-          lastName: matchedUser.lastName,
-          email: matchedUser.email,
-          country: matchedUser.country,
-          city: matchedUser.city,
-        };
-      });
+        // make set to hold all allowed emails
+        const allowedEmails = new Set();
+        users.forEach(async (user) => {
+          // the emails that are sent to in the last TIME_WINDOW hours/days exist in the mailing DB in this key, and expire after TIME_WINDOW
+          const exists = await this._emailExists(user.email);
+          if (!exists) allowedEmails.add(user.email);
+        });
 
-      // unique emails, every email with 1 job only, the content is of type AtsEmailTemplateData
-      const matchedEmailsContents: { [email: string]: AtsEmailTemplateData } =
-        {};
+        // get all profiles of these users from Profiles service
+        const profiles = await firstValueFrom(
+          this.profileService.send(
+            {
+              cmd: profileServicePattern.getProfilesByUsersIds,
+            },
+            {
+              usersIds: users.map((user) => user.id),
+            },
+          ),
+        );
 
-      // will have all matches even if more than job matched the same profile
-      const filterations = [];
+        // create a map of users keyed by ID
+        const userMap = new Map(users.map((user) => [user.id, user]));
 
-      jobs.forEach((job) => {
-        profileUsers.forEach((profile) => {
-          // check if there is custom filters in the job
-          if (job.customFilters) {
-            // validate custom filters, if no match, continue to the next profile
-            const isValid = this._validateCustomFilters(
-              job.customFilters,
-              profile,
-            );
+        // map profiles with user details
+        const profileUsers = profiles.map((profile: Profile) => {
+          const matchedUser = userMap.get(profile.userId);
+          return {
+            ...profile,
+            firstName: matchedUser.firstName,
+            lastName: matchedUser.lastName,
+            email: matchedUser.email,
+            country: matchedUser.country,
+            city: matchedUser.city,
+          };
+        });
 
-            if (!isValid) {
-              return;
+        // unique emails, every email with 1 job only, the content is of type AtsEmailTemplateData
+        const matchedEmailsContents: { [email: string]: AtsEmailTemplateData } =
+          {};
+
+        // will have all matches even if more than job matched the same profile
+        const filterations = [];
+
+        jobs.forEach((job) => {
+          profileUsers.forEach((profile) => {
+            // check if there is custom filters in the job
+            if (job.customFilters) {
+              // validate custom filters, if no match, continue to the next profile
+              const isValid = this._validateCustomFilters(
+                job.customFilters,
+                profile,
+              );
+
+              if (!isValid) {
+                return;
+              }
             }
-          }
 
-          const matchScore = this._calculateMatchScore(job, profile);
+            const matchScore = this._calculateMatchScore(job, profile);
 
-          // ATS_CONSTANTS.MATCHING_THRESHOLD is the threshold for matching
-          if (matchScore >= ATS_CONSTANTS.MATCHING_THRESHOLD) {
-            // don't send matching email to the same email even if 2 profiles with the same mail are matched
-            if (allowedEmails.has(profile.email)) {
-              if (!matchedEmailsContents[profile.email]) {
-                matchedEmailsContents[profile.email] = {
-                  jobTitle: job.title,
-                  jobCompany: job.company,
-                  jobUrl: job.url,
-                  firstName: profile.firstName,
-                  lastName: profile.lastName,
-                  matchedJobsCount: 1,
-                  matchScore,
-                } as AtsEmailTemplateData;
-              } else {
-                // increment the number of matched jobs
-                const newMatchedJobsCount = matchedEmailsContents[profile.email]
-                  .matchedJobsCount++;
-
-                // if the same email is matched with another job, take the job with the highest matchScore
-                if (
-                  matchedEmailsContents[profile.email].matchScore < matchScore
-                ) {
+            // ATS_CONSTANTS.MATCHING_THRESHOLD is the threshold for matching
+            if (matchScore >= ATS_CONSTANTS.MATCHING_THRESHOLD) {
+              // don't send matching email to the same email even if 2 profiles with the same mail are matched
+              if (allowedEmails.has(profile.email)) {
+                if (!matchedEmailsContents[profile.email]) {
                   matchedEmailsContents[profile.email] = {
                     jobTitle: job.title,
                     jobCompany: job.company,
                     jobUrl: job.url,
                     firstName: profile.firstName,
                     lastName: profile.lastName,
+                    matchedJobsCount: 1,
                     matchScore,
-                    matchedJobsCount: newMatchedJobsCount,
                   } as AtsEmailTemplateData;
                 } else {
-                  matchedEmailsContents[profile.email].matchedJobsCount =
-                    newMatchedJobsCount;
+                  // increment the number of matched jobs
+                  const newMatchedJobsCount = matchedEmailsContents[
+                    profile.email
+                  ].matchedJobsCount++;
+
+                  // if the same email is matched with another job, take the job with the highest matchScore
+                  if (
+                    matchedEmailsContents[profile.email].matchScore < matchScore
+                  ) {
+                    matchedEmailsContents[profile.email] = {
+                      jobTitle: job.title,
+                      jobCompany: job.company,
+                      jobUrl: job.url,
+                      firstName: profile.firstName,
+                      lastName: profile.lastName,
+                      matchScore,
+                      matchedJobsCount: newMatchedJobsCount,
+                    } as AtsEmailTemplateData;
+                  } else {
+                    matchedEmailsContents[profile.email].matchedJobsCount =
+                      newMatchedJobsCount;
+                  }
                 }
               }
+              filterations.push({
+                jobId: job.id,
+                profileId: profile.id,
+                stageData: {
+                  matchScore,
+                },
+              });
             }
-            filterations.push({
-              jobId: job.id,
-              profileId: profile.id,
-              stageData: {
-                matchScore,
-              },
-            });
-          }
+          });
         });
-      });
 
-      const matchedEmailsContentsArray = Object.keys(matchedEmailsContents).map(
-        (email: string) => {
+        const matchedEmailsContentsArray = Object.keys(
+          matchedEmailsContents,
+        ).map((email: string) => {
           return {
             to: email,
             data: matchedEmailsContents[email],
           } as TemplateData;
-        },
-      );
+        });
 
-      const sendEmailsDto: SendEmailsDto = {
-        template: EmailTemplates.ATSMATCHED,
-        templateData: matchedEmailsContentsArray,
-      };
+        const sendEmailsDto: SendEmailsDto = {
+          template: EmailTemplates.ATSMATCHED,
+          templateData: matchedEmailsContentsArray,
+        };
 
-      // send emails to the matched profiles
-      this.notifierService.emit(
-        {
-          cmd: NotifierEvents.sendEmail,
-        },
-        sendEmailsDto,
-      );
+        // send emails to the matched users
+        this.notifierService.emit(
+          {
+            cmd: NotifierEvents.sendEmail,
+          },
+          sendEmailsDto,
+        );
 
-      // add records for these matches (all matched not only the sent emails) in filteration DB
-      await this.filterationRepository.save(filterations);
+        // add records for these matches (all matches not only the sent emails) in filteration DB
+        await this.filterationRepository.save(filterations);
+      }
 
       return {
         status: ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS,

@@ -16,6 +16,7 @@ import {
 import { RpcExceptionsFilter, ServiceName, User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -106,8 +107,7 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: userServicePatterns.getAllJobSeekers })
-  async getAllJobSeekers(): Promise<User[]> {
-    // used for ATS match command
-    return this.userService.getAllJobSeekers();
+  async getAllJobSeekers(pageOptions: PageOptionsDto): Promise<User[]> {
+    return this.userService.getAllJobSeekers(pageOptions);
   }
 }
