@@ -25,6 +25,7 @@ import {
   Query,
   Inject,
   Patch,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
@@ -143,7 +144,7 @@ export class JobsController {
   @ApiBearerAuth(AUTH_HEADER)
   @ApiNotFoundResponse({ description: 'Job not found' })
   async deactivateJob(
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @CurrentUser() user: User,
   ) {
     return this.jobsService.send(
@@ -163,7 +164,7 @@ export class JobsController {
   @ApiBearerAuth(AUTH_HEADER)
   @ApiNotFoundResponse({ description: 'Job not found' })
   async moveToNextStage(
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @CurrentUser() user: User,
   ) {
     return this.jobsService.send(

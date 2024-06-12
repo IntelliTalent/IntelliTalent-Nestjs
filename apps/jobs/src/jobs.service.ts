@@ -120,9 +120,22 @@ export class JobsService {
     }
   }
 
+  private getJobName(jobId: string, type: string) {
+    switch (type) {
+      case 'job':
+        return `jobEndDate-${jobId}`;
+      case 'quiz':
+        return `quizEndDate-${jobId}`;
+      case 'interview':
+        return `interviewEndDate-${jobId}`;
+      default:
+        throw new BadRequestException('Invalid Job Name Type');
+    }
+  }
+
   private async deactivateJobAndBeginNextStage(job: StructuredJob) {
     // If the job is already scheduled, remove it
-    const jobName = `jobEndDate-${job.id}`;
+    const jobName = this.getJobName(job.id, 'job');
     if (this.schedulerRegistry.doesExist('cron', jobName)) {
       const existingJob = this.schedulerRegistry.getCronJob(jobName);
       existingJob.stop();
@@ -156,7 +169,7 @@ export class JobsService {
     // Update the current stage of the job
     if (job.currentStage === StageType.Quiz && job.stages?.interview) {
       // Stop the quiz cron job
-      const jobName = `quizEndDate-${job.id}`;
+      const jobName = this.getJobName(job.id, 'quiz');
       const existingJob = this.schedulerRegistry.getCronJob(jobName);
       existingJob.stop();
       this.schedulerRegistry.deleteCronJob(jobName);
@@ -164,7 +177,7 @@ export class JobsService {
       job.currentStage = StageType.Interview;
     } else if (job.currentStage === StageType.Interview) {
       // Stop the interview cron job
-      const jobName = `interviewEndDate-${job.id}`;
+      const jobName = this.getJobName(job.id, 'interview');
       const existingJob = this.schedulerRegistry.getCronJob(jobName);
       existingJob.stop();
       this.schedulerRegistry.deleteCronJob(jobName);
@@ -186,7 +199,7 @@ export class JobsService {
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
-    const jobName = `jobEndDate-${job.id}`;
+    const jobName = this.getJobName(job.id, 'job');
 
     // If the job is already scheduled, remove it before scheduling a new one
     if (this.schedulerRegistry.doesExist('cron', jobName)) {
@@ -206,7 +219,7 @@ export class JobsService {
   }
 
   private scheduleQuizEnd(job: StructuredJob): void {
-    const jobName = `quizEndDate-${job.id}`;
+    const jobName = this.getJobName(job.id, 'quiz');
 
     // If the job is already scheduled, remove it before scheduling a new one
     if (this.schedulerRegistry.doesExist('cron', jobName)) {
@@ -226,7 +239,7 @@ export class JobsService {
   }
 
   private scheduleInterviewEnd(job: StructuredJob): void {
-    const jobName = `interviewEndDate-${job.id}`;
+    const jobName = this.getJobName(job.id, 'interview');
 
     // If the job is already scheduled, remove it before scheduling a new one
     if (this.schedulerRegistry.doesExist('cron', jobName)) {
