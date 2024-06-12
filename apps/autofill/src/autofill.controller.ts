@@ -17,7 +17,6 @@ export class AutofillController {
 
   @MessagePattern({ cmd: AutofillServicePattern.init })
   async init(@Payload() dto: AuthFormFieldsDto): Promise<FormFieldsResponseDto> {
-    console.log('init', dto);
     const { userId, data } = dto;
     return await this.autofillService.init(userId, {data});
   }
