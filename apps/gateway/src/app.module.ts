@@ -15,7 +15,6 @@ import { JwtAuthGuard } from '@app/shared/guards/jwt-auth.guard';
 import { RolesGuard } from '@app/shared/guards/roles.guard';
 import { ApiUploaderModule } from '../uploader/uploader.module';
 import { ApiQuizModule } from '../quiz/quiz.module';
-import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 
 @Module({
   imports: [
@@ -36,7 +35,6 @@ import { ApiCustomJobModule } from '../custom-job/custom-job.module';
     ApiJobsModule,
     ApiUploaderModule,
     ApiQuizModule,
-    ApiCustomJobModule
   ],
   controllers: [AppController],
   providers: [

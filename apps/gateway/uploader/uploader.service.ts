@@ -3,7 +3,7 @@ import { Constants } from '@app/shared';
 import { BlobServiceClient, BlockBlobClient } from '@azure/storage-blob';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-// import { MulterFile } from 'multer';
+import { MulterFile } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class UploaderService {
 
     return blockBlobClient;
   } 
-  public async uploadFile(file): Promise<UploadResponseDto>{
+  public async uploadFile(file: MulterFile): Promise<UploadResponseDto>{
     // generate uuid string
     const generatedUuid = uuidv4();
     const file_name = generatedUuid + '-' + file.originalname;

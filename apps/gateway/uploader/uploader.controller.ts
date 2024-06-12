@@ -2,7 +2,7 @@ import { Public } from "@app/shared/decorators/ispublic-decorator.decorator";
 import { Controller, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-// import { MulterFile } from 'multer';
+import { MulterFile } from 'multer';
 import { UploaderService } from "./uploader.service";
 import { UploadResponseDto } from "@app/services_communications/uploader-service/uploader-response.dto";
 
@@ -25,7 +25,7 @@ export class ApiUploaderController {
     FileInterceptor('file'),
   )
   async upload(
-    @UploadedFile() file,
+    @UploadedFile() file: MulterFile,
   ): Promise<UploadResponseDto> {
     return await this.uploaderService.uploadFile(file);
   }
