@@ -49,4 +49,14 @@ export class JobsController {
   getJobs(pageOptions: PageOptionsDto) {
     return this.jobsService.getJobs(pageOptions);
   }
+
+  @MessagePattern({ cmd: jobsServicePatterns.deactivateJob })
+  deactivateJob({ jobId, userId }: { jobId: string; userId: string }) {
+    return this.jobsService.deactivateJob(jobId, userId);
+  }
+
+  @MessagePattern({ cmd: jobsServicePatterns.moveToNextStage })
+  moveToNextStage({ jobId, userId }: { jobId: string; userId: string }) {
+    return this.jobsService.moveToNextStage(jobId, userId);
+  }
 }

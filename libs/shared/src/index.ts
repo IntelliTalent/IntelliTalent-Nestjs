@@ -48,3 +48,6 @@ export * from './filters/RPCFilter.filter';
 // redis
 export * from './redis/redis-keys';
 export * from './redis/expire-constants';
+
+// decotaors
+export * from './decorators/is-match.decorator';

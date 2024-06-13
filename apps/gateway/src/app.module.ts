@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '@app/shared/guards/jwt-auth.guard';
 import { RolesGuard } from '@app/shared/guards/roles.guard';
 import { ApiUploaderModule } from '../uploader/uploader.module';
 import { ApiQuizModule } from '../quiz/quiz.module';
-import { AutofillModule } from 'apps/autofill/src/autofill.module';
+import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 import { ApiAutofillModule } from '../autofill/autofill.module';
 
 @Module({
@@ -37,6 +37,7 @@ import { ApiAutofillModule } from '../autofill/autofill.module';
     ApiJobsModule,
     ApiUploaderModule,
     ApiQuizModule,
+    ApiCustomJobModule,
     ApiAutofillModule
   ],
   controllers: [AppController],

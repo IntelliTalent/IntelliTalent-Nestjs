@@ -1,6 +1,7 @@
 import {
   ClassSerializerInterceptor,
   Controller,
+  SerializeOptions,
   UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
@@ -8,6 +9,7 @@ import { QuizzesService } from './quizzes.service';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateQuizDto,
+  GetQuizSlugsDto,
   GetUserQuizzesDto,
   JobQuizzesIdentifierDto,
   QuizIdentifierDto,
@@ -22,6 +24,15 @@ import { RpcExceptionsFilter } from '@app/shared';
 @UseInterceptors(ClassSerializerInterceptor)
 export class QuizzesController {
   constructor(private readonly quizzesService: QuizzesService) {}
+
+  @MessagePattern({ cmd: quizzesPattern.getQuizSlugs })
+  @SerializeOptions({
+    ignoreDecorators: true,
+  })
+  async getQuizSlugs(@Payload() getQuiz: GetQuizSlugsDto) {
+    const quizzes = await this.quizzesService.getQuizSlugs(getQuiz);
+    return quizzes;
+  }
 
   @MessagePattern({ cmd: quizzesPattern.getUserQuizzes })
   async getUserQuizzes(@Payload() getUserQuizDto: GetUserQuizzesDto) {

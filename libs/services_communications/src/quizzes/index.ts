@@ -11,3 +11,4 @@ export * from './dtos/response-quiz-card.dto';
 export * from './dtos/response-quiz.dto';
 export * from './dtos/respose-submit-quiz.dto';
 export * from './dtos/response-job-quizzes-score.dto';
+export * from './dtos/get-quiz-slugs.dto';

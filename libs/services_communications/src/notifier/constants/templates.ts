@@ -1,7 +1,10 @@
 export enum EmailTemplates {
-  SIGNUP = 0,
-  FORGOTPASSWORD = 1,
-  ATSMATCHED = 2,
+  ATSMATCHED = 0,
+  VERIFYEMAIL = 1,
+  FORGETPASSWORD = 2,
+  RESETPASSWORD = 3,
+  QUIZ,
+  INTERVIEW,
 }
 
 export const senderEmail = 'admin@intelliTalent.com';

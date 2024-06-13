@@ -1,4 +1,8 @@
-import { Controller } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
@@ -10,9 +14,10 @@ import {
   ForgetPasswordToken,
   authServicePattern,
 } from '@app/services_communications/authService';
-import { CurrentUser, User } from '@app/shared';
+import { User } from '@app/shared';
 
 @Controller()
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

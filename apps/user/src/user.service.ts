@@ -1,15 +1,22 @@
 import {
+  AllowedUserTypes,
   CreateUserDto,
+  EmailTemplates,
+  NotifierEvents,
+  SendEmailsDto,
+  TemplateData,
   UpdateUserDto,
+  changePasswordDto,
   getUpdatableFields,
 } from '@app/services_communications';
-import { Constants, FormField, User, UserType } from '@app/shared';
+import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
@@ -17,8 +24,6 @@ import { FindOneOptions, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
-import { PageDto } from '@app/shared/api-features/dtos/page.dto';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Injectable()
@@ -28,6 +33,8 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     @InjectModel(FormField.name)
     private readonly formFieldModel: Model<FormField>,
+    @Inject(ServiceName.NOTIFIER_SERVICE)
+    private readonly notifierService: ClientProxy,
   ) {}
 
   getHello(): string {
@@ -55,19 +62,22 @@ export class UserService {
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     createUser.password = await bcrypt.hash(createUser.password, salt);
 
-    const createdUser = this.userRepository.create(createUser);
+    const databaseUserType =
+      createUser.type === AllowedUserTypes.jobSeeker
+        ? UserType.jobSeeker
+        : UserType.recruiter;
+
+    const createdUser = this.userRepository.create({
+      ...createUser,
+      type: databaseUserType,
+    });
+
     const savedUser = await this.userRepository.save(createdUser);
 
     await this.formFieldModel.create({
+      ...createdUser,
       userId: savedUser.id,
-      firstName: createdUser.firstName,
-      lastName: createdUser.lastName,
       fullName: `${createdUser.firstName} ${createdUser.lastName}`,
-      email: createdUser.email,
-      phoneNumber: createdUser.phoneNumber,
-      country: createdUser.country,
-      city: createdUser.city,
-      address: createdUser.address,
     });
 
     return savedUser;
@@ -89,17 +99,15 @@ export class UserService {
 
   // TODO: need to edit for the update password
   async updateUser(updateUser: UpdateUserDto): Promise<User> {
+    delete updateUser.password;
+    delete updateUser.email;
+    delete updateUser.type;
+
     const { id } = updateUser;
 
-    const updatableFields = getUpdatableFields(updateUser);
+    const user = await this.findUser({ where: { id } });
 
-    const user = await this.userRepository.findOneBy({ id });
-
-    if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
-    }
-
-    Object.assign(user, updatableFields);
+    Object.assign(user, updateUser);
 
     return this.userRepository.save(user);
   }
@@ -108,10 +116,10 @@ export class UserService {
     TakenActionId: string,
     deletedUserId: string,
   ): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id: deletedUserId });
+    const user = await this.findUser({ where: { id: deletedUserId } });
 
     if (!user) {
-      throw new RpcException(new NotFoundException('User not found'));
+      throw new NotFoundException('User not found');
     }
 
     await this.userRepository.delete({ id: deletedUserId });
@@ -165,6 +173,50 @@ export class UserService {
       { id: userId },
       { password: hashedPassword },
     );
+
+    const user = await this.findUser({
+      where: {
+        id: userId,
+      },
+    });
+
+    const emailData: TemplateData = {
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      to: user.email,
+    };
+    const sendEmailDto: SendEmailsDto = {
+      template: EmailTemplates.RESETPASSWORD,
+      templateData: [emailData],
+    };
+    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
+
+    return {
+      message: 'Password changed successfully',
+    };
+  }
+
+  async changePassword(dto: changePasswordDto): Promise<{ message: string }> {
+    const { currentPassword, newPassword, userId } = dto;
+
+    const user = await this.findUser({
+      where: {
+        id: userId,
+      },
+    });
+
+    await this.validateUser(user.email, currentPassword);
+
+    const salt: number = +(await getConfigVariables(Constants.JWT.salt));
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await this.userRepository.update(
+      { id: userId },
+      { password: hashedPassword },
+    );
+
     return {
       message: 'Password changed successfully',
     };
@@ -183,13 +235,25 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async getAllJobSeekers(): Promise<User[]> {
+  async getAllJobSeekers(pageOptions: PageOptionsDto): Promise<User[]> {
     const query = this.userRepository
       .createQueryBuilder('user')
-      .select(['user.id', 'user.email', 'user.firstName', 'user.lastName', 'user.country', 'user.city'])
+      .select([
+        'user.id',
+        'user.email',
+        'user.firstName',
+        'user.lastName',
+        'user.country',
+        'user.city',
+      ])
       .where('user.type = :type', { type: UserType.jobSeeker })
       .andWhere('user.isVerified = :isVerified', { isVerified: true });
-    
+
+    // Apply pagination
+    const skip = (pageOptions.page - 1) * pageOptions.take;
+
+    query.skip(skip).take(pageOptions.take);
+
     return await query.getMany();
   }
 }

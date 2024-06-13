@@ -6,6 +6,9 @@ export class IJobs {
   id: string;
 
   @ApiProperty()
+  userId: string;
+
+  @ApiProperty()
   title: string;
 
   @ApiProperty()
@@ -43,4 +46,7 @@ export class IJobs {
 
   @ApiProperty()
   isActive: boolean;
+
+  @ApiProperty()
+  currentStage: string;
 }

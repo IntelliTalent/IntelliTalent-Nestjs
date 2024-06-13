@@ -1,7 +1,11 @@
 import {
   CreateUserDto,
+  EmailTemplates,
   ForgetPasswordToken,
   GeneralTokenData,
+  NotifierEvents,
+  SendEmailsDto,
+  TemplateData,
   TokenPayload,
   generatedToken,
   userServicePatterns,
@@ -22,6 +26,8 @@ export class AuthService {
     private readonly userService: ClientProxy,
     private readonly jwtService: JwtService,
     private readonly tokenService: TokenService,
+    @Inject(ServiceName.NOTIFIER_SERVICE)
+    private readonly notifierService: ClientProxy,
   ) {}
 
   getHello(): string {
@@ -83,8 +89,6 @@ export class AuthService {
         Constants.JWT.verifyEmailExpiresIn,
       );
 
-      // TODO: send mail to user with token
-
       const { uuid, token } = await this.signToken({
         payload: payload,
         secret: jwtSecret,
@@ -93,8 +97,24 @@ export class AuthService {
 
       await this.tokenService.createToken(uuid);
 
+      const emailData: TemplateData = {
+        data: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          token: token,
+        },
+        to: user.email,
+      };
+      const sendEmailDto: SendEmailsDto = {
+        template: EmailTemplates.VERIFYEMAIL,
+        templateData: [emailData],
+      };
+      this.notifierService.emit(
+        { cmd: NotifierEvents.sendEmail },
+        sendEmailDto,
+      );
+
       return {
-        token,
         message: `welcome to InteliTalent, ${user.firstName} ${user.lastName}! Please verify your email to continue. A verification link has been sent to ${user.email}`,
       };
     } catch (error) {
@@ -124,8 +144,6 @@ export class AuthService {
         Constants.JWT.forgetPasswordExpiresIn,
       );
 
-      // TODO: send mail to user with token
-
       const { uuid, token } = await this.signToken({
         payload: payload,
         secret: jwtSecret,
@@ -134,17 +152,36 @@ export class AuthService {
 
       await this.tokenService.createToken(uuid);
 
-      return { token, uuid };
+      const emailData: TemplateData = {
+        data: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          token: token,
+        },
+        to: user.email,
+      };
+      const sendEmailDto: SendEmailsDto = {
+        template: EmailTemplates.FORGETPASSWORD,
+        templateData: [emailData],
+      };
+
+      this.notifierService.emit(
+        { cmd: NotifierEvents.sendEmail },
+        sendEmailDto,
+      );
+
+      return {
+        message: `A password reset link has been sent to ${user.email}`,
+      };
     } catch (error) {
       throw new RpcException(error);
     }
   }
 
-  async resetPassword(
-    uuid: string,
-  ): Promise<{ message: string }> {
+  async resetPassword(uuid: string): Promise<{ message: string }> {
     try {
       await this.tokenService.useToken(uuid);
+
       return {
         message: 'Password reset successfully',
       };

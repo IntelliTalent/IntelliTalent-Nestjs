@@ -1,6 +1,7 @@
 # compiled output
 /dist
 /node_modules
+/uploads
 
 # Logs
 logs
@@ -39,3 +40,5 @@ db/*
 monitoring/data/*
 
 .env
+
+package-lock.json
