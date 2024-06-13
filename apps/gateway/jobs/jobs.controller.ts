@@ -5,6 +5,7 @@ import {
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
+import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
 import {
   CurrentUser,
   Roles,
@@ -13,7 +14,6 @@ import {
   User,
   UserType,
 } from '@app/shared';
-import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
   Controller,
@@ -56,7 +56,7 @@ export class JobsController {
     isArray: true,
     description: 'List of jobs returned successfully.',
   })
-  async getJobs(@Query() filteration: PageOptionsDto) {
+  async getJobs(@Query() filteration: JobsPageOptionsDto) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobs },
       filteration,
