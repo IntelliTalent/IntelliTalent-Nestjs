@@ -11,7 +11,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : HttpStatus.BAD_REQUEST;
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const httpResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
@@ -20,6 +20,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       httpResponse instanceof Object
         ? httpResponse
         : { message: exception.message };
+
+    console.log('rerere', responseBody);
 
     response.status(status).json({
       ...responseBody,

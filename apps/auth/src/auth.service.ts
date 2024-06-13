@@ -71,55 +71,55 @@ export class AuthService {
   }
 
   async register(newUser: CreateUserDto) {
+    let user: User = null;
+
+    console.log('perfore');
     try {
-      const user: User = await firstValueFrom(
+      user = await firstValueFrom(
         this.userService.send({ cmd: userServicePatterns.createUser }, newUser),
       );
-
-      const payload: TokenPayload = {
-        email: user.email,
-        id: user.id,
-        type: user.type,
-      };
-
-      const jwtSecret = await getConfigVariables(
-        Constants.JWT.verifyEmailSecret,
-      );
-      const loginExpiration = await getConfigVariables(
-        Constants.JWT.verifyEmailExpiresIn,
-      );
-
-      const { uuid, token } = await this.signToken({
-        payload: payload,
-        secret: jwtSecret,
-        expiresIn: loginExpiration,
-      });
-
-      await this.tokenService.createToken(uuid);
-
-      const emailData: TemplateData = {
-        data: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          token: token,
-        },
-        to: user.email,
-      };
-      const sendEmailDto: SendEmailsDto = {
-        template: EmailTemplates.VERIFYEMAIL,
-        templateData: [emailData],
-      };
-      this.notifierService.emit(
-        { cmd: NotifierEvents.sendEmail },
-        sendEmailDto,
-      );
-
-      return {
-        message: `welcome to InteliTalent, ${user.firstName} ${user.lastName}! Please verify your email to continue. A verification link has been sent to ${user.email}`,
-      };
-    } catch (error) {
-      throw new RpcException(error);
+    } catch (error: any) {
+      console.log('error', error);
     }
+
+    console.log('user', user);
+
+    const payload: TokenPayload = {
+      email: user.email,
+      id: user.id,
+      type: user.type,
+    };
+
+    const jwtSecret = await getConfigVariables(Constants.JWT.verifyEmailSecret);
+    const loginExpiration = await getConfigVariables(
+      Constants.JWT.verifyEmailExpiresIn,
+    );
+
+    const { uuid, token } = await this.signToken({
+      payload: payload,
+      secret: jwtSecret,
+      expiresIn: loginExpiration,
+    });
+
+    await this.tokenService.createToken(uuid);
+
+    const emailData: TemplateData = {
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        token: token,
+      },
+      to: user.email,
+    };
+    const sendEmailDto: SendEmailsDto = {
+      template: EmailTemplates.VERIFYEMAIL,
+      templateData: [emailData],
+    };
+    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
+
+    return {
+      message: `welcome to InteliTalent, ${user.firstName} ${user.lastName}! Please verify your email to continue. A verification link has been sent to ${user.email}`,
+    };
   }
 
   async forgetPassword(email: string) {
@@ -174,6 +174,7 @@ export class AuthService {
         message: `A password reset link has been sent to ${user.email}`,
       };
     } catch (error) {
+      console.log('error', error);
       throw new RpcException(error);
     }
   }

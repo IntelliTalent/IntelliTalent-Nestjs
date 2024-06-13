@@ -7,7 +7,6 @@ import {
   TemplateData,
   UpdateUserDto,
   changePasswordDto,
-  getUpdatableFields,
 } from '@app/services_communications';
 import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
 import {
@@ -15,8 +14,9 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
@@ -51,10 +51,8 @@ export class UserService {
     });
 
     if (doesUserExist) {
-      throw new RpcException(
-        new BadRequestException(
-          'User with this email already exists or wait for the email verification to complete',
-        ),
+      throw new BadRequestException(
+        'User with this email already exists or wait for the email verification to complete',
       );
     }
 
@@ -73,6 +71,7 @@ export class UserService {
 
     const savedUser = await this.userRepository.save(createdUser);
 
+    // send on init
     await this.formFieldModel.create({
       ...createdUser,
       userId: savedUser.id,
@@ -86,10 +85,8 @@ export class UserService {
     const user = await this.userRepository.findOne(finduser);
 
     if (!user) {
-      throw new RpcException(
-        new NotFoundException(
-          `user with ${Object.keys(finduser.where)} : ${Object.values(finduser.where)} not found`,
-        ),
+      throw new NotFoundException(
+        `user with ${Object.keys(finduser.where)} : ${Object.values(finduser.where)} not found`,
       );
     }
 
@@ -136,24 +133,18 @@ export class UserService {
       .getOne();
 
     if (!user) {
-      throw new RpcException(
-        new NotFoundException('Invalid email or password(not found)'),
-      );
+      throw new UnauthorizedException('Invalid email or password(not found)');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new RpcException(
-        new NotFoundException('Invalid email or password'),
-      );
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     if (!user.isVerified) {
-      throw new RpcException(
-        new NotFoundException(
-          'Please verify your email first, check your email for the verification link',
-        ),
+      throw new BadRequestException(
+        'Please verify your email first, check your email for the verification link',
       );
     }
 
@@ -225,9 +216,7 @@ export class UserService {
     const user = await this.userRepository.findOneBy({ id });
 
     if (!user) {
-      throw new RpcException(
-        new NotFoundException(`user with id ${id} not found`),
-      );
+      throw new NotFoundException(`user with id ${id} not found`);
     }
     user.isVerified = true;
 
