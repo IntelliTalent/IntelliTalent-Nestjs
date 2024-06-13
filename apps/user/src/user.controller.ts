@@ -2,20 +2,24 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Inject,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  changePasswordDto,
   CreateUserDto,
   HealthCheckPatterns,
   userServicePatterns,
 } from '@app/services_communications';
-import { ServiceName, User } from '@app/shared';
+import { RpcExceptionsFilter, ServiceName, User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Controller()
+@UseFilters(RpcExceptionsFilter)
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(
@@ -82,7 +86,7 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: userServicePatterns.resetPassword })
-  changePassword(
+  changePasswordWithToken(
     @Payload()
     { id, password }: ResetPasswordDto,
   ): Promise<{ message: string }> {
@@ -94,9 +98,16 @@ export class UserController {
     return this.userService.verifyUser(id);
   }
 
+  @MessagePattern({ cmd: userServicePatterns.changePassword })
+  changePassword(
+    @Payload()
+    dto: changePasswordDto,
+  ): Promise<{ message: string }> {
+    return this.userService.changePassword(dto);
+  }
+
   @MessagePattern({ cmd: userServicePatterns.getAllJobSeekers })
-  async getAllJobSeekers(): Promise<User[]> {
-    // used for ATS match command
-    return this.userService.getAllJobSeekers();
+  async getAllJobSeekers(pageOptions: PageOptionsDto): Promise<User[]> {
+    return this.userService.getAllJobSeekers(pageOptions);
   }
 }

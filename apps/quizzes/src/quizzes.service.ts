@@ -11,6 +11,7 @@ import { ServiceName } from '@app/shared';
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CreateQuizDto,
+  GetQuizSlugsDto,
   GetUserQuizzesDto,
   IQuizzesGeneratorDto,
   JobQuizzesIdentifierDto,
@@ -48,7 +49,7 @@ export class QuizzesService {
     //   const deadline = new Date();
     //   deadline.setDate(deadline.getDate() + 2);
     //   this.createQuiz({
-    //     jobId: i.toString(),
+    //     jobId: '109de94e-1a1b-46c0-9371-3162129dcd7e',
     //     skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
     //     numberOfQuestions: 5,
     //     recruiterId: '1',
@@ -246,5 +247,16 @@ export class QuizzesService {
     });
 
     return quezzies;
+  }
+
+  async getQuizSlugs(getQuiz: GetQuizSlugsDto) {
+    const quizSlugs = await this.quizRepository.find({
+      where: {
+        jobId: getQuiz.jobId,
+      },
+      select: ['randomSlug', 'userId'],
+    });
+
+    return quizSlugs;
   }
 }

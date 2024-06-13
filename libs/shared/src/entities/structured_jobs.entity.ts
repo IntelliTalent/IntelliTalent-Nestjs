@@ -9,7 +9,13 @@ import {
 import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 import { CustomJobsStages } from './custom_jobs_stages.entity';
-import { StageType } from '../enums/stage-type.enum';
+
+export enum StageType {
+  Active = 'Active',
+  Quiz = 'Quiz',
+  Interview = 'Interview',
+  Final = 'Final',
+}
 
 @Entity()
 @Index(['title', 'company', 'publishedAt'], { unique: true })
@@ -65,10 +71,10 @@ export class StructuredJob extends AbstractEntity {
   @Column({ default: false })
   isScrapped: boolean;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: Date, nullable: true })
   jobEndDate: Date;
 
-  @Column({ type: 'enum', enum: StageType, default: StageType.matched})
+  @Column({ type: 'enum', enum: StageType, default: StageType.Active })
   currentStage: StageType;
 
   @OneToOne(() => CustomJobsStages)

@@ -1,5 +1,6 @@
 import { StageData } from "@app/shared/entities/filteration.entity";
 import { StageType } from "@app/shared/enums/stage-type.enum";
+import { StageType as JobStageType } from "@app/shared/entities/structured_jobs.entity";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class StageResponseDto {
@@ -14,7 +15,7 @@ export class StageResponseDto {
         type: 'string',
         enum: StageType
     })
-    stage: StageType;
+    stage: StageType | JobStageType;
 
     @ApiProperty({
         description: 'The data of the stage',

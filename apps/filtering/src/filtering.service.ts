@@ -3,7 +3,7 @@ import { MatchProfileAndJobData } from '@app/services_communications/ats-service
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { jobsServicePatterns } from '@app/services_communications/jobs-service';
-import { ServiceName, StructuredJob } from '@app/shared';
+import {  ServiceName, StructuredJob, User } from '@app/shared';
 import { Filteration, QuizData, StageData } from '@app/shared/entities/filteration.entity';
 import { StageType } from '@app/shared/enums/stage-type.enum';
 import { Inject, Injectable } from '@nestjs/common';
@@ -15,7 +15,10 @@ import { Repository } from 'typeorm';
 import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
 import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
 import * as FILTERATION_CONSTANTS from '@app/services_communications/filteration-service/constants/constants';
-import { profileServicePattern } from '@app/services_communications';
+import { EmailTemplates, GetQuizSlugsDto, InterviewTemplateData, NotifierEvents, QuizEmailTemplateData, SendEmailsDto, TemplateData, profileServicePattern, quizzesPattern, userServicePatterns } from '@app/services_communications';
+import { Quiz } from '@app/shared/entities/quiz.entity';
+import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
+import { StageType as JobStageType } from '@app/shared/entities/structured_jobs.entity';
 @Injectable()
 export class FilteringService {
 
@@ -23,7 +26,9 @@ export class FilteringService {
     @Inject(ServiceName.ATS_SERVICE) private readonly atsService: ClientProxy,
     @Inject(ServiceName.JOB_SERVICE) private readonly jobService: ClientProxy,
     @Inject(ServiceName.NOTIFIER_SERVICE) private readonly notifierService: ClientProxy,
+    @Inject(ServiceName.QUIZ_SERVICE) private readonly quizService: ClientProxy,
     @Inject(ServiceName.PROFILE_SERVICE) private readonly profileService: ClientProxy,
+    @Inject(ServiceName.USER_SERVICE) private readonly userService: ClientProxy,
     @InjectRepository(Filteration) private readonly filterationRepository: Repository<Filteration>,
   ) { }
   getHello(): string {
@@ -31,7 +36,7 @@ export class FilteringService {
   }
 
 
-  async applyJob(profileId: string, jobId: string): Promise<StageResponseDto> {
+  async applyJob(profileId: string, jobId: string, userId: string): Promise<StageResponseDto> {
     // get the job details
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -60,7 +65,7 @@ export class FilteringService {
           {
             profileId,
             jobId,
-          },
+          } as ProfileAndJobDto,
         ),
       );
       const { status, ...matchData } = matchingResult;
@@ -72,6 +77,7 @@ export class FilteringService {
       const newFilteration = this.filterationRepository.create({
         jobId,
         profileId,
+        userId,
         currentStage: StageType.applied,
         matchData,
         isQualified: matchData.isValid && (matchData.matchScore > MATCHING_THRESHOLD),
@@ -122,11 +128,74 @@ export class FilteringService {
       return null;
     }
     switch (job.currentStage) {
-      case StageType.quiz:
-        // TODO:  call the quiz service to get the urls of the generated quizzes        
+      case JobStageType.Quiz:
+        // call the quiz service to get the quiz slugs
+        const quizzes: Quiz[] = await firstValueFrom(
+          this.quizService.send(
+            {
+              cmd: quizzesPattern.getQuizSlugs
+            },
+            {
+              jobId
+            } as GetQuizSlugsDto
+          )
+        );
+        // call the mail service to send the mails to the users to start the quiz
+        const quizzesTemplateData: TemplateData[] = quizzes.map((quiz: Quiz) => {
+          return {
+            to: quiz.email,
+            data: {
+              firstName: quiz.name,
+              lastName: quiz.name,
+              quizSlug: quiz.randomSlug,
+              jobTitle: job.title,
+            } as QuizEmailTemplateData
+          };
+        });
+        const sendEmailsDto: SendEmailsDto = {
+          template: EmailTemplates.QUIZ,
+          templateData: quizzesTemplateData,
+        };
+        this.notifierService.send(
+          {
+            cmd: NotifierEvents.sendEmail
+          },
+          sendEmailsDto
+        );
         break;
-      case StageType.interview:
-        // TODO: call the mail service to send the mails to the users to start the interview
+      case JobStageType.Interview:
+        // call the mail service to send the mails to the users to start the interview
+        const appliedUsers = await this.filterationRepository.findBy({ jobId: job.jobId, currentStage: StageType.interview });
+        const interviewTemplateData: TemplateData[] = await Promise.all(appliedUsers.map(async (user) =>  {
+          // get the user details from the user service
+          const userDetails: User = await firstValueFrom(
+            this.userService.send(
+              {
+                cmd: userServicePatterns.findUserById
+              },
+              user.userId
+            )
+          );
+          return {
+            to: user.profileId,
+            data: {
+              firstName: userDetails.firstName,
+              lastName: userDetails.lastName,
+              jobTitle: job.title,
+              jobUrl: job.url
+            } as InterviewTemplateData
+          };
+        }));
+        const sendInterviewEmailsDto: SendEmailsDto = {
+          template: EmailTemplates.INTERVIEW,
+          templateData: interviewTemplateData,
+        };
+        this.notifierService.send(
+          {
+            cmd: NotifierEvents.sendEmail
+          },
+          sendInterviewEmailsDto
+        );
         break;
       default:
         // throw new BadRequestException('Not valid stage to begin');
@@ -279,7 +348,11 @@ export class FilteringService {
       grade,
       quizDate: new Date()
     } as QuizData;
-    filteration.currentStage = StageType.interview;
+    if (job.stages.interview != null) {
+      filteration.currentStage = StageType.interview;
+    } else {
+      filteration.currentStage = StageType.candidate;
+    }
     await this.filterationRepository.save(filteration);
     return {
       message: FILTERATION_CONSTANTS.USER_PASSED_QUIZ,
