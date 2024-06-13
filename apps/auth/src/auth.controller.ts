@@ -35,7 +35,6 @@ export class AuthController {
 
   @MessagePattern({ cmd: authServicePattern.register })
   async register(@Payload() newUser: CreateUserDto) {
-    console.log('waer');
     return this.authService.register(newUser);
   }
 

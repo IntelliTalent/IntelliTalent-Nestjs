@@ -8,7 +8,7 @@ import {
   UpdateUserDto,
   changePasswordDto,
 } from '@app/services_communications';
-import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
+import { Constants, ServiceName, User, UserType } from '@app/shared';
 import {
   BadRequestException,
   Inject,
@@ -22,19 +22,22 @@ import { FindUserInterface } from '../../../libs/services_communications/src/use
 import * as bcrypt from 'bcryptjs';
 import { FindOneOptions, In, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import {
+  AuthFormFieldsDto,
+  AutofillServicePattern,
+} from '@app/services_communications/autofill';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectModel(FormField.name)
-    private readonly formFieldModel: Model<FormField>,
     @Inject(ServiceName.NOTIFIER_SERVICE)
     private readonly notifierService: ClientProxy,
+    @Inject(ServiceName.AUTOFILL_SERVICE)
+    private readonly formFieldsService: ClientProxy,
   ) {}
 
   getHello(): string {
@@ -72,14 +75,38 @@ export class UserService {
 
     const savedUser = await this.userRepository.save(createdUser);
 
-    // send on init
-    await this.formFieldModel.create({
-      ...createdUser,
-      userId: savedUser.id,
-      fullName: `${createdUser.firstName} ${createdUser.lastName}`,
-    });
-
     return savedUser;
+  }
+
+  async initFormFields(user: User, init = true) {
+    const {
+      id,
+      password,
+      createdAt,
+      updatedAt,
+      deletedAt,
+      isVerified,
+      type,
+      ...requiredData
+    } = user;
+
+    const payload: AuthFormFieldsDto = {
+      userId: user.id,
+      data: {
+        ...requiredData,
+      },
+    };
+
+    await firstValueFrom(
+      this.formFieldsService.send(
+        {
+          cmd: init
+            ? AutofillServicePattern.init
+            : AutofillServicePattern.patchFields,
+        },
+        payload,
+      ),
+    );
   }
 
   async findUser(finduser: FindOneOptions<User>): Promise<User> {
@@ -94,13 +121,12 @@ export class UserService {
     return user;
   }
 
-  async getUsersByIds(usersIds: string[]){
-      return this.userRepository.find({
-        where: {
-          id: In(usersIds),
-        },
-      });
-    
+  async getUsersByIds(usersIds: string[]) {
+    return this.userRepository.find({
+      where: {
+        id: In(usersIds),
+      },
+    });
   }
 
   // TODO: need to edit for the update password
@@ -114,6 +140,8 @@ export class UserService {
     const user = await this.findUser({ where: { id } });
 
     Object.assign(user, updateUser);
+
+    this.initFormFields(user, false);
 
     return this.userRepository.save(user);
   }
@@ -229,6 +257,8 @@ export class UserService {
       throw new NotFoundException(`user with id ${id} not found`);
     }
     user.isVerified = true;
+
+    this.initFormFields(user);
 
     return this.userRepository.save(user);
   }

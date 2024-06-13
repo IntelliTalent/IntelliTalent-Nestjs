@@ -12,13 +12,12 @@ export class RpcExceptionsFilter implements ExceptionFilter {
   constructor() {}
 
   catch(exception: any, host: ArgumentsHost): any {
+    if (exception.error) {
+      return throwError(() => exception);
+    }
+
     const response = exception.getResponse();
     const status = exception.getStatus() ?? HttpStatus.BAD_REQUEST;
-
-    console.log('RpcExceptionsFilter', response, 'waerafter', {
-      error: typeof response === 'string' ? response : response.error,
-      message: typeof response === 'string' ? response : response.message,
-    });
 
     return throwError(
       () =>
