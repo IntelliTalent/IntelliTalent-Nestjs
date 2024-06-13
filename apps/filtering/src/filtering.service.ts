@@ -38,9 +38,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId
-        },
+        jobId
       ),
     );
     // check if the job exists and is open
@@ -114,10 +112,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId
-        },
-        // TODO : send it without object
+        jobId
       ),
     );
     // check if the job exists and is open
@@ -151,9 +146,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId
-        },
+        jobId
       ),
     );
     console.log('job', job);
@@ -262,9 +255,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId
-        },
+        jobId
       ),
     );
     if (!job || job.userId !== userId) {
@@ -297,16 +288,14 @@ export class FilteringService {
     }
   }
 
-  async failQuiz(userId:string, jobId: string, profileId: string, grade: number): Promise<StageResponseDto> {
+  async failQuiz(userId: string, jobId: string, profileId: string, grade: number): Promise<StageResponseDto> {
     // check if the user is the owner of the job
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId
-        },
+        jobId
       ),
     );
     if (!job || job.userId !== userId) {
@@ -315,7 +304,7 @@ export class FilteringService {
       return null;
     }
 
-    
+
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId: profileId });
     if (!filteration) {
       // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
@@ -334,7 +323,7 @@ export class FilteringService {
     filteration.currentStage = StageType.failed;
     await this.filterationRepository.save(filteration);
     return {
-      message:FILTERATION_CONSTANTS.USER_FAILED_QUIZ,
+      message: FILTERATION_CONSTANTS.USER_FAILED_QUIZ,
       stage: filteration.currentStage,
       stageData: filteration.quizData
     }
@@ -396,9 +385,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId: reviewAnswers.jobId
-        },
+        reviewAnswers.jobId
       ),
     );
     if (!job || job.userId !== userId) {
@@ -443,9 +430,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById
         },
-        {
-          jobId
-        },
+        jobId
       ),
     );
     if (!job || job.userId !== userId) {
