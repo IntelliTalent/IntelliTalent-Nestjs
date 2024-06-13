@@ -254,7 +254,7 @@ export class QuizzesService {
       where: {
         jobId: getQuiz.jobId,
       },
-      select: ['randomSlug', 'userId'],
+      select: ['randomSlug', 'userId', 'email'],
     });
 
     return quizSlugs;

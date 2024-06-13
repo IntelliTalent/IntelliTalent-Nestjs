@@ -6,6 +6,7 @@ export enum MongoDBName {
   FormFieldsDB = 'FormFieldsDB',
   QuizzesDB = 'QuizzesDB',
   InterviewQuestionsDB = 'InterviewQuestionsDB',
+  FilterationDB = 'FilterationDB',
 }
 
 export const getMongoDatabase = async (dbName: MongoDBName) => {

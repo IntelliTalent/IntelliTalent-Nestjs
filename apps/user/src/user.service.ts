@@ -20,10 +20,11 @@ import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
-import { FindOneOptions, Repository } from 'typeorm';
+import { FindOneOptions, In, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 @Injectable()
 export class UserService {
@@ -91,6 +92,15 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async getUsersByIds(usersIds: string[]){
+      return this.userRepository.find({
+        where: {
+          id: In(usersIds),
+        },
+      });
+    
   }
 
   // TODO: need to edit for the update password
@@ -223,7 +233,7 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async getAllJobSeekers(): Promise<User[]> {
+  async getAllJobSeekers(pageOptions: PageOptionsDto): Promise<User[]> {
     const query = this.userRepository
       .createQueryBuilder('user')
       .select([
@@ -236,6 +246,11 @@ export class UserService {
       ])
       .where('user.type = :type', { type: UserType.jobSeeker })
       .andWhere('user.isVerified = :isVerified', { isVerified: true });
+
+    // Apply pagination
+    const skip = (pageOptions.page - 1) * pageOptions.take;
+
+    query.skip(skip).take(pageOptions.take);
 
     return await query.getMany();
   }

@@ -1,4 +1,4 @@
-import { JobPlace, JobType, StageType } from '@app/shared';
+import { JobPlace, JobType } from '@app/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -118,18 +118,6 @@ export class CreateJobDto {
   @ValidateNested()
   @Type(() => CustomFilters)
   customFilters?: CustomFilters;
-
-  @ApiProperty({
-    enum: StageType,
-    isArray: true,
-    required: false,
-    example: '[0, 1] 0: INTERVIEW, 1: QUIZ',
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsEnum(StageType, { each: true })
-  stagesOrder?: StageType[];
 
   @ApiProperty({ type: Date, required: false })
   @IsOptional()

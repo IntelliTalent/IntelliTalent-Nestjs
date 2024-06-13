@@ -21,6 +21,7 @@ import { RedisDBName } from '@app/shared/config/redis.config';
     SharedModule.registerRmq(ServiceName.SCRAPPER_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_EXTRACTOR_SERVICE),
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
+    SharedModule.registerRmq(ServiceName.FILTERATION_SERVICE),
     SharedModule.registerMongoDB(MongoDBName.ScrappedJobsDB),
     MongooseModule.forFeature([
       { name: UnstructuredJobs.name, schema: UnstructuredJobsSchema },

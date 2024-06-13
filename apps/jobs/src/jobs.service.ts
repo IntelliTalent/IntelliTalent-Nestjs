@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -10,6 +11,7 @@ import {
   CustomJobsStages,
   Interview,
   ServiceName,
+  StageType,
   StructuredJob,
   UnstructuredJobs,
 } from '@app/shared';
@@ -29,6 +31,9 @@ import { Model } from 'mongoose';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class JobsService {
@@ -49,6 +54,9 @@ export class JobsService {
     private readonly jobExtractorService: ClientProxy,
     @Inject(ServiceName.ATS_SERVICE)
     private readonly atsService: ClientProxy,
+    @Inject(ServiceName.FILTERATION_SERVICE)
+    private readonly filtrationService: ClientProxy,
+    private schedulerRegistry: SchedulerRegistry,
   ) {}
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
@@ -112,8 +120,182 @@ export class JobsService {
     }
   }
 
+  private getJobName(jobId: string, type: string) {
+    switch (type) {
+      case 'job':
+        return `jobEndDate-${jobId}`;
+      case 'quiz':
+        return `quizEndDate-${jobId}`;
+      case 'interview':
+        return `interviewEndDate-${jobId}`;
+      default:
+        throw new BadRequestException('Invalid Job Name Type');
+    }
+  }
+
+  private async deactivateJobAndBeginNextStage(job: StructuredJob) {
+    // If the job is already scheduled, remove it
+    const jobName = this.getJobName(job.id, 'job');
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
+      const existingJob = this.schedulerRegistry.getCronJob(jobName);
+      existingJob.stop();
+      this.schedulerRegistry.deleteCronJob(jobName);
+    }
+
+    // Update the job to inactive
+    job.isActive = false;
+
+    // Update the current stage of the job
+    if (job.stages?.quizEndDate) {
+      job.currentStage = StageType.Quiz;
+    } else if (job.stages?.interview) {
+      job.currentStage = StageType.Interview;
+    } else {
+      job.currentStage = StageType.Final;
+    }
+
+    await this.structuredJobRepository.save(job);
+
+    // Call the filtration service to begin the next stage
+    if (job.currentStage !== StageType.Final) {
+      this.filtrationService.emit(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id },
+      );
+    }
+  }
+
+  private async moveJobToNextStage(job: StructuredJob) {
+    // Update the current stage of the job
+    if (job.currentStage === StageType.Quiz && job.stages?.interview) {
+      // Stop the quiz cron job
+      const jobName = this.getJobName(job.id, 'quiz');
+      const existingJob = this.schedulerRegistry.getCronJob(jobName);
+      existingJob.stop();
+      this.schedulerRegistry.deleteCronJob(jobName);
+
+      job.currentStage = StageType.Interview;
+    } else if (job.currentStage === StageType.Interview) {
+      // Stop the interview cron job
+      const jobName = this.getJobName(job.id, 'interview');
+      const existingJob = this.schedulerRegistry.getCronJob(jobName);
+      existingJob.stop();
+      this.schedulerRegistry.deleteCronJob(jobName);
+
+      job.currentStage = StageType.Final;
+    } else {
+      job.currentStage = StageType.Final;
+    }
+
+    await this.structuredJobRepository.save(job);
+
+    // Call the filtration service to begin the next stage
+    if (job.currentStage !== StageType.Final) {
+      this.filtrationService.emit(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id },
+      );
+    }
+  }
+
+  private scheduleJobEnd(job: StructuredJob): void {
+    const jobName = this.getJobName(job.id, 'job');
+
+    // If the job is already scheduled, remove it before scheduling a new one
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
+      const existingJob = this.schedulerRegistry.getCronJob(jobName);
+      existingJob.stop();
+      this.schedulerRegistry.deleteCronJob(jobName);
+    }
+
+    const jobEndDate = new Date(job.jobEndDate);
+
+    const cronJob = new CronJob(jobEndDate, async () => {
+      await this.deactivateJobAndBeginNextStage(job);
+    });
+
+    this.schedulerRegistry.addCronJob(jobName, cronJob);
+    cronJob.start();
+  }
+
+  private scheduleQuizEnd(job: StructuredJob): void {
+    const jobName = this.getJobName(job.id, 'quiz');
+
+    // If the job is already scheduled, remove it before scheduling a new one
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
+      const existingJob = this.schedulerRegistry.getCronJob(jobName);
+      existingJob.stop();
+      this.schedulerRegistry.deleteCronJob(jobName);
+    }
+
+    const quizEndDate = new Date(job.stages.quizEndDate);
+
+    const cronJob = new CronJob(quizEndDate, async () => {
+      await this.moveJobToNextStage(job);
+    });
+
+    this.schedulerRegistry.addCronJob(jobName, cronJob);
+    cronJob.start();
+  }
+
+  private scheduleInterviewEnd(job: StructuredJob): void {
+    const jobName = this.getJobName(job.id, 'interview');
+
+    // If the job is already scheduled, remove it before scheduling a new one
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
+      const existingJob = this.schedulerRegistry.getCronJob(jobName);
+      existingJob.stop();
+      this.schedulerRegistry.deleteCronJob(jobName);
+    }
+
+    const interviewEndDate = new Date(job.stages.interview.endDate);
+
+    const cronJob = new CronJob(interviewEndDate, async () => {
+      await this.moveJobToNextStage(job);
+    });
+
+    this.schedulerRegistry.addCronJob(jobName, cronJob);
+    cronJob.start();
+  }
+
   async createJob(newJob: CreateJobDto) {
     try {
+      // Check that dates are valid
+      // Check that interview end date is after quiz end date
+      if (newJob.quizEndDate && newJob.interview?.endDate) {
+        if (newJob.interview?.endDate < newJob.quizEndDate) {
+          console.log('Interview end date must be after quiz end date');
+
+          throw new BadRequestException(
+            'Interview end date must be after quiz end date',
+          );
+        }
+      }
+
+      // Check that interview end date is after job end date
+      if (newJob.jobEndDate && newJob.interview?.endDate) {
+        if (newJob.jobEndDate > newJob.interview?.endDate) {
+          console.log('Interview end date must be after job end date');
+
+          throw new BadRequestException(
+            'Interview end date must be after job end date',
+          );
+        }
+      }
+
+      // Check that the quiz end date is after the quiz end date
+      if (newJob.quizEndDate && newJob.jobEndDate) {
+        if (newJob.jobEndDate > newJob.quizEndDate) {
+          throw new BadRequestException(
+            'Quiz end date must be after job end date',
+          );
+        }
+      }
+
       // Check if there is an interview in the new job
       let interview: Interview | null = null;
       if (newJob.interview) {
@@ -128,7 +310,6 @@ export class JobsService {
       // Create a custom job stage entity
       const customJobStage = this.customJobsStagesRepository.create({
         interview: interview,
-        order: newJob.stagesOrder,
         quizEndDate: newJob.quizEndDate,
         customFilters: newJob.customFilters,
       });
@@ -136,6 +317,7 @@ export class JobsService {
 
       // Create the structured job entity
       const structuredJob = this.structuredJobRepository.create({
+        userId: newJob.userId,
         title: newJob.title,
         company: newJob.company,
         jobLocation: newJob.jobLocation,
@@ -148,7 +330,6 @@ export class JobsService {
         csRequired: newJob.csRequired,
         jobEndDate: newJob.jobEndDate,
         stages: customJobStage,
-        userId: newJob.userId,
       });
 
       // Set additional fields
@@ -173,6 +354,17 @@ export class JobsService {
       // Fire the matching event to the ATS service
       await this.callATSService();
 
+      // Schedule the end dates
+      if (newJob.jobEndDate) {
+        this.scheduleJobEnd(savedJob);
+      }
+      if (newJob.quizEndDate) {
+        this.scheduleQuizEnd(savedJob);
+      }
+      if (newJob.interview) {
+        this.scheduleInterviewEnd(savedJob);
+      }
+
       return savedJob;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -181,39 +373,113 @@ export class JobsService {
 
   async editJob(editJob: EditJobDto) {
     try {
+      const {
+        jobId,
+        userId,
+        customFilters,
+        interview,
+        jobEndDate,
+        quizEndDate,
+        ...rest
+      } = editJob;
+
       // Check if the job exists
       const existingJob = await this.structuredJobRepository.findOne({
-        where: { id: editJob.jobId },
-        relations: ['stages'],
+        where: { id: jobId },
+        relations: ['stages', 'stages.interview'],
       });
       if (!existingJob) {
-        throw new NotFoundException(
-          `Can not find a job with id: ${editJob.jobId}`,
-        );
+        throw new NotFoundException(`Can not find a job with id: ${jobId}`);
       }
 
       // Check if the user is the owner of the job
-      if (existingJob.userId !== editJob.userId) {
+      if (existingJob.userId !== userId) {
         throw new ForbiddenException('Can not edit a job of another user');
       }
 
-      // Update the job fields
-      Object.assign(existingJob, editJob);
-
-      // Update related entities
-      if (existingJob.stages) {
-        Object.assign(existingJob.stages, {
-          customFilters: editJob.customFilters,
-          order: editJob.stagesOrder,
-          quizEndDate: editJob.quizEndDate,
-        });
+      for (const [key, value] of Object.entries(rest)) {
+        if (isDefined(value)) {
+          existingJob[key] = value;
+        }
       }
 
-      if (existingJob.stages && existingJob.stages.interview) {
-        Object.assign(existingJob.stages.interview, {
-          interviewQuestions: editJob.interview.interviewQuestions,
-          endDate: editJob.interview.endDate,
-        });
+      if (customFilters) {
+        for (const [key, value] of Object.entries(customFilters)) {
+          if (isDefined(value)) {
+            existingJob.stages.customFilters[key] = value;
+          }
+        }
+      }
+
+      if (jobEndDate) {
+        // Check that the job end date is before the quiz end date and before the interview end date
+        if (
+          existingJob.stages.quizEndDate &&
+          existingJob.stages.quizEndDate < jobEndDate
+        ) {
+          throw new BadRequestException(
+            'Job end date must be before quiz end date',
+          );
+        }
+
+        if (
+          existingJob.stages.interview &&
+          existingJob.stages.interview.endDate < jobEndDate
+        ) {
+          throw new BadRequestException(
+            'Job end date must be before interview end date',
+          );
+        }
+
+        existingJob.jobEndDate = jobEndDate;
+        this.scheduleJobEnd(existingJob);
+      }
+
+      if (quizEndDate) {
+        // Check that the quiz end date is after the job end date and before the interview end date
+        if (existingJob.jobEndDate && existingJob.jobEndDate > quizEndDate) {
+          throw new BadRequestException(
+            'Quiz end date must be after job end date',
+          );
+        }
+
+        if (
+          existingJob.stages.interview &&
+          existingJob.stages.interview.endDate < quizEndDate
+        ) {
+          throw new BadRequestException(
+            'Quiz end date must be before interview end date',
+          );
+        }
+
+        existingJob.stages.quizEndDate = quizEndDate;
+        this.scheduleQuizEnd(existingJob);
+      }
+
+      if (interview) {
+        // Check that the interview end date is after the job end date and after the quiz end date
+        if (
+          existingJob.jobEndDate &&
+          existingJob.jobEndDate > interview.endDate
+        ) {
+          throw new BadRequestException(
+            'Interview end date must be after job end date',
+          );
+        }
+
+        if (
+          existingJob.stages.quizEndDate &&
+          existingJob.stages.quizEndDate > interview.endDate
+        ) {
+          throw new BadRequestException(
+            'Interview end date must be after quiz end date',
+          );
+        }
+
+        existingJob.stages.interview.endDate = interview.endDate;
+        existingJob.stages.interview.interviewQuestions =
+          interview.interviewQuestions;
+        this.scheduleInterviewEnd(existingJob);
       }
 
       // Save the updated job entity
@@ -225,10 +491,12 @@ export class JobsService {
     }
   }
 
-  async getJobById(jobId: string) {
+  async getJobById(jobId) {
+    console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId },
+      where: { id: jobId},
     });
+    console.log('job: ', job);
 
     if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
@@ -237,6 +505,7 @@ export class JobsService {
     // Map the job entity to IJobs format
     const responseJob: IJobs = {
       id: job.id,
+      userId: job.userId,
       title: job.title,
       company: job.company,
       jobLocation: job.jobLocation,
@@ -250,6 +519,7 @@ export class JobsService {
       education: job.education,
       csRequired: job.csRequired,
       isActive: job.isActive,
+      currentStage: job.currentStage,
     };
     return responseJob;
   }
@@ -258,7 +528,7 @@ export class JobsService {
     // return the job with left joining CustomJobsStages
     const job = await this.structuredJobRepository.findOne({
       where: { id: jobId },
-      relations: ['stages'],
+      relations: ['stages', 'stages.interview'],
     });
 
     return job;
@@ -272,14 +542,20 @@ export class JobsService {
       searchValue,
       startDate,
       endDate,
-      skip,
       take,
+      page,
     } = pageOptions;
+
+    // Calculate skip
+    let skip = undefined;
+    if (page && take) {
+      skip = (page - 1) * take;
+    }
 
     const queryBuilder = this.structuredJobRepository.createQueryBuilder('job');
 
     // Apply orderBy and orderDirection
-    if (orderBy) {
+    if (orderBy && orderDirection) {
       queryBuilder.orderBy(`job.${orderBy}`, orderDirection);
     }
 
@@ -310,6 +586,7 @@ export class JobsService {
 
     const responseJobs: IJobs[] = jobs.map((job) => ({
       id: job.id,
+      userId: job.userId,
       title: job.title,
       company: job.company,
       jobLocation: job.jobLocation,
@@ -323,6 +600,7 @@ export class JobsService {
       education: job.education,
       csRequired: job.csRequired,
       isActive: job.isActive,
+      currentStage: job.currentStage,
     }));
 
     return {
@@ -377,7 +655,7 @@ export class JobsService {
             cmd: jobsServicePatterns.extractInfo,
           },
           {
-            jobs: [unstructuredJobs[0], unstructuredJobs[1]],
+            jobs: unstructuredJobs,
           },
         ),
       ),
@@ -408,5 +686,72 @@ export class JobsService {
 
     // Fire the matching event to the ATS service
     await this.callATSService();
+  }
+
+  async deactivateJob(jobId: string, userId: string) {
+    // Check if the job exists
+    const existingJob = await this.structuredJobRepository.findOne({
+      where: { id: jobId },
+      relations: ['stages', 'stages.interview'],
+    });
+    if (!existingJob) {
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
+
+    // Check if the user is the owner of the job
+    if (existingJob.userId !== userId) {
+      throw new ForbiddenException('Can not deactivate a job of another user');
+    }
+
+    // Check if the job is active
+    if (!existingJob.isActive) {
+      throw new BadRequestException('Can not deactivate an inactive job');
+    }
+
+    // Deactivate the job
+    this.deactivateJobAndBeginNextStage(existingJob);
+
+    return {
+      message: 'Job deactivated successfully.',
+    };
+  }
+
+  async moveToNextStage(jobId: string, userId: string) {
+    // Check if the job exists
+    const existingJob = await this.structuredJobRepository.findOne({
+      where: { id: jobId },
+      relations: ['stages', 'stages.interview'],
+    });
+    if (!existingJob) {
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
+
+    // Check if the user is the owner of the job
+    if (existingJob.userId !== userId) {
+      throw new ForbiddenException(
+        'Can not move a job of another user to next stage',
+      );
+    }
+
+    // Check if the job is active
+    if (existingJob.isActive) {
+      throw new BadRequestException(
+        'Can not move a job that is active to next stage',
+      );
+    }
+
+    // Check if the job is in Final stage
+    if (existingJob.currentStage === StageType.Final) {
+      throw new BadRequestException(
+        'Can not move a job that is in Final stage to next stage',
+      );
+    }
+
+    // Deactivate the job
+    this.moveJobToNextStage(existingJob);
+
+    return {
+      message: 'Job moved to next stage successfully.',
+    };
   }
 }

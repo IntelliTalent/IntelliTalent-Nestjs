@@ -24,6 +24,8 @@ import {
   Body,
   Query,
   Inject,
+  Patch,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
@@ -129,5 +131,45 @@ export class JobsController {
     editJob.jobId = jobId;
     editJob.userId = user.id;
     return this.jobsService.send({ cmd: jobsServicePatterns.editJob }, editJob);
+  }
+
+  @Patch('/:jobId/deactivate')
+  @Roles([UserType.recruiter])
+  @ApiOperation({ summary: 'Deactivate job by ID' })
+  @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Job deactivated successfully.',
+  })
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiNotFoundResponse({ description: 'Job not found' })
+  async deactivateJob(
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.jobsService.send(
+      { cmd: jobsServicePatterns.deactivateJob },
+      { jobId, userId: user.id },
+    );
+  }
+
+  @Patch('/:jobId/move-to-next-stage')
+  @Roles([UserType.recruiter])
+  @ApiOperation({ summary: 'Move job to next stage by ID' })
+  @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Job moved to next stage successfully.',
+  })
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiNotFoundResponse({ description: 'Job not found' })
+  async moveToNextStage(
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.jobsService.send(
+      { cmd: jobsServicePatterns.moveToNextStage },
+      { jobId, userId: user.id },
+    );
   }
 }
