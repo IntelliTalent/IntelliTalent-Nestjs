@@ -157,12 +157,14 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    this.filtrationService.emit(
-      {
-        cmd: jobsServicePatterns.beginCurrentStage,
-      },
-      { jobId: job.id },
-    );
+    if (job.currentStage !== StageType.Final) {
+      this.filtrationService.emit(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id },
+      );
+    }
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
@@ -190,12 +192,14 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    this.filtrationService.emit(
-      {
-        cmd: jobsServicePatterns.beginCurrentStage,
-      },
-      { jobId: job.id },
-    );
+    if (job.currentStage !== StageType.Final) {
+      this.filtrationService.emit(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id },
+      );
+    }
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
