@@ -54,7 +54,7 @@ export class JobsService {
     private readonly jobExtractorService: ClientProxy,
     @Inject(ServiceName.ATS_SERVICE)
     private readonly atsService: ClientProxy,
-    @Inject(ServiceName.FILTRATION_SERVICE)
+    @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
   ) {}

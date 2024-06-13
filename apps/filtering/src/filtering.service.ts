@@ -3,7 +3,7 @@ import { MatchProfileAndJobData } from '@app/services_communications/ats-service
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { jobsServicePatterns } from '@app/services_communications/jobs-service';
-import {  ServiceName, StructuredJob, User } from '@app/shared';
+import { ServiceName, StructuredJob, User } from '@app/shared';
 import { Filteration, QuizData, StageData } from '@app/shared/entities/filteration.entity';
 import { StageType } from '@app/shared/enums/stage-type.enum';
 import { Inject, Injectable } from '@nestjs/common';
@@ -15,7 +15,7 @@ import { Repository } from 'typeorm';
 import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
 import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
 import * as FILTERATION_CONSTANTS from '@app/services_communications/filteration-service/constants/constants';
-import { EmailTemplates, GetQuizSlugsDto, InterviewTemplateData, NotifierEvents, QuizEmailTemplateData, SendEmailsDto, TemplateData, profileServicePattern, quizzesPattern, userServicePatterns } from '@app/services_communications';
+import { CreateQuizDto, EmailTemplates, GetQuizSlugsDto, InterviewTemplateData, NotifierEvents, QuizEmailTemplateData, SendEmailsDto, TemplateData, profileServicePattern, quizzesEvents, quizzesPattern, userServicePatterns } from '@app/services_communications';
 import { Quiz } from '@app/shared/entities/quiz.entity';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
 import { StageType as JobStageType } from '@app/shared/entities/structured_jobs.entity';
@@ -37,6 +37,25 @@ export class FilteringService {
 
 
   async applyJob(profileId: string, jobId: string, userId: string): Promise<StageResponseDto> {
+    // get the profile details and ensure that the user is the owner of the profile 
+    const profile = await firstValueFrom(
+      this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById
+        },
+        profileId,
+      ),
+    );
+    if (!profile) {
+      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      return null;
+    }
+    if (profile.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      return null;
+    }
     // get the job details
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -74,6 +93,14 @@ export class FilteringService {
         // throw new BadRequestException(status);
         console.log(status);
       }
+      const job: StructuredJob = await firstValueFrom(
+        this.jobService.send(
+          {
+            cmd: jobsServicePatterns.getJobDetailsById
+          },
+          jobId
+        ),
+      );
       const newFilteration = this.filterationRepository.create({
         jobId,
         profileId,
@@ -86,6 +113,24 @@ export class FilteringService {
         }
       });
       const savedFilteration = await this.filterationRepository.save(newFilteration);
+      // call the quiz service to generate the quiz for the user
+      this.quizService.send(
+        {
+          cmd: quizzesEvents.createQuiz
+        },
+        {
+          usersDetails: [{
+            userId: userId,
+            email: profileId,
+          }],
+          jobId: job.id,
+          recruiterId: job.userId,
+          name: job.title,
+          skills: job.skills,
+          numberOfQuestions: FILTERATION_CONSTANTS.NUMBER_OF_QUESTIONS,
+          deadline: new Date(job.stages.quizEndDate),
+        } as CreateQuizDto
+      );
       return {
         message: FILTERATION_CONSTANTS.USER_APPLIED,
         stage: StageType.applied,
@@ -156,17 +201,19 @@ export class FilteringService {
           template: EmailTemplates.QUIZ,
           templateData: quizzesTemplateData,
         };
-        this.notifierService.send(
-          {
-            cmd: NotifierEvents.sendEmail
-          },
-          sendEmailsDto
-        );
+        if (quizzesTemplateData.length > 0) {
+          this.notifierService.send(
+            {
+              cmd: NotifierEvents.sendEmail
+            },
+            sendEmailsDto
+          );
+        }
         break;
       case JobStageType.Interview:
         // call the mail service to send the mails to the users to start the interview
         const appliedUsers = await this.filterationRepository.findBy({ jobId: job.jobId, currentStage: StageType.interview });
-        const interviewTemplateData: TemplateData[] = await Promise.all(appliedUsers.map(async (user) =>  {
+        const interviewTemplateData: TemplateData[] = await Promise.all(appliedUsers.map(async (user) => {
           // get the user details from the user service
           const userDetails: User = await firstValueFrom(
             this.userService.send(
@@ -257,7 +304,6 @@ export class FilteringService {
         stage: user.currentStage,
       })),
     };
-
     return results;
   }
 
@@ -322,7 +368,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById
+          cmd: jobsServicePatterns.getJobDetailsById
         },
         jobId
       ),
@@ -431,7 +477,6 @@ export class FilteringService {
       console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
       return null;
     }
-
     if (filteration.currentStage !== StageType.interview) {
       // throw new BadRequestException('User is not in the interview stage');
       console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
@@ -461,6 +506,7 @@ export class FilteringService {
         reviewAnswers.jobId
       ),
     );
+    console.log('job', job);
     if (!job || job.userId !== userId) {
       // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
       console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);

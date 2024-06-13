@@ -11,7 +11,7 @@ import { GetAppliedUsersResponseDto } from '@app/services_communications/filtera
 import { GetStageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-stage-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
-import { CurrentUser, ServiceName, User } from '@app/shared';
+import { CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -27,6 +27,7 @@ export class ApiFilterationController {
 
   @ApiOperation({ summary: 'Filter certain job to the users' })
   @Post()
+  @Roles([UserType.jobSeeker])
   @ApiOkResponse({
     description: 'filteration of the job under processing ...',
   })
@@ -47,20 +48,20 @@ export class ApiFilterationController {
   }
 
   @ApiOperation({ summary: 'Begin the current stage for a certain job' })
-  @Post(':jobId/begin')
+  @Post('begin')
   @ApiOkResponse({
     description: 'The current stage has been started',
     type: StageResponseDto
   })
   async beginCurrentStage(
-    @Param('jobId') jobId: string,
+    @Body() dto: JobDto,
   ) {
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.beginCurrentStage,
       },
       {
-        jobId,
+        jobId: dto.jobId,
       } as JobDto,
     );
   }
@@ -193,7 +194,7 @@ export class ApiFilterationController {
       },
       { ...reviewAnswers,
         userId: user.id,
-       } as AuthReviewAnswersDto,
+      } as AuthReviewAnswersDto,
     );
   }
 

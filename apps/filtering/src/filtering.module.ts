@@ -12,6 +12,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     SharedModule.registerRmq(ServiceName.JOB_SERVICE),
     SharedModule.registerRmq(ServiceName.NOTIFIER_SERVICE),
     SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
+    SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    SharedModule.registerRmq(ServiceName.QUIZ_SERVICE),
     SharedModule.registerPostgres(ServiceName.FILTERATION_SERVICE, [Filteration]),
     TypeOrmModule.forFeature([Filteration]),
   ],

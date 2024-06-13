@@ -21,7 +21,7 @@ export class FilteringController {
 
   @MessagePattern({ cmd: FilterationServicePattern.filterJob })
   applyJob(@Payload() data: ApplyJobRequest): Promise<StageResponseDto> {
-    return this.filteringService.applyJob(data.profileId, data.jobId);
+    return this.filteringService.applyJob(data.profileId, data.jobId, data.userId);
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.beginCurrentStage })

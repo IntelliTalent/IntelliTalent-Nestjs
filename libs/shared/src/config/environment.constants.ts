@@ -1,4 +1,3 @@
-import { Filteration } from '../entities/filteration.entity';
 import getConfigVariables from './configVariables.config';
 
 export const Constants = {
