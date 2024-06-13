@@ -7,55 +7,76 @@ import { Model } from 'mongoose';
 import { AutofillHelper } from './autofill.helper';
 import * as AUTOFILL_CONSTANTS from '@app/services_communications/autofill/index';
 
-
 @Injectable()
 export class AutofillService {
-
-
-  constructor(@InjectModel(FormField.name) private formFieldModel: Model<FormField>) { }
+  constructor(
+    @InjectModel(FormField.name) private formFieldModel: Model<FormField>,
+  ) {}
   getHello(): string {
     return 'Hello World!';
   }
 
-  async init(userId: string, data: FormFieldsDto): Promise<FormFieldsResponseDto> {
-    // get the user 
+  async init(
+    userId: string,
+    data: FormFieldsDto,
+  ): Promise<FormFieldsResponseDto> {
+    // get the user
     const user = await this.formFieldModel.findOne({ userId }).exec();
     if (user) {
       user.data = new Map(Object.entries(data.data));
       await user.save();
       return {
         message: AUTOFILL_CONSTANTS.INITIATED_SUCCESSFULLY,
-        formFields: Object.fromEntries(user.data)
-      }
+        formFields: Object.fromEntries(user.data),
+      };
     }
     const newUser = await this.formFieldModel.create({
       userId,
-      data: data.data
-    })
+      data: data.data,
+    });
+
+    console.log(newUser.data);
     return {
       message: AUTOFILL_CONSTANTS.INITIATED_SUCCESSFULLY,
-      formFields: Object.fromEntries(newUser.data)
-    }
-  }
-
-  async getFields(userId: string, fields: [string]): Promise<FormFieldsResponseDto> {
-    const userData = (await this.formFieldModel.findOne({ userId }).exec())?.data;
-    if (!userData) {
-      return {
-        message: AUTOFILL_CONSTANTS.USER_NOT_FOUND,
-        formFields: {}
-      }
-    }
-    const result = AutofillHelper.getMostSimilar(userData, fields, (field) => userData.get(field), false);
-    return {
-      message: AUTOFILL_CONSTANTS.SUCCESS,
-      formFields: result
+      formFields: Object.fromEntries(newUser.data),
     };
   }
 
-  async patchFields(userId: string, newFieldsValues: { [s: string]: string; }): Promise<FormFieldsResponseDto> {
+  async getFields(
+    userId: string,
+    fields: [string],
+  ): Promise<FormFieldsResponseDto> {
+    const userData = (await this.formFieldModel.findOne({ userId }).exec())
+      ?.data;
+    if (!userData) {
+      return {
+        message: AUTOFILL_CONSTANTS.USER_NOT_FOUND,
+        formFields: {},
+      };
+    }
+    const result = AutofillHelper.getMostSimilar(
+      userData,
+      fields,
+      (field) => userData.get(field),
+      false,
+    );
+    return {
+      message: AUTOFILL_CONSTANTS.SUCCESS,
+      formFields: result,
+    };
+  }
+
+  async patchFields(
+    userId: string,
+    newFieldsValues: { [s: string]: string },
+  ): Promise<FormFieldsResponseDto> {
     const oldFormField = await this.formFieldModel.findOne({ userId }).exec();
-    let newKeys = AutofillHelper.getMostSimilar(oldFormField.data, Object.keys(newFieldsValues), (field) => field, true);
+    let newKeys = AutofillHelper.getMostSimilar(
+      oldFormField.data,
+      Object.keys(newFieldsValues),
+      (field) => field,
+      true,
+    );
     const oldKeys = Object.values(newKeys);
     // swap the keys and values
     newKeys = Object.entries(newKeys).reduce((acc, [key, value]) => {
@@ -68,7 +89,7 @@ export class AutofillService {
     const results = await oldFormField.save();
     return {
       message: AUTOFILL_CONSTANTS.SUCCESS,
-      formFields: Object.fromEntries(results.data)
-    }
+      formFields: Object.fromEntries(results.data),
+    };
   }
 }

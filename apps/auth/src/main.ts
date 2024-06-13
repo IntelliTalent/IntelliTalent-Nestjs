@@ -18,7 +18,7 @@ async function bootstrap() {
   );
 
   app.startAllMicroservices();
-  app.init()
+  app.init();
   console.log('Auth service is running');
 }
 bootstrap();

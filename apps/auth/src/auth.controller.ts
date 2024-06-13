@@ -1,6 +1,7 @@
 import {
   ClassSerializerInterceptor,
   Controller,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -14,9 +15,10 @@ import {
   ForgetPasswordToken,
   authServicePattern,
 } from '@app/services_communications/authService';
-import { User } from '@app/shared';
+import { RpcExceptionsFilter, User } from '@app/shared';
 
 @Controller()
+@UseFilters(RpcExceptionsFilter)
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

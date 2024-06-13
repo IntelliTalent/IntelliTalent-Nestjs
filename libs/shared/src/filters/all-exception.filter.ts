@@ -8,10 +8,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
     const request = context.getRequest<Request>();
+
+    const exceptionAny = exception as any;
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : HttpStatus.BAD_REQUEST;
+        : exceptionAny.error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
 
     const httpResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
