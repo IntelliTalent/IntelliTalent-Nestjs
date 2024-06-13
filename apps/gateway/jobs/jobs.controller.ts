@@ -73,7 +73,7 @@ export class JobsController {
     description: 'Job details returned successfully.',
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
-  async getJobById(@Param('jobId') jobId: string) {
+  async getJobById(@Param('jobId', new ParseUUIDPipe()) jobId: string) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
       jobId,
@@ -90,7 +90,7 @@ export class JobsController {
     description: 'Job details returned successfully.',
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
-  async getJobDetailsById(@Param('jobId') jobId: string) {
+  async getJobDetailsById(@Param('jobId', new ParseUUIDPipe()) jobId: string) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobDetailsById },
       jobId,
@@ -124,7 +124,7 @@ export class JobsController {
   @ApiBearerAuth(AUTH_HEADER)
   @ApiNotFoundResponse({ description: 'Job not found' })
   async updateJob(
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @Body() editJob: EditJobDto,
     @CurrentUser() user: User,
   ) {
