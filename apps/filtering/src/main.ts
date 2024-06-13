@@ -13,7 +13,7 @@ async function bootstrap() {
 
   app.connectMicroservice(
     await sharedService.getRmqOptions(
-      await mapServiceNameToQueueName(ServiceName.FILTRATION_SERVICE),
+      await mapServiceNameToQueueName(ServiceName.FILTERATION_SERVICE),
     ),
   );
 

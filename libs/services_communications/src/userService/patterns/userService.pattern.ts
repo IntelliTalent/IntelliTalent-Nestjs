@@ -10,4 +10,5 @@ export const userServicePatterns = {
   resetPassword: 'resetPassword',
   verifyUser: 'verifyUser',
   getAllJobSeekers: 'getAllJobSeekers',
+  getUsersByIds: 'getUsersByIds',
 };

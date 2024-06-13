@@ -1,4 +1,5 @@
 export enum StageType {
+  created = 'created',
   matched = 'matched',
   applied = 'applied',
   quiz = 'quiz',
