@@ -29,11 +29,7 @@ export class ApiAutofillController {
             {
                 cmd: AutofillServicePattern.init,
             },
-            new AuthFormFieldsDto(user.id, formFields)
-            // {
-            //     userId: user.id,
-            //     ...formFields
-            // } as AuthFormFieldsDto,
+            new AuthFormFieldsDto(user.id, formFields.data)
         );
     }
 
@@ -72,10 +68,7 @@ export class ApiAutofillController {
             {
                 cmd: AutofillServicePattern.patchFields,
             },
-            {
-                userId: user.id,
-                ...formFields
-            } as AuthFormFieldsDto,
+            new AuthFormFieldsDto(user.id, formFields.data)
         );
     }
 }

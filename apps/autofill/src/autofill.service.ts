@@ -55,8 +55,13 @@ export class AutofillService {
 
   async patchFields(userId: string, newFieldsValues: { [s: string]: string; }): Promise<FormFieldsResponseDto> {
     const oldFormField = await this.formFieldModel.findOne({ userId }).exec();
-    const newKeys = AutofillHelper.getMostSimilar(oldFormField.data, Object.keys(newFieldsValues), (field) => field, true);
+    let newKeys = AutofillHelper.getMostSimilar(oldFormField.data, Object.keys(newFieldsValues), (field) => field, true);
     const oldKeys = Object.values(newKeys);
+    // swap the keys and values
+    newKeys = Object.entries(newKeys).reduce((acc, [key, value]) => {
+      acc[value] = key;
+      return acc;
+    }, {});
     for (const key of oldKeys) {
       oldFormField.data.set(key, newFieldsValues[newKeys[key]]);
     }
