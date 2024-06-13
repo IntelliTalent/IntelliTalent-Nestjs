@@ -67,6 +67,7 @@ export const Constants = {
     JOB_EXTRACTOR_QUEUE: 'RABBITMQ_JOB_EXTRACTOR_QUEUE',
     QUIZ_QUEUE: 'RABBITMQ_QUIZ_QUEUE',
     QUIZ_GENERATOR_QUEUE: 'RABBITMQ_QUIZ_GENERATOR_QUEUE',
+    CUSTOM_JOB_QUEUE: 'RABBITMQ_CUSTOM_JOB_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
@@ -149,5 +150,7 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.QUIZ_QUEUE);
     case ServiceName.QUIZ_GENERATOR_SERVICE:
       return await getConfigVariables(Constants.QUEUES.QUIZ_GENERATOR_QUEUE);
+    case ServiceName.CUSTOM_JOB_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.CUSTOM_JOB_QUEUE);
   }
 }
