@@ -17,6 +17,7 @@ import { RpcExceptionsFilter, ServiceName, User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/get-users.dto';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -109,5 +110,10 @@ export class UserController {
   @MessagePattern({ cmd: userServicePatterns.getAllJobSeekers })
   async getAllJobSeekers(pageOptions: PageOptionsDto): Promise<User[]> {
     return this.userService.getAllJobSeekers(pageOptions);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.getUsersByIds })
+  getProfilesByUsersIds(@Payload() dto: GetUsersByIdsDto) {
+    return this.userService.getUsersByIds(dto.usersIds);
   }
 }

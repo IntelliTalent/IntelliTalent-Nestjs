@@ -19,6 +19,7 @@ import { CreateQuizDto, EmailTemplates, GetQuizSlugsDto, InterviewTemplateData, 
 import { Quiz } from '@app/shared/entities/quiz.entity';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
 import { StageType as JobStageType } from '@app/shared/entities/structured_jobs.entity';
+import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/get-users.dto';
 @Injectable()
 export class FilteringService {
 
@@ -92,6 +93,7 @@ export class FilteringService {
         // TODO : edit it to rbc exception
         // throw new BadRequestException(status);
         console.log(status);
+        return null;
       }
       const job: StructuredJob = await firstValueFrom(
         this.jobService.send(
@@ -113,15 +115,23 @@ export class FilteringService {
         }
       });
       const savedFilteration = await this.filterationRepository.save(newFilteration);
+      const userDetails: User = await firstValueFrom(
+        this.userService.send(
+          {
+            cmd: userServicePatterns.findUserById
+          },
+          userId
+        )
+      );
       // call the quiz service to generate the quiz for the user
-      this.quizService.send(
+      this.quizService.emit(
         {
           cmd: quizzesEvents.createQuiz
         },
         {
           usersDetails: [{
             userId: userId,
-            email: profileId,
+            email: userDetails.email,
           }],
           jobId: job.id,
           recruiterId: job.userId,
@@ -185,13 +195,30 @@ export class FilteringService {
             } as GetQuizSlugsDto
           )
         );
+        const usersIds = quizzes.map(quiz => quiz.userId);
         // call the mail service to send the mails to the users to start the quiz
+        const usersDetails: User[] = await firstValueFrom(
+          this.userService.send(
+            {
+              cmd: userServicePatterns.getUsersByIds
+            },
+            {
+              usersIds
+            } as GetUsersByIdsDto
+          )
+        )
+        // make a map that contains the user id and the user details
+        const usersMap = new Map<string, User>();
+        usersDetails.forEach(user => {
+          usersMap.set(user.id, user);
+        });
         const quizzesTemplateData: TemplateData[] = quizzes.map((quiz: Quiz) => {
+          const userDetails = usersMap.get(quiz.userId);
           return {
             to: quiz.email,
             data: {
-              firstName: quiz.name,
-              lastName: quiz.name,
+              firstName: userDetails.firstName,
+              lastName: userDetails.lastName,
               quizSlug: quiz.randomSlug,
               jobTitle: job.title,
             } as QuizEmailTemplateData
@@ -202,7 +229,7 @@ export class FilteringService {
           templateData: quizzesTemplateData,
         };
         if (quizzesTemplateData.length > 0) {
-          this.notifierService.send(
+          this.notifierService.emit(
             {
               cmd: NotifierEvents.sendEmail
             },
@@ -265,7 +292,6 @@ export class FilteringService {
         jobId
       ),
     );
-    console.log('job', job);
     if (!job || job.userId !== userId) {
       // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
       console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
@@ -276,7 +302,6 @@ export class FilteringService {
     page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
     limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
     limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
-    console.log('page', page);
 
     // Step 1: Count the total number of documents matching the jobId
     const totalCount = await this.filterationRepository
@@ -506,7 +531,6 @@ export class FilteringService {
         reviewAnswers.jobId
       ),
     );
-    console.log('job', job);
     if (!job || job.userId !== userId) {
       // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
       console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);

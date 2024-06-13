@@ -20,7 +20,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
-import { FindOneOptions, Repository } from 'typeorm';
+import { FindOneOptions, In, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -95,6 +95,15 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async getUsersByIds(usersIds: string[]){
+      return this.userRepository.find({
+        where: {
+          id: In(usersIds),
+        },
+      });
+    
   }
 
   // TODO: need to edit for the update password
