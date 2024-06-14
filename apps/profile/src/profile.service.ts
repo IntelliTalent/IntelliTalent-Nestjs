@@ -143,6 +143,8 @@ export class ProfileService {
         'linkedIn',
         'gitHub',
         'cv',
+        'graduatedFromCS',
+        'summary'
       ],
     });
   }

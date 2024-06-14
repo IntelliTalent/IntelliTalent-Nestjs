@@ -16,7 +16,6 @@
     "dev-autofill": "nest start --watch autofill",
     "dev-notifier": "nest start --watch notifier",
     "dev-ats": "nest start --watch ats",
-    "dev-autofill": "nest start --watch autofill",
     "dev-profile": "nest start --watch profile",
     "dev-filtering": "nest start --watch filtering",
     "dev-jobs": "nest start --watch jobs",

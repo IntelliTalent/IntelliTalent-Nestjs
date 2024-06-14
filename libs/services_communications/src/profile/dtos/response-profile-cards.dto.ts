@@ -24,4 +24,10 @@ export class ResponseProfileCardsDto {
 
   @ApiProperty({ example: 'https://github.com/waer1' })
   gitHub: string;
+z
+  @ApiProperty({ example: true })
+  graduatedFromCS: boolean;
+
+  @ApiProperty({ example: 'I am a software engineer' })
+  summary: string;
 }
