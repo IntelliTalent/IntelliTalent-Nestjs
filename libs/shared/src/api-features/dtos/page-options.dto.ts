@@ -13,8 +13,13 @@ import {
 import { Order } from '../constant/order.enum';
 
 const excludedSearchFields = ['createdAt', 'updatedAt', 'deletedAt'];
+interface IPageOptions {
+  page?: number;
+  take?: number;
+}
 
 export class PageOptionsDto {
+
   @ApiPropertyOptional({
     required: false,
     description: 'Field to order by its formed by entity.fieldName',
@@ -53,7 +58,7 @@ export class PageOptionsDto {
   @IsInt()
   @Min(1)
   @IsOptional()
-  readonly page?: number = 1;
+  readonly page: number = 1;
 
   @ApiPropertyOptional({
     minimum: 1,
@@ -65,7 +70,7 @@ export class PageOptionsDto {
   @Min(1)
   @Max(200)
   @IsOptional()
-  readonly take?: number = 10;
+  readonly take: number = 10;
 
   @ApiPropertyOptional({
     required: false,
@@ -83,7 +88,9 @@ export class PageOptionsDto {
   @IsOptional({})
   endDate?: Date;
 
-  get skip(): number {
-    return (this.page - 1) * this.take;
-  }
+
+  // skip() {
+  //   return (this.page - 1) * this.take;
+  // }
+
 }

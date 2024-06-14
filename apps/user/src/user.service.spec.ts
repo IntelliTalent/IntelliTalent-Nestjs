@@ -9,13 +9,11 @@ import {
 } from '@app/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AllowedUserTypes, CreateUserDto } from '@app/services_communications';
-import { getConnection } from 'typeorm';
 import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { subscribe } from 'diagnostics_channel';
 import { of } from 'rxjs';
 
 describe('UserService', () => {
@@ -392,14 +390,16 @@ describe('UserService', () => {
   });
 
   it('should get all job seekers', async () => {
-    for (let i = 0; i < 12; i++) {
+
+    const promises = Array.from({ length: 10 }, async (_, i) => {
       const user = await service.createUser({
         ...tempCreateUser,
-        email: `w${i}@gmail.com`,
-        type: AllowedUserTypes.jobSeeker,
+        email: `w${i}@s.com`,
       });
-      await service.verifyUser(user.id)
-    }
+      return service.verifyUser(user.id);
+    })
+
+    await Promise.all(promises);
 
     const users = await service.getAllJobSeekers({
       page: 1,
