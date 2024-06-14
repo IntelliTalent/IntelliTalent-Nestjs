@@ -20,6 +20,11 @@ import { Quiz } from '@app/shared/entities/quiz.entity';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
 import { StageType as JobStageType } from '@app/shared/entities/structured_jobs.entity';
 import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/get-users.dto';
+import { GetMatchedJobsDto } from '@app/services_communications/filteration-service/dtos/responses/get-matched-jobs.dto';
+import { GetAppliedJobsDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-jobs-response.dto';
+import { GetInterviewQuestionsResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-questions.dto';
+import { GetDetailedAppliedUsersDto } from '@app/services_communications/filteration-service/dtos/responses/get-detailed-applied-users.dto';
+import { GetInterviewAnswersResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-answers-response.dto';
 @Injectable()
 export class FilteringService {
 
@@ -606,4 +611,249 @@ export class FilteringService {
       stageData: filteration.selectionData
     }
   }
+
+
+  async getMatchedJobs(profileId: string, userId: string, page: number, limit: number): Promise<GetMatchedJobsDto> {
+    page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
+    limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
+    page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
+    limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
+    limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+
+    // ensure the profile is owned by the user
+    const profile = await firstValueFrom(
+      this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById
+        },
+        profileId,
+      ),
+    );
+    if (!profile) {
+      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      return null;
+    }
+    if (profile.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      return null;
+    }
+
+    // Step 1: Count the total number of documents matching the profileId
+    const totalCount = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.profileId = :profileId', { profileId })
+      .getCount();
+
+    // Step 2: Get the matched jobs with pagination
+    const matchedJobs = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.profileId = :profileId AND filteration.currentStage = :currentStage', { profileId, currentStage: StageType.matched})
+      .skip((page - 1) * limit)
+      .take(limit)
+      .select(['filteration.jobId', 'filteration.matchData'])
+      .getMany();
+
+    // Step 3: get the job details for each matched job
+    const jobsDetails = await Promise.all(matchedJobs.map(async (job) => {
+      const jobDetails: StructuredJob = await firstValueFrom(
+        this.jobService.send(
+          {
+            cmd: jobsServicePatterns.getJobById
+          },
+          job.jobId
+        )
+      );
+      return {
+        ...jobDetails,
+        matchScore: job.matchData.matchScore,
+      }
+    }));
+
+    return {
+      metadata:{
+        count: totalCount,
+        page: page,
+      },
+      matchedJobs: jobsDetails
+    }
+  }
+
+  async getAppliedJobs(userId: string, profileId: string, page: number, limit: number): Promise<GetAppliedJobsDto> {
+
+    // ensure the profile is owned by the user
+    const profile = await firstValueFrom(
+      this.profileService.send(
+        {
+          cmd: profileServicePattern.getProfileById
+        },
+        profileId,
+      ),
+    );
+    if (!profile) {
+      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
+      return null;
+    }
+    if (profile.userId !== userId) {
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
+      return null;
+    }
+
+    page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
+    limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
+    page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
+    limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
+    limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+
+    // Step 1: Count the total number of documents matching the profileId
+    const totalCount = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.profileId = :profileId', { profileId })
+      .getCount();
+
+    // Step 2: Get the applied jobs with pagination
+    const appliedJobs = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.profileId = :profileId', { profileId })
+      .skip((page - 1) * limit)
+      .take(limit)
+      .select(['filteration.jobId', 'filteration.currentStage', 'filteration.isQualified'])
+      .getMany();
+
+    // Step 3: get the job details for each applied job
+    const jobsDetails = await Promise.all(appliedJobs.map(async (job) => {
+      const jobDetails: StructuredJob = await firstValueFrom(
+        this.jobService.send(
+          {
+            cmd: jobsServicePatterns.getJobById
+          },
+          job.jobId
+        )
+      );
+      return {
+        ...jobDetails,
+        applicationCurrentStage: job.currentStage,
+        isQualified: job.isQualified
+      }
+    }));
+
+    return {
+      metadata:{
+        count: totalCount,
+        page: page,
+      },
+      appliedJobs: jobsDetails
+    }
+  }
+
+  async getInterviewQuestions(userId: string, jobId: string): Promise<GetInterviewQuestionsResponse>{
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobDetailsById
+        },
+        jobId
+      ),
+    );
+    if(!job.currentStage || job.currentStage !== JobStageType.Interview){
+      // throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_IN_INTERVIEW_STAGE);
+      console.log(FILTERATION_CONSTANTS.JOB_NOT_IN_INTERVIEW_STAGE);
+      return null;
+    }
+
+    // get the filteration details
+    const filteration = await this.filterationRepository.findOneBy({ jobId, userId });
+    if(!filteration || filteration.currentStage !== StageType.interview){
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      return null;
+    }
+
+    return {
+      questions: job.stages.interview.interviewQuestions
+    } 
+  }
+
+  async getJobApplicants(userId: string, jobId: string, page: number, limit: number): Promise<GetDetailedAppliedUsersDto>{
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobById
+        },
+        jobId
+      ),
+    );
+    if(!job || job.userId !== userId){
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
+    }
+
+    page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
+    limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
+    page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
+    limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
+    limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+
+    // Step 1: Count the total number of documents matching the jobId
+    const totalCount = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.jobId = :jobId', { jobId })
+      .getCount();
+
+    // Step 2: Get the applied users with pagination
+    const appliedUsers = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.jobId = :jobId', { jobId })
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    // Step 3: Construct the final result in the desired format
+    const results = {
+      metadata: {
+        count: totalCount,
+        page: page,
+      },
+      appliedUsers
+    };
+    return results;
+  }
+
+  async getInterviewAnswers(userId: string, jobId: string, profileId: string): Promise<GetInterviewAnswersResponse>{
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobDetailsById
+        },
+        jobId
+      ),
+    );
+    if(!job || job.userId !== userId){
+      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+      return null;
+    }
+
+    // get the filteration details
+    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
+    if(!filteration || filteration.currentStage !== StageType.interview){
+      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
+      return null;
+    }
+
+    return {
+      questions: job.stages?.interview?.interviewQuestions,
+      answers: filteration.interviewData?.answers,
+      recordedAnswers: filteration.interviewData?.recordedAnswers
+    }
+  }
+
 }

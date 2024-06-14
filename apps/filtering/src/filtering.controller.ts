@@ -9,6 +9,9 @@ import { PaginatedJobDto } from '@app/services_communications/filteration-servic
 import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
 import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
 import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
+import { PaginatedMatchedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-matched-job.dto';
+import { GetInterviewQuestionsDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-questions.dto';
+import { GetInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-answers.dto';
 
 @Controller()
 export class FilteringController {
@@ -65,5 +68,29 @@ export class FilteringController {
     return this.filteringService.selectProfile(data.userId, data.jobId, data.profileId);
   }
 
+  @MessagePattern({ cmd: FilterationServicePattern.getMatchedJobs })
+  getMatchedJobs(@Payload() data: PaginatedMatchedJobDto) {
+    return this.filteringService.getMatchedJobs(data.profileId, data.userId, data.page, data.limit);
+  }
+
+  @MessagePattern({cmd : FilterationServicePattern.getAppliedJobs})
+  getAppliedJobs(@Payload() data: PaginatedMatchedJobDto){
+    return this.filteringService.getAppliedJobs(data.userId, data.profileId, data.page, data.limit);
+  }
+
+  @MessagePattern({cmd : FilterationServicePattern.getInterviewQuestions})
+  getInterveiwQeustions(@Payload() data: GetInterviewQuestionsDto){
+    return this.filteringService.getInterviewQuestions(data.userId, data.jobId);
+  }
+
+  @MessagePattern({cmd: FilterationServicePattern.getJobApplicants})
+  getJobApplicants(@Payload() data: PaginatedJobDto){
+    return this.filteringService.getJobApplicants(data.userId, data.jobId, data.page, data.limit);
+  }
+
+  @MessagePattern({cmd: FilterationServicePattern.getInterviewAnswers})
+  getInterviewAnswers(@Payload() data: GetInterviewAnswersDto){
+    return this.filteringService.getInterviewAnswers(data.userId, data.jobId, data.profileId);
+  }
 
 }

@@ -2,9 +2,12 @@ import { ApplyJobRequest } from '@app/services_communications/filteration-servic
 import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
 import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
 import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
+import { GetInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-answers.dto';
+import { GetInterviewQuestionsDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-questions.dto';
 import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
 import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
 import { PaginatedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-job.dto';
+import { PaginatedMatchedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-matched-job.dto';
 import { QuizDto } from '@app/services_communications/filteration-service/dtos/requests/quiz.dto';
 import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
@@ -63,6 +66,123 @@ export class ApiFilterationController {
       {
         jobId: dto.jobId,
       } as JobDto,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get the matched jobs of certain profile' })
+  @Get('matched-jobs/:profileId')
+  @ApiOkResponse({
+    description: 'The matched jobs of the profile',
+  })
+  async getMatchedJobs(
+    @CurrentUser() user: User,
+    @Param('profileId') profileId: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    console.log('getMatchedJobs', profileId);
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getMatchedJobs,
+      },
+      {
+        userId: user.id,
+        profileId,
+        page,
+        limit,
+      } as PaginatedMatchedJobDto,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get the matched jobs of certain profile' })
+  @Get('applied-jobs/:profileId')
+  @ApiOkResponse({
+    description: 'The matched jobs of the profile',
+  })
+  async getAppliedJobs(
+    @CurrentUser() user: User,
+    @Param('profileId') profileId: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    console.log('getMatchedJobs', profileId);
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getAppliedJobs,
+      },
+      {
+        userId: user.id,
+        profileId,
+        page,
+        limit,
+      } as PaginatedMatchedJobDto,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get the interview questions of the job' })
+  @Get('interview/:jobId')
+  @ApiOkResponse({
+    description: 'The interview questions of the job',
+  })
+  async getInterviewQuestions(
+    @CurrentUser() user: User,
+    @Param('jobId') jobId: string,
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getInterviewQuestions,
+      },
+      {
+        userId: user.id,
+        jobId,
+      } as GetInterviewQuestionsDto,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get the applied users for the job' })
+  @Get('applied-users/:jobId')
+  @ApiOkResponse({
+    description: 'The applied users for the job',
+  })
+  async getJobApplicants(
+    @CurrentUser() user: User,
+    @Param('jobId') jobId: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getJobApplicants,
+      },
+      {
+        userId: user.id,
+        jobId,
+        page, 
+        limit
+      } as PaginatedJobDto,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get the interview answers of the user' })
+  @Get('interview-answers/:jobId/:profileId')
+  @ApiOkResponse({
+    description: 'The applied users for the job',
+  })
+  async getInterviewAnswers(
+    @CurrentUser() user: User,
+    @Param('jobId') jobId: string,
+    @Param('profileId') profileId: string,
+    
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getInterviewAnswers,
+      },
+      {
+        userId: user.id,
+        jobId,
+        profileId
+      } as GetInterviewAnswersDto,
     );
   }
 
@@ -218,4 +338,5 @@ export class ApiFilterationController {
       } as ApplyJobRequest,
     );
   }
+
 }
