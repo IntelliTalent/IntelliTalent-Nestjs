@@ -18,9 +18,8 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
-import { FindOneOptions, In, Repository } from 'typeorm';
+import { FindOneOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import {
@@ -44,8 +43,8 @@ export class UserService {
     return 'Hello World From User Service!';
   }
 
-  async doesUserExist(findUserInterface: FindUserInterface): Promise<boolean> {
-    return await this.userRepository.existsBy({ ...findUserInterface });
+  async doesUserExist(findUserInterface: FindOptionsWhere<User>): Promise<boolean> {
+    return await this.userRepository.existsBy(findUserInterface);
   }
 
   async createUser(createUser: CreateUserDto): Promise<User> {
@@ -191,7 +190,7 @@ export class UserService {
     return this.userRepository.findOneBy({ id: user.id });
   }
 
-  async chagePasswordUsingToken(
+  async changePasswordUsingToken(
     userId: string,
     password: string,
   ): Promise<{ message: string }> {
@@ -219,6 +218,7 @@ export class UserService {
       template: EmailTemplates.RESETPASSWORD,
       templateData: [emailData],
     };
+
     this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
 
     return {

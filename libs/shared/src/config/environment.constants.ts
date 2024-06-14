@@ -20,6 +20,7 @@ export const Constants = {
       FILTERATIONDB: 'FilterationDB',
       CVSDB: 'CVSDB',
       QUIZDB: 'QuizzesDB',
+      TESTINGDB: 'TestingDB',
     },
   },
   MONGODB: {
@@ -112,6 +113,7 @@ export enum ServiceName {
   JOB_EXTRACTOR_SERVICE = 'JOB_EXTRACTOR_SERVICE',
   QUIZ_SERVICE = 'QUIZ_SERVICE',
   QUIZ_GENERATOR_SERVICE = 'QUIZ_GENERATOR_SERVICE',
+  TESTING_DATABASE = 'TESTING_DATABASE',
 }
 
 export async function mapServiceNameToQueueName(

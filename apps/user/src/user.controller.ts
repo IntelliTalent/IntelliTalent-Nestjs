@@ -91,7 +91,7 @@ export class UserController {
     @Payload()
     { id, password }: ResetPasswordDto,
   ): Promise<{ message: string }> {
-    return this.userService.chagePasswordUsingToken(id, password);
+    return this.userService.changePasswordUsingToken(id, password);
   }
 
   @MessagePattern({ cmd: userServicePatterns.verifyUser })
