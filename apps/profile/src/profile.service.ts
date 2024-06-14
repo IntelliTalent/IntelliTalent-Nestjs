@@ -3,12 +3,15 @@ import {
   DeleteProfileDto,
   UpdateProfileDto,
 } from '@app/services_communications';
-import { FormField, Profile, ServiceName } from '@app/shared';
+import {
+  AuthFormFieldsDto,
+  AutofillServicePattern,
+} from '@app/services_communications/autofill';
+import { Profile, ServiceName } from '@app/shared';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Model } from 'mongoose';
+import { firstValueFrom } from 'rxjs';
 import { FindManyOptions, FindOneOptions, In, Repository } from 'typeorm';
 
 @Injectable()
@@ -16,8 +19,6 @@ export class ProfileService {
   constructor(
     @InjectRepository(Profile)
     private profileRepository: Repository<Profile>,
-    @InjectModel(FormField.name)
-    private readonly formFieldModel: Model<FormField>,
     @Inject(ServiceName.AUTOFILL_SERVICE) private autoFillService: ClientProxy,
   ) {}
 
@@ -30,19 +31,30 @@ export class ProfileService {
     // Save the new profile
     const savedProfile = await this.profileRepository.save(profile);
 
-    // Update the FormField entry with the new profile data
-    // send to Nabil Here autoFillService
-    await this.formFieldModel.updateOne(
-      { userId: createProfileDto.userId },
-      {
-        cvLink: savedProfile.cv,
-        linkedIn: savedProfile.linkedIn,
-        github: savedProfile.gitHub,
-        skills: savedProfile.skills,
-      },
-    );
+    this.updateFormFields(savedProfile);
 
     return savedProfile;
+  }
+
+  async updateFormFields(profile: Profile) {
+    const { userId, createdAt, deletedAt, updatedAt, id, ...requiredData } =
+      profile;
+
+    const payload: AuthFormFieldsDto = {
+      userId: userId,
+      data: {
+        ...requiredData,
+      },
+    };
+
+    await firstValueFrom(
+      this.autoFillService.send(
+        {
+          cmd: AutofillServicePattern.patchFields,
+        },
+        payload,
+      ),
+    );
   }
 
   async update(updateProfileDto: UpdateProfileDto): Promise<Profile> {
@@ -60,10 +72,11 @@ export class ProfileService {
       throw new NotFoundException('You Dont Profile With this Id');
     }
 
-    return this.profileRepository.save({
-      ...profile,
-      ...updateProfileDto,
-    });
+    Object.assign(profile, updateProfileDto);
+
+    this.updateFormFields(profile);
+
+    return this.profileRepository.save(profile);
   }
 
   async delete(DeleteProfileDto: DeleteProfileDto): Promise<string> {
@@ -130,6 +143,8 @@ export class ProfileService {
         'linkedIn',
         'gitHub',
         'cv',
+        'graduatedFromCS',
+        'summary'
       ],
     });
   }

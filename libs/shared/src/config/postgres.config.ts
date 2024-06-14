@@ -61,6 +61,13 @@ export const getServiceDatabse = async (
       });
       break;
 
+    case ServiceName.TESTING_DATABASE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.TESTINGDB),
+      });
+      break;
+
+
     default:
       throw new Error('Service not found');
   }

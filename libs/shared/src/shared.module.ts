@@ -116,6 +116,7 @@ export class SharedModule {
   static registerPostgres(
     serviceType: ServiceName,
     entities: any[],
+    testingEnv = false,
   ): DynamicModule {
     const providers = [
       {
@@ -123,7 +124,7 @@ export class SharedModule {
         useFactory: async (): Promise<TypeOrmModuleOptions> => {
           const configObject: TypeOrmModuleOptions =
             await getServiceDatabse(serviceType);
-          Object.assign(configObject, { entities: entities });
+          Object.assign(configObject, { entities: entities, dropSchema: testingEnv });
           return configObject;
         },
       },

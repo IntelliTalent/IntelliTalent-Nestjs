@@ -12,12 +12,9 @@ import {
 import {
   CurrentUser,
   JWTForgetPasswordGuard,
-  Roles,
   ServiceName,
   User,
-  UserType,
 } from '@app/shared';
-import { JwtAuthGuard } from '@app/shared/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '@app/shared/guards/local-auth.guard';
 import {
   Body,
@@ -155,7 +152,7 @@ export class ApiAuthController {
   @ApiUnauthorizedResponse({ description: 'wrong token' })
   @ApiBearerAuth(AUTH_HEADER)
   @Public()
-  @Post('change-forgotten-password')
+  @Post('reset-password')
   @UseGuards(JWTForgetPasswordGuard)
   async changeForgottenPassword(
     @Body() dto: ChangeForgottenPasswordDto,

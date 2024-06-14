@@ -8,7 +8,7 @@ import { AuthFormFieldsDto } from '@app/services_communications/autofill/dtos/au
 
 @Controller()
 export class AutofillController {
-  constructor(private readonly autofillService: AutofillService) { }
+  constructor(private readonly autofillService: AutofillService) {}
 
   @Get()
   getHello(): string {
@@ -16,21 +16,26 @@ export class AutofillController {
   }
 
   @MessagePattern({ cmd: AutofillServicePattern.init })
-  async init(@Payload() dto: AuthFormFieldsDto): Promise<FormFieldsResponseDto> {
+  async init(
+    @Payload() dto: AuthFormFieldsDto,
+  ): Promise<FormFieldsResponseDto> {
     const { userId, data } = dto;
-    return await this.autofillService.init(userId, {data});
+    return await this.autofillService.init(userId, { data });
   }
 
   @MessagePattern({ cmd: AutofillServicePattern.getFields })
-  async getFields(@Payload() data: GetFieldsDto): Promise<FormFieldsResponseDto> {
+  async getFields(
+    @Payload() data: GetFieldsDto,
+  ): Promise<FormFieldsResponseDto> {
     const { userId, fields } = data;
     return await this.autofillService.getFields(userId, fields);
   }
 
   @MessagePattern({ cmd: AutofillServicePattern.patchFields })
-  async patchFields(@Payload() dto: AuthFormFieldsDto): Promise<FormFieldsResponseDto> {
+  async patchFields(
+    @Payload() dto: AuthFormFieldsDto,
+  ): Promise<FormFieldsResponseDto> {
     const { userId, data } = dto;
     return await this.autofillService.patchFields(userId, data);
   }
-
 }

@@ -7,6 +7,7 @@ import {
   AUTH_HEADER,
   DeleteProfileDto,
   UpdateProfileDto,
+  ResponseProfileCardsDto,
 } from '@app/services_communications';
 import { ResponseScrapeProfileDto } from '@app/services_communications/profile/dtos/response-scrape-profile.dto';
 import { CurrentUser, Profile, ServiceName, User } from '@app/shared';
@@ -114,7 +115,7 @@ export class ProfileController {
   @ApiResponse({
     status: 200,
     description: 'Returns profile cards',
-    type: Profile,
+    type: ResponseProfileCardsDto,
     isArray: true,
   })
   getProfileCards(@CurrentUser() user: User) {

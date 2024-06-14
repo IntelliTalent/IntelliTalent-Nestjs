@@ -12,9 +12,9 @@ import {
 } from '@app/services_communications';
 import { Constants, ServiceName, User } from '@app/shared';
 import getConfigVariables from '@app/shared/config/configVariables.config';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { TokenService } from './token.service';
@@ -71,123 +71,105 @@ export class AuthService {
   }
 
   async register(newUser: CreateUserDto) {
-    try {
-      const user: User = await firstValueFrom(
-        this.userService.send({ cmd: userServicePatterns.createUser }, newUser),
-      );
+    let user: User = null;
 
-      const payload: TokenPayload = {
-        email: user.email,
-        id: user.id,
-        type: user.type,
-      };
+    user = await firstValueFrom(
+      this.userService.send({ cmd: userServicePatterns.createUser }, newUser),
+    );
 
-      const jwtSecret = await getConfigVariables(
-        Constants.JWT.verifyEmailSecret,
-      );
-      const loginExpiration = await getConfigVariables(
-        Constants.JWT.verifyEmailExpiresIn,
-      );
+    const payload: TokenPayload = {
+      email: user.email,
+      id: user.id,
+      type: user.type,
+    };
 
-      const { uuid, token } = await this.signToken({
-        payload: payload,
-        secret: jwtSecret,
-        expiresIn: loginExpiration,
-      });
+    const jwtSecret = await getConfigVariables(Constants.JWT.verifyEmailSecret);
+    const loginExpiration = await getConfigVariables(
+      Constants.JWT.verifyEmailExpiresIn,
+    );
 
-      await this.tokenService.createToken(uuid);
+    const { uuid, token } = await this.signToken({
+      payload: payload,
+      secret: jwtSecret,
+      expiresIn: loginExpiration,
+    });
 
-      const emailData: TemplateData = {
-        data: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          token: token,
-        },
-        to: user.email,
-      };
-      const sendEmailDto: SendEmailsDto = {
-        template: EmailTemplates.VERIFYEMAIL,
-        templateData: [emailData],
-      };
-      this.notifierService.emit(
-        { cmd: NotifierEvents.sendEmail },
-        sendEmailDto,
-      );
+    await this.tokenService.createToken(uuid);
 
-      return {
-        message: `welcome to InteliTalent, ${user.firstName} ${user.lastName}! Please verify your email to continue. A verification link has been sent to ${user.email}`,
-      };
-    } catch (error) {
-      throw new RpcException(error);
-    }
+    const emailData: TemplateData = {
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        token: token,
+      },
+      to: user.email,
+    };
+    const sendEmailDto: SendEmailsDto = {
+      template: EmailTemplates.VERIFYEMAIL,
+      templateData: [emailData],
+    };
+    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
+
+    return {
+      message: `welcome to InteliTalent, ${user.firstName} ${user.lastName}! Please verify your email to continue. A verification link has been sent to ${user.email}`,
+    };
   }
 
   async forgetPassword(email: string) {
-    try {
-      const user = await firstValueFrom(
-        this.userService.send(
-          { cmd: userServicePatterns.findUserByEmail },
-          email,
-        ),
-      );
+    const user = await firstValueFrom(
+      this.userService.send(
+        { cmd: userServicePatterns.findUserByEmail },
+        email,
+      ),
+    );
 
-      const payload: TokenPayload = {
-        email: user.email,
-        id: user.id,
-        type: user.type,
-      };
+    const payload: TokenPayload = {
+      email: user.email,
+      id: user.id,
+      type: user.type,
+    };
 
-      const jwtSecret = await getConfigVariables(
-        Constants.JWT.forgetPasswordSecret,
-      );
-      const loginExpiration = await getConfigVariables(
-        Constants.JWT.forgetPasswordExpiresIn,
-      );
+    const jwtSecret = await getConfigVariables(
+      Constants.JWT.forgetPasswordSecret,
+    );
+    const loginExpiration = await getConfigVariables(
+      Constants.JWT.forgetPasswordExpiresIn,
+    );
 
-      const { uuid, token } = await this.signToken({
-        payload: payload,
-        secret: jwtSecret,
-        expiresIn: loginExpiration,
-      });
+    const { uuid, token } = await this.signToken({
+      payload: payload,
+      secret: jwtSecret,
+      expiresIn: loginExpiration,
+    });
 
-      await this.tokenService.createToken(uuid);
+    await this.tokenService.createToken(uuid);
 
-      const emailData: TemplateData = {
-        data: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          token: token,
-        },
-        to: user.email,
-      };
-      const sendEmailDto: SendEmailsDto = {
-        template: EmailTemplates.FORGETPASSWORD,
-        templateData: [emailData],
-      };
+    const emailData: TemplateData = {
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        token: token,
+      },
+      to: user.email,
+    };
+    const sendEmailDto: SendEmailsDto = {
+      template: EmailTemplates.FORGETPASSWORD,
+      templateData: [emailData],
+    };
 
-      this.notifierService.emit(
-        { cmd: NotifierEvents.sendEmail },
-        sendEmailDto,
-      );
+    this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
 
-      return {
-        message: `A password reset link has been sent to ${user.email}`,
-      };
-    } catch (error) {
-      throw new RpcException(error);
-    }
+    return {
+      message: `A password reset link has been sent to ${user.email}`,
+    };
   }
 
   async resetPassword(uuid: string): Promise<{ message: string }> {
-    try {
-      await this.tokenService.useToken(uuid);
+    await this.tokenService.useToken(uuid);
 
-      return {
-        message: 'Password reset successfully',
-      };
-    } catch (error) {
-      throw new RpcException(error);
-    }
+    return {
+      message: 'Password reset successfully',
+    };
   }
 
   async userToken(user: User) {
@@ -204,22 +186,18 @@ export class AuthService {
   async verifyEmail(
     verifyEmail: ForgetPasswordToken,
   ): Promise<{ token: string; user: User }> {
-    try {
-      const { uuid } = verifyEmail;
-      await this.tokenService.useToken(uuid);
+    const { uuid } = verifyEmail;
+    await this.tokenService.useToken(uuid);
 
-      const user: User = await firstValueFrom(
-        this.userService.send(
-          {
-            cmd: userServicePatterns.verifyUser,
-          },
-          verifyEmail.id,
-        ),
-      );
+    const user: User = await firstValueFrom(
+      this.userService.send(
+        {
+          cmd: userServicePatterns.verifyUser,
+        },
+        verifyEmail.id,
+      ),
+    );
 
-      return this.userToken(user);
-    } catch (error) {
-      throw new RpcException(error);
-    }
+    return this.userToken(user);
   }
 }

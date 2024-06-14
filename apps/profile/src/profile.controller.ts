@@ -1,4 +1,4 @@
-import { Controller, Get, UseFilters } from '@nestjs/common';
+import { Controller, UseFilters } from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { profileServicePattern } from '@app/services_communications/profile/patterns/preofile.patterns';
 import {

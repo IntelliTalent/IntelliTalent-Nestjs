@@ -7,42 +7,44 @@ import {
   TemplateData,
   UpdateUserDto,
   changePasswordDto,
-  getUpdatableFields,
 } from '@app/services_communications';
-import { Constants, FormField, ServiceName, User, UserType } from '@app/shared';
+import { Constants, ServiceName, User, UserType } from '@app/shared';
 import {
   BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindUserInterface } from '../../../libs/services_communications/src/userService/interfaces/findUser.interface';
 import * as bcrypt from 'bcryptjs';
-import { FindOneOptions, In, Repository } from 'typeorm';
+import { FindOneOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import getConfigVariables from '@app/shared/config/configVariables.config';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import {
+  AuthFormFieldsDto,
+  AutofillServicePattern,
+} from '@app/services_communications/autofill';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectModel(FormField.name)
-    private readonly formFieldModel: Model<FormField>,
     @Inject(ServiceName.NOTIFIER_SERVICE)
     private readonly notifierService: ClientProxy,
+    @Inject(ServiceName.AUTOFILL_SERVICE)
+    private readonly formFieldsService: ClientProxy,
   ) {}
 
   getHello(): string {
     return 'Hello World From User Service!';
   }
 
-  async doesUserExist(findUserInterface: FindUserInterface): Promise<boolean> {
-    return await this.userRepository.existsBy({ ...findUserInterface });
+  async doesUserExist(findUserInterface: FindOptionsWhere<User>): Promise<boolean> {
+    return await this.userRepository.existsBy(findUserInterface);
   }
 
   async createUser(createUser: CreateUserDto): Promise<User> {
@@ -52,10 +54,8 @@ export class UserService {
     });
 
     if (doesUserExist) {
-      throw new RpcException(
-        new BadRequestException(
-          'User with this email already exists or wait for the email verification to complete',
-        ),
+      throw new BadRequestException(
+        'User with this email already exists or wait for the email verification to complete',
       );
     }
 
@@ -74,36 +74,58 @@ export class UserService {
 
     const savedUser = await this.userRepository.save(createdUser);
 
-    await this.formFieldModel.create({
-      ...createdUser,
-      userId: savedUser.id,
-      fullName: `${createdUser.firstName} ${createdUser.lastName}`,
-    });
-
     return savedUser;
+  }
+
+  async initFormFields(user: User, init = true) {
+    const {
+      id,
+      password,
+      createdAt,
+      updatedAt,
+      deletedAt,
+      isVerified,
+      type,
+      ...requiredData
+    } = user;
+
+    const payload: AuthFormFieldsDto = {
+      userId: user.id,
+      data: {
+        ...requiredData,
+      },
+    };
+
+    await firstValueFrom(
+      this.formFieldsService.send(
+        {
+          cmd: init
+            ? AutofillServicePattern.init
+            : AutofillServicePattern.patchFields,
+        },
+        payload,
+      ),
+    );
   }
 
   async findUser(finduser: FindOneOptions<User>): Promise<User> {
     const user = await this.userRepository.findOne(finduser);
 
     if (!user) {
-      throw new RpcException(
-        new NotFoundException(
-          `user with ${Object.keys(finduser.where)} : ${Object.values(finduser.where)} not found`,
-        ),
+      throw new NotFoundException(
+        `user with ${Object.keys(finduser.where)} : ${Object.values(finduser.where)} not found`,
       );
     }
 
     return user;
   }
 
-  async getUsersByIds(usersIds: string[]){
-      return this.userRepository.find({
-        where: {
-          id: In(usersIds),
-        },
-      });
-    
+  async getUsersByIds(usersIds: string[]) {
+    return this.userRepository.find({
+      where: {
+        id: In(usersIds),
+      },
+    });
   }
 
   // TODO: need to edit for the update password
@@ -117,6 +139,8 @@ export class UserService {
     const user = await this.findUser({ where: { id } });
 
     Object.assign(user, updateUser);
+
+    this.initFormFields(user, false);
 
     return this.userRepository.save(user);
   }
@@ -146,24 +170,18 @@ export class UserService {
       .getOne();
 
     if (!user) {
-      throw new RpcException(
-        new NotFoundException('Invalid email or password(not found)'),
-      );
+      throw new UnauthorizedException('Invalid email or password(not found)');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new RpcException(
-        new NotFoundException('Invalid email or password'),
-      );
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     if (!user.isVerified) {
-      throw new RpcException(
-        new NotFoundException(
-          'Please verify your email first, check your email for the verification link',
-        ),
+      throw new BadRequestException(
+        'Please verify your email first, check your email for the verification link',
       );
     }
 
@@ -172,7 +190,7 @@ export class UserService {
     return this.userRepository.findOneBy({ id: user.id });
   }
 
-  async chagePasswordUsingToken(
+  async changePasswordUsingToken(
     userId: string,
     password: string,
   ): Promise<{ message: string }> {
@@ -200,6 +218,7 @@ export class UserService {
       template: EmailTemplates.RESETPASSWORD,
       templateData: [emailData],
     };
+
     this.notifierService.emit({ cmd: NotifierEvents.sendEmail }, sendEmailDto);
 
     return {
@@ -235,11 +254,11 @@ export class UserService {
     const user = await this.userRepository.findOneBy({ id });
 
     if (!user) {
-      throw new RpcException(
-        new NotFoundException(`user with id ${id} not found`),
-      );
+      throw new NotFoundException(`user with id ${id} not found`);
     }
     user.isVerified = true;
+
+    this.initFormFields(user);
 
     return this.userRepository.save(user);
   }
