@@ -152,7 +152,7 @@ export class ApiAuthController {
   @ApiUnauthorizedResponse({ description: 'wrong token' })
   @ApiBearerAuth(AUTH_HEADER)
   @Public()
-  @Post('change-forgotten-password')
+  @Post('reset-password')
   @UseGuards(JWTForgetPasswordGuard)
   async changeForgottenPassword(
     @Body() dto: ChangeForgottenPasswordDto,
