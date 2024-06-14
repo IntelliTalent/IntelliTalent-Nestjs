@@ -36,7 +36,6 @@ export class DeletePendingUsersService implements OnModuleInit {
     await this.userRepository.remove(pendingUsers);
   }
 
-  // need to be used with redis tp prevent race condition over the database
   @Cron('0 2 * * *', { timeZone: 'America/New_York' })
   async handleCron() {
     try {

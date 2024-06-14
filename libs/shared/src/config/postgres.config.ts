@@ -49,7 +49,7 @@ export const getServiceDatabse = async (
       });
       break;
 
-    case ServiceName.FILTRATION_SERVICE:
+    case ServiceName.FILTERATION_SERVICE:
       Object.assign(configObject, {
         database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),
       });
@@ -60,6 +60,13 @@ export const getServiceDatabse = async (
         database: await getConfigVariables(Constants.DB.dbName.QUIZDB),
       });
       break;
+
+    case ServiceName.TESTING_DATABASE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.TESTINGDB),
+      });
+      break;
+
 
     default:
       throw new Error('Service not found');

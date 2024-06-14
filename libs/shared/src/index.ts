@@ -51,3 +51,9 @@ export * from './redis/expire-constants';
 
 // decotaors
 export * from './decorators/is-match.decorator';
+
+
+
+
+// orm test config
+export * from './config/test-orm.config';

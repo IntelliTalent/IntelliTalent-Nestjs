@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserType } from '../enums/user-type.enum';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -23,6 +28,9 @@ export class RolesGuard implements CanActivate {
 
     if (user.type == UserType.admin) return true;
 
-    return requiredRoles.some((role) => user.type?.includes(role));
+    const hasRole = requiredRoles.includes(user.type);
+    if (hasRole) return true;
+
+    throw new ForbiddenException('You do not have permission (RolesGuard)');
   }
 }

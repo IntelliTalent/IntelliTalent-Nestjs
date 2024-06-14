@@ -54,7 +54,7 @@ export class JobsService {
     private readonly jobExtractorService: ClientProxy,
     @Inject(ServiceName.ATS_SERVICE)
     private readonly atsService: ClientProxy,
-    @Inject(ServiceName.FILTRATION_SERVICE)
+    @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
   ) {}
@@ -491,10 +491,12 @@ export class JobsService {
     }
   }
 
-  async getJobById(jobId: string) {
+  async getJobById(jobId) {
+    console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId },
+      where: { id: jobId},
     });
+    console.log('job: ', job);
 
     if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);

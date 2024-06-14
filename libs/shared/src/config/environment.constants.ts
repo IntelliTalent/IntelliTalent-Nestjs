@@ -20,6 +20,7 @@ export const Constants = {
       FILTERATIONDB: 'FilterationDB',
       CVSDB: 'CVSDB',
       QUIZDB: 'QuizzesDB',
+      TESTINGDB: 'TestingDB',
     },
   },
   MONGODB: {
@@ -32,6 +33,7 @@ export const Constants = {
       ScrappedJobsDB: 'ScrappedJobsDB',
       FormFieldsDB: 'FormFieldsDB',
       InterviewQuestionsDB: 'InterviewQuestionsDB',
+      FilterationDB: 'FilterationDB',
     },
   },
   REDIS: {
@@ -66,6 +68,7 @@ export const Constants = {
     JOB_EXTRACTOR_QUEUE: 'RABBITMQ_JOB_EXTRACTOR_QUEUE',
     QUIZ_QUEUE: 'RABBITMQ_QUIZ_QUEUE',
     QUIZ_GENERATOR_QUEUE: 'RABBITMQ_QUIZ_GENERATOR_QUEUE',
+    CUSTOM_JOB_QUEUE: 'RABBITMQ_CUSTOM_JOB_QUEUE',
   },
   JWT: {
     secret: 'JWT_SECRET',
@@ -104,11 +107,13 @@ export enum ServiceName {
   JOB_SERVICE = 'JOB_SERVICE',
   NOTIFIER_SERVICE = 'NOTIFIER_SERVICE',
   PROFILE_SERVICE = 'PROFILE_SERVICE',
-  FILTRATION_SERVICE = 'FILTERATION_SERVICE',
+  FILTERATION_SERVICE = 'FILTERATION_SERVICE',
+  CUSTOM_JOB_SERVICE = 'CUSTOM_JOB_SERVICE',
   SCRAPPER_SERVICE = 'SCRAPPER_SERVICE',
   JOB_EXTRACTOR_SERVICE = 'JOB_EXTRACTOR_SERVICE',
   QUIZ_SERVICE = 'QUIZ_SERVICE',
   QUIZ_GENERATOR_SERVICE = 'QUIZ_GENERATOR_SERVICE',
+  TESTING_DATABASE = 'TESTING_DATABASE',
 }
 
 export async function mapServiceNameToQueueName(
@@ -137,7 +142,7 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.NOTIFIER_QUEUE);
     case ServiceName.PROFILE_SERVICE:
       return await getConfigVariables(Constants.QUEUES.PROFILE_QUEUE);
-    case ServiceName.FILTRATION_SERVICE:
+    case ServiceName.FILTERATION_SERVICE:
       return await getConfigVariables(Constants.QUEUES.FILTRATION_QUEUE);
     case ServiceName.SCRAPPER_SERVICE:
       return await getConfigVariables(Constants.QUEUES.SCRAPPER_QUEUE);
@@ -147,5 +152,7 @@ export async function mapServiceNameToQueueName(
       return await getConfigVariables(Constants.QUEUES.QUIZ_QUEUE);
     case ServiceName.QUIZ_GENERATOR_SERVICE:
       return await getConfigVariables(Constants.QUEUES.QUIZ_GENERATOR_QUEUE);
+    case ServiceName.CUSTOM_JOB_SERVICE:
+      return await getConfigVariables(Constants.QUEUES.CUSTOM_JOB_QUEUE);
   }
 }
