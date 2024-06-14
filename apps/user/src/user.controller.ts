@@ -25,8 +25,6 @@ import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    @Inject(ServiceName.NOTIFIER_SERVICE)
-    private readonly notifierService: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: HealthCheckPatterns })
@@ -113,7 +111,7 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: userServicePatterns.getUsersByIds })
-  getProfilesByUsersIds(@Payload() dto: GetUsersByIdsDto) {
+  getUsersByIds(@Payload() dto: GetUsersByIdsDto) {
     return this.userService.getUsersByIds(dto.usersIds);
   }
 }
