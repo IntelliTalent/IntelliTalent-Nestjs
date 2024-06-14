@@ -63,6 +63,23 @@ export class JobsController {
     );
   }
 
+  @Get('/me')
+  @Roles([UserType.recruiter])
+  @ApiOperation({ summary: "Get all user's jobs" })
+  @ApiResponse({
+    status: 200,
+    type: IJobs,
+    isArray: true,
+    description: 'List of jobs returned successfully.',
+  })
+  @ApiBearerAuth(AUTH_HEADER)
+  async getUserJobs(@CurrentUser() user: User) {
+    return this.jobsService.send(
+      { cmd: jobsServicePatterns.getUserJobs },
+      user.id,
+    );
+  }
+
   @Get('/:jobId')
   @Public()
   @ApiOperation({ summary: 'Get job by ID' })

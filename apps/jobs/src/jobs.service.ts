@@ -494,7 +494,7 @@ export class JobsService {
   async getJobById(jobId) {
     console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId},
+      where: { id: jobId },
     });
     console.log('job: ', job);
 
@@ -654,6 +654,33 @@ export class JobsService {
       totalRecords: count,
       totalPages: Math.ceil(count / (take || 10)),
     };
+  }
+
+  async getUserJobs(userId: string) {
+    const jobs = await this.structuredJobRepository.find({
+      where: { userId },
+    });
+
+    const responseJobs: IJobs[] = jobs.map((job) => ({
+      id: job.id,
+      userId: job.userId,
+      title: job.title,
+      company: job.company,
+      jobLocation: job.jobLocation,
+      type: job.type,
+      skills: job.skills,
+      url: job.url,
+      description: job.description,
+      publishedAt: job.publishedAt,
+      jobPlace: job.jobPlace,
+      neededExperience: job.neededExperience,
+      education: job.education,
+      csRequired: job.csRequired,
+      isActive: job.isActive,
+      currentStage: job.currentStage,
+    }));
+
+    return { jobs: responseJobs };
   }
 
   async checkActiveJobs() {

@@ -50,6 +50,11 @@ export class JobsController {
     return this.jobsService.getJobs(pageOptions);
   }
 
+  @MessagePattern({ cmd: jobsServicePatterns.getUserJobs })
+  getUserJobs(userId: string) {
+    return this.jobsService.getUserJobs(userId);
+  }
+
   @MessagePattern({ cmd: jobsServicePatterns.deactivateJob })
   deactivateJob({ jobId, userId }: { jobId: string; userId: string }) {
     return this.jobsService.deactivateJob(jobId, userId);

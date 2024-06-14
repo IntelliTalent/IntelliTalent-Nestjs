@@ -6,6 +6,7 @@ export const jobsServicePatterns = {
   editJob: 'editJob',
   deactivateJob: 'deactivateJob',
   moveToNextStage: 'moveToNextStage',
+  getUserJobs: 'getUserJobs',
 
   // patterns with other services
   extractInfo: 'extractInfo',
