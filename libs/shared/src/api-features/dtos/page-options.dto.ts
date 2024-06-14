@@ -82,4 +82,8 @@ export class PageOptionsDto {
   @IsDateString()
   @IsOptional({})
   endDate?: Date;
+
+  get skip(): number {
+    return (this.page - 1) * this.take;
+  }
 }
