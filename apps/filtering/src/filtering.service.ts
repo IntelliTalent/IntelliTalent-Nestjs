@@ -6,7 +6,7 @@ import { jobsServicePatterns } from '@app/services_communications/jobs-service';
 import { ServiceName, StructuredJob, User } from '@app/shared';
 import { Filteration, QuizData, StageData } from '@app/shared/entities/filteration.entity';
 import { StageType } from '@app/shared/enums/stage-type.enum';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
@@ -53,14 +53,10 @@ export class FilteringService {
       ),
     );
     if (!profile) {
-      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      return null;
+      throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
     }
     if (profile.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
     }
     // get the job details
     const job: StructuredJob = await firstValueFrom(
@@ -73,9 +69,7 @@ export class FilteringService {
     );
     // check if the job exists and is open
     if (!job || !job.isActive) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
     }
     // check if user applied to the job before
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
@@ -95,10 +89,7 @@ export class FilteringService {
       );
       const { status, ...matchData } = matchingResult;
       if (status != ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS) {
-        // TODO : edit it to rbc exception
-        // throw new BadRequestException(status);
-        console.log(status);
-        return null;
+        throw new BadRequestException(status);
       }
       const job: StructuredJob = await firstValueFrom(
         this.jobService.send(
@@ -165,9 +156,7 @@ export class FilteringService {
         stageData: filteration.appliedData
       }
     } else {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
-      console.log(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
     }
   }
 
@@ -183,9 +172,7 @@ export class FilteringService {
     );
     // check if the job exists and is open
     if (!job || !job.isActive) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
     }
     switch (job.currentStage) {
       case JobStageType.Quiz:
@@ -277,9 +264,7 @@ export class FilteringService {
         );
         break;
       default:
-        // throw new BadRequestException('Not valid stage to begin');
-        console.log(FILTERATION_CONSTANTS.NOT_VALID_STAGE);
-        return null;
+        throw new BadRequestException('Not valid stage to begin');
     }
     return {
       message: FILTERATION_CONSTANTS.STAGE_STARTED,
@@ -298,9 +283,7 @@ export class FilteringService {
       ),
     );
     if (!job || job.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
     page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
     limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
@@ -349,22 +332,16 @@ export class FilteringService {
       ),
     );
     if (!profile) {
-      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      return null;
+      throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
     }
     // check if the user is the owner of the profile
     if (profile.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
     }
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
 
     if (!filteration) {
-      // throw new BadRequestException('User did not apply or matched to the job');
-      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      return null;
+      throw new BadRequestException('User did not apply or matched to the job');
     }
     let stageData: StageData = null;
     switch (filteration.currentStage) {
@@ -404,21 +381,16 @@ export class FilteringService {
       ),
     );
     if (!job || job.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
 
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
+
     }
     if (filteration.currentStage !== StageType.quiz) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
     }
     filteration.quizData = {
       grade,
@@ -448,22 +420,16 @@ export class FilteringService {
       ),
     );
     if (!job || job.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
 
 
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId: profileId });
     if (!filteration) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
     }
     if (filteration.currentStage !== StageType.quiz) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE);
     }
     filteration.quizData = {
       grade,
@@ -490,27 +456,19 @@ export class FilteringService {
       ),
     );
     if (!profile) {
-      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      return null;
+      throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
     }
     // check if the user is the owner of the profile
     if (profile.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
     }
 
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      // throw new BadRequestException('User did not apply to the job');
-      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      return null;
+      throw new BadRequestException('User did not apply to the job');
     }
     if (filteration.currentStage !== StageType.interview) {
-      // throw new BadRequestException('User is not in the interview stage');
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      return null;
+      throw new BadRequestException('User is not in the interview stage');
     }
 
     filteration.interviewData = {
@@ -537,27 +495,19 @@ export class FilteringService {
       ),
     );
     if (!job || job.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
 
     const { jobId, profileId, grades } = reviewAnswers;
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
     }
     if (filteration.currentStage !== StageType.interview) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
     }
     if (filteration.interviewData.answers.length !== grades.length) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.ANSWERS_AND_QUESTIONS_NOT_MATCHED);
-      console.log(FILTERATION_CONSTANTS.ANSWERS_AND_QUESTIONS_NOT_MATCHED);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.ANSWERS_AND_QUESTIONS_NOT_MATCHED);
     }
     const totalGrade = grades.reduce((acc, grade) => acc + grade, 0);
     filteration.interviewData.grade = totalGrade / grades.length;
@@ -582,21 +532,15 @@ export class FilteringService {
       ),
     );
     if (!job || job.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
 
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if (!filteration) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      console.log(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
     }
     if (filteration.currentStage !== StageType.candidate) {
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_CANDIDATE);
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_CANDIDATE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_CANDIDATE);
     }
     filteration.currentStage = StageType.selected;
     filteration.selectionData = {
@@ -630,14 +574,10 @@ export class FilteringService {
       ),
     );
     if (!profile) {
-      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      return null;
+      throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
     }
     if (profile.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
     }
 
     // Step 1: Count the total number of documents matching the profileId
@@ -692,14 +632,10 @@ export class FilteringService {
       ),
     );
     if (!profile) {
-      // throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      console.log(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
-      return null;
+      throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
     }
     if (profile.userId !== userId) {
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER);
     }
 
     page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
@@ -760,17 +696,13 @@ export class FilteringService {
       ),
     );
     if(!job.currentStage || job.currentStage !== JobStageType.Interview){
-      // throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_IN_INTERVIEW_STAGE);
-      console.log(FILTERATION_CONSTANTS.JOB_NOT_IN_INTERVIEW_STAGE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_IN_INTERVIEW_STAGE);
     }
 
     // get the filteration details
     const filteration = await this.filterationRepository.findOneBy({ jobId, userId });
     if(!filteration || filteration.currentStage !== StageType.interview){
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
     }
 
     return {
@@ -789,9 +721,7 @@ export class FilteringService {
       ),
     );
     if(!job || job.userId !== userId){
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
 
     page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
@@ -836,17 +766,13 @@ export class FilteringService {
       ),
     );
     if(!job || job.userId !== userId){
-      // throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      console.log(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-      return null;
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
 
     // get the filteration details
     const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     if(!filteration || filteration.currentStage !== StageType.interview){
-      // throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      console.log(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
-      return null;
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_IS_NOT_IN_INTERVIEW_STAGE);
     }
 
     return {

@@ -10,7 +10,12 @@ import { PaginatedJobDto } from '@app/services_communications/filteration-servic
 import { PaginatedMatchedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-matched-job.dto';
 import { QuizDto } from '@app/services_communications/filteration-service/dtos/requests/quiz.dto';
 import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
+import { GetAppliedJobsDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-jobs-response.dto';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
+import { GetDetailedAppliedUsersDto } from '@app/services_communications/filteration-service/dtos/responses/get-detailed-applied-users.dto';
+import { GetInterviewAnswersResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-answers-response.dto';
+import { GetInterviewQuestionsResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-questions.dto';
+import { GetMatchedJobsDto } from '@app/services_communications/filteration-service/dtos/responses/get-matched-jobs.dto';
 import { GetStageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-stage-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
@@ -33,6 +38,7 @@ export class ApiFilterationController {
   @Roles([UserType.jobSeeker])
   @ApiOkResponse({
     description: 'filteration of the job under processing ...',
+    type: StageResponseDto
   })
   async filterJob(
     @Body() filterJob: ApplyJobRequest,
@@ -73,6 +79,7 @@ export class ApiFilterationController {
   @Get('matched-jobs/:profileId')
   @ApiOkResponse({
     description: 'The matched jobs of the profile',
+    type: GetMatchedJobsDto
   })
   async getMatchedJobs(
     @CurrentUser() user: User,
@@ -94,10 +101,11 @@ export class ApiFilterationController {
     );
   }
 
-  @ApiOperation({ summary: 'Get the matched jobs of certain profile' })
+  @ApiOperation({ summary: 'Get the applied jobs for certain profile' })
   @Get('applied-jobs/:profileId')
   @ApiOkResponse({
-    description: 'The matched jobs of the profile',
+    description: 'The applied jobs of the profile',
+    type: GetAppliedJobsDto
   })
   async getAppliedJobs(
     @CurrentUser() user: User,
@@ -123,6 +131,7 @@ export class ApiFilterationController {
   @Get('interview/:jobId')
   @ApiOkResponse({
     description: 'The interview questions of the job',
+    type: GetInterviewQuestionsResponse
   })
   async getInterviewQuestions(
     @CurrentUser() user: User,
@@ -143,6 +152,7 @@ export class ApiFilterationController {
   @Get('applied-users/:jobId')
   @ApiOkResponse({
     description: 'The applied users for the job',
+    type: GetDetailedAppliedUsersDto
   })
   async getJobApplicants(
     @CurrentUser() user: User,
@@ -167,6 +177,7 @@ export class ApiFilterationController {
   @Get('interview-answers/:jobId/:profileId')
   @ApiOkResponse({
     description: 'The applied users for the job',
+    type: GetInterviewAnswersResponse
   })
   async getInterviewAnswers(
     @CurrentUser() user: User,
@@ -215,7 +226,7 @@ export class ApiFilterationController {
   @Get(':jobId/:profileId')
   @ApiOkResponse({
     description: 'The stage of the user in the job',
-    type: GetStageResponseDto,
+    type:StageResponseDto,
   })
   async getStage(
     @CurrentUser() user: User,

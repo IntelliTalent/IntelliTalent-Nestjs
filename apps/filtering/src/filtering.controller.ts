@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseFilters } from '@nestjs/common';
 import { FilteringService } from './filtering.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
@@ -12,8 +12,11 @@ import { AuthReviewAnswersDto } from '@app/services_communications/filteration-s
 import { PaginatedMatchedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-matched-job.dto';
 import { GetInterviewQuestionsDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-questions.dto';
 import { GetInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-answers.dto';
+import { RpcExceptionsFilter } from '@app/shared';
+import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 
 @Controller()
+@UseFilters(RpcExceptionsFilter)
 export class FilteringController {
   constructor(private readonly filteringService: FilteringService) { }
 
@@ -33,7 +36,7 @@ export class FilteringController {
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.getAppliedUsers })
-  getAppliedUsers(@Payload() data: PaginatedJobDto) {
+  getAppliedUsers(@Payload() data: PaginatedJobDto):Promise<GetAppliedUsersResponseDto> {
     return this.filteringService.getAppliedUsers(data.userId, data.jobId, data.page, data.limit);
   }
 
