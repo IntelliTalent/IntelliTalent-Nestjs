@@ -122,7 +122,7 @@ describe('ProfileService', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         SharedModule.registerPostgres(
-          ServiceName.PROFILE_SERVICE,
+          ServiceName.TESTING_DATABASE,
           [Profile, Certificate, Project, Education, Experience],
           true,
         ),
@@ -272,7 +272,14 @@ describe('ProfileService', () => {
     await profileService.create(profileTemp);
     await profileService.create(profileTemp);
     await profileService.create(profileTemp);
-    const result = await profileService.getUserProfileCard(profile.userId);
+    const fullResult = await profileService.getUserProfileCard({
+      id: profile.userId,
+      pageOptionsDto: {
+        page: 1,
+        take: 3,
+      }
+    });
+    const result = fullResult.data;
     expect(result).toBeDefined();
     expect(result.length).toBeGreaterThan(0);
     for (let i = 1; i < result.length; i++) {
@@ -302,7 +309,14 @@ describe('ProfileService', () => {
     const profile = await profileService.create(profileTemp);
     await profileService.create(profileTemp);
     await profileService.create(profileTemp);
-    const result = await profileService.getUserProfiles(profile.userId);
+    const result = (await profileService.getUserProfiles({
+      id: profile.userId,
+      pageOptionsDto: {
+        page: 1,
+        take: 3,
+      }
+    })).data;
+
     expect(result).toBeDefined();
     expect(result.length).toBe(3);
   });

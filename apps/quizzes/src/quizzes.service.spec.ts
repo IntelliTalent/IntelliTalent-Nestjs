@@ -439,10 +439,14 @@ it("should submit a quiz with 100% score", async () => {
       userWhoRequestedId: targetQuiz.userId,
     });
 
-    const result = await quizzesService.getUsersScores({
+    const result = (await quizzesService.getUsersScores({
       jobId: targetQuiz.jobId,
       recruiterId: targetQuiz.recruiterId,
-    });
+      pageOptionsDto: {
+        page: 1,
+        take: 20,
+      }
+    })).data;
 
     expect(result).toBeDefined();
     expect(result.length).toBeGreaterThan(0);
@@ -483,6 +487,11 @@ it("should submit a quiz with 100% score", async () => {
       await quizzesService.getUsersScores({
         jobId: 'invalid',
         recruiterId: targetQuiz.recruiterId,
+        pageOptionsDto: {
+          page: 1,
+          take: 10,
+        }
+
       });
     } catch (error) {
       expect(error).toBeInstanceOf(NotFoundException);
@@ -523,6 +532,11 @@ it("should submit a quiz with 100% score", async () => {
       await quizzesService.getUsersScores({
         jobId: targetQuiz.jobId,
         recruiterId: 'invalid',
+        pageOptionsDto: {
+          page: 1,
+          take: 10,
+        }
+
       });
     } catch (error) {
       expect(error).toBeInstanceOf(ForbiddenException);
@@ -563,6 +577,10 @@ it("should submit a quiz with 100% score", async () => {
       await quizzesService.getUsersScores({
         jobId: 'invalid',
         recruiterId: 'invalid',
+        pageOptionsDto: {
+          page: 1,
+          take: 10,
+        }
       });
     } catch (error) {
       expect(error).toBeInstanceOf(NotFoundException);
