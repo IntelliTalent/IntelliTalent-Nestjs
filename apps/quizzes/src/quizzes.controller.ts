@@ -12,6 +12,7 @@ import {
   GetQuizSlugsDto,
   GetUserQuizzesDto,
   JobQuizzesIdentifierDto,
+  PaginatedJobQuizzesIdentifierDto,
   QuizIdentifierDto,
   quizzesEvents,
   quizzesPattern,
@@ -55,7 +56,7 @@ export class QuizzesController {
   }
 
   @MessagePattern({ cmd: quizzesPattern.getUsersScores })
-  async getUsersScores(@Payload() correctQuiz: JobQuizzesIdentifierDto) {
+  async getUsersScores(@Payload() correctQuiz: PaginatedJobQuizzesIdentifierDto) {
     return this.quizzesService.getUsersScores(correctQuiz);
   }
 

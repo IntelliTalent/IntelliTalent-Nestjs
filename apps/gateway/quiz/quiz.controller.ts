@@ -2,6 +2,7 @@ import {
   AUTH_HEADER,
   GetUserQuizzesDto,
   JobQuizzesIdentifierDto,
+  PaginatedJobQuizzesIdentifierDto,
   QuizIdentifierDto,
   quizzesEvents,
   quizzesPattern,
@@ -12,7 +13,8 @@ import {
   ResponseSubmitQuiz,
   SubmitQuizDto,
 } from '@app/services_communications';
-import { CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
+import { ApiPaginatedResponse, CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import {
   Body,
   Controller,
@@ -21,6 +23,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
@@ -40,16 +43,15 @@ export class QuizController {
   @Get('/my-quizzes')
   @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'get all quizzes for this user' })
-  @ApiResponse({
-    status: 200,
-    description: 'All quizzes for this user',
-    type: ResponseQuizCardDto,
-    isArray: true,
-  })
+  @ApiPaginatedResponse(ResponseQuizCardDto)
   @Roles([UserType.jobSeeker])
-  async getUserQuizzes(@CurrentUser() user: User) {
+  async getUserQuizzes(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
+  ) {
     const payload: GetUserQuizzesDto = {
       userId: user.id,
+      pageOptionsDto
     };
 
     return this.quizzesService.send(
@@ -135,6 +137,7 @@ export class QuizController {
   getSlugs(
     @CurrentUser() user: User,
     @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @Query() pageOptionsDto: PageOptionsDto,
   ) {
     const payload: JobQuizzesIdentifierDto = {
       jobId: jobId,
@@ -150,20 +153,17 @@ export class QuizController {
   @Get('/job-scores/:jobId')
   @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'get job quizzes scores' })
-  @ApiResponse({
-    status: 200,
-    description: 'Job quizzes scores',
-    type: ResponseJobQuizzesScore,
-    isArray: true,
-  })
   @Roles([UserType.recruiter])
+  @ApiPaginatedResponse(ResponseJobQuizzesScore)
   getJobQuizzesScores(
     @CurrentUser() user: User,
     @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @Query() pageOptionsDto: PageOptionsDto,
   ) {
-    const payload: JobQuizzesIdentifierDto = {
+    const payload: PaginatedJobQuizzesIdentifierDto = {
       jobId: jobId,
       recruiterId: user.id,
+      pageOptionsDto: pageOptionsDto,
     };
 
     return this.quizzesService.send(
