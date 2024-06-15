@@ -18,6 +18,7 @@ import { ApiQuizModule } from '../quiz/quiz.module';
 import { ApiAutofillModule } from '../autofill/autofill.module';
 import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 import { ApiFilterationModule } from '../filteration/filteration.module';
+import { ApiUserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { ApiFilterationModule } from '../filteration/filteration.module';
     ApiQuizModule,
     ApiAutofillModule,
     ApiCustomJobModule,
-    ApiFilterationModule
+    ApiFilterationModule,
+    ApiUserModule
   ],
   controllers: [AppController],
   providers: [

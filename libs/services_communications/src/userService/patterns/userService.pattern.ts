@@ -11,4 +11,5 @@ export const userServicePatterns = {
   verifyUser: 'verifyUser',
   getAllJobSeekers: 'getAllJobSeekers',
   getUsersByIds: 'getUsersByIds',
+  findVerifiedUser: 'findVerifiedUser',
 };

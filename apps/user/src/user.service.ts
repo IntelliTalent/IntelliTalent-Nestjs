@@ -108,12 +108,12 @@ export class UserService {
     );
   }
 
-  async findUser(finduser: FindOneOptions<User>): Promise<User> {
-    const user = await this.userRepository.findOne(finduser);
+  async findUser(findUser: FindOneOptions<User>): Promise<User> {
+    const user = await this.userRepository.findOne(findUser);
 
     if (!user) {
       throw new NotFoundException(
-        `user with ${Object.keys(finduser.where)} : ${Object.values(finduser.where)} not found`,
+        `user with ${Object.keys(findUser.where)} : ${Object.values(findUser.where)} not found`,
       );
     }
 
