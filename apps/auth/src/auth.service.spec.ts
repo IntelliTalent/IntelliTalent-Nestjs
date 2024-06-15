@@ -34,7 +34,8 @@ describe('AuthService', () => {
     isVerified: true,
     createdAt: undefined,
     updatedAt: undefined,
-    deletedAt: undefined
+    deletedAt: undefined,
+    joinedAt: undefined
   };
 
 
@@ -176,7 +177,8 @@ describe('AuthService', () => {
       isVerified: true,
       createdAt: undefined,
       updatedAt: undefined,
-      deletedAt: undefined
+      deletedAt: undefined,
+      joinedAt: undefined
     };
 
     const token = await authService.sign(user);
