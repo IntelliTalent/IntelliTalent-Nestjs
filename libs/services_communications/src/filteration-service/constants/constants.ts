@@ -17,6 +17,7 @@ export const RECRUITER_SELECTED_CANDIDATE = 'Recruiter selected the candidate';
 export const PROFILE_NOT_FOUND = 'Profile not found';
 export const  USER_NOT_PROFILE_OWNER = 'User is not the profile owner';
 export const USER_NOT_JOB_OWNER = 'User is not the job owner';
+export const JOB_NOT_IN_INTERVIEW_STAGE = 'Job is not in the interview stage';
 export const MIN_PAGE = 1;
 export const MIN_LIMIT = 1;
 export const DEFAULT_PAGE = 1;
