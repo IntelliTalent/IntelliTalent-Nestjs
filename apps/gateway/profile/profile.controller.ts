@@ -11,7 +11,15 @@ import {
 } from '@app/services_communications';
 import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
 import { ResponseScrapeProfileDto } from '@app/services_communications/profile/dtos/response-scrape-profile.dto';
-import { ApiPaginatedResponse, CurrentUser, Profile, Roles, ServiceName, User, UserType } from '@app/shared';
+import {
+  ApiPaginatedResponse,
+  CurrentUser,
+  Profile,
+  Roles,
+  ServiceName,
+  User,
+  UserType,
+} from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import { IsUUIDDto } from '@app/shared/dtos/uuid.dto';
@@ -25,7 +33,6 @@ import {
   Query,
   Patch,
   Delete,
-  NotImplementedException,
   ClassSerializerInterceptor,
   UseInterceptors,
 } from '@nestjs/common';
@@ -109,11 +116,6 @@ export class ProfileController {
     );
   }
 
-  @Get('cv/result')
-  getCvExtractorResult() {
-    throw new NotImplementedException('Not implemented');
-  }
-
   @Get('cards')
   @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'Get profile cards' })
@@ -126,10 +128,10 @@ export class ProfileController {
     const payload: PaginatedProfilesDto = {
       id: user.id,
       pageOptionsDto,
-    }
+    };
     return this.profileService.send(
       { cmd: profileServicePattern.getUserProfileCard },
-      payload
+      payload,
     );
   }
 
@@ -138,11 +140,14 @@ export class ProfileController {
   @ApiOperation({ summary: 'Get user profiles' })
   @ApiPaginatedResponse(Profile)
   @Roles([UserType.jobSeeker])
-  getUserProfiles(@CurrentUser() user: User, @Query() pageOptionsDto: PageOptionsDto) {
+  getUserProfiles(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
+  ) {
     const payload: PaginatedProfilesDto = {
       id: user.id,
       pageOptionsDto,
-    }
+    };
     return this.profileService.send(
       { cmd: profileServicePattern.getUserProfile },
       payload,
