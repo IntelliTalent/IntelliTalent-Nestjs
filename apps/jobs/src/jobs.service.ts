@@ -618,6 +618,11 @@ export class JobsService {
       }
     }
 
+    // Apply condition for currentStage to be Active
+    queryBuilder.andWhere('job.currentStage = :currentStage', {
+      currentStage: StageType.Active,
+    });
+
     // Apply pagination
     queryBuilder.skip(skip).take(take);
 
