@@ -25,11 +25,11 @@ export class TokenService {
     });
 
     if (!token) {
-      throw new RpcException(new BadRequestException('Token not found'));
+      throw new BadRequestException('Token not found');
     }
 
     if (token.isUsed) {
-      throw new RpcException(new BadRequestException('Token already used'));
+      throw new BadRequestException('Token already used');
     }
 
     token.isUsed = true;

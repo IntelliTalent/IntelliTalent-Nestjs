@@ -14,6 +14,7 @@ import { LinkedinScrapperService } from './linkedin-scrapper/linkedin-scrapper.s
 import { ProfileService } from './profile.service';
 import { Profile, RpcExceptionsFilter } from '@app/shared';
 import { GetProfilesByUsersIdsDto } from '@app/services_communications/profile/dtos/get-profiles-by-users-ids.dto';
+import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -59,13 +60,13 @@ export class ProfileController {
   }
 
   @MessagePattern({ cmd: profileServicePattern.getUserProfileCard })
-  getUserProfileCard(@Payload() userId: string) {
-    return this.profileService.getUserProfileCard(userId);
+  getUserProfileCard(@Payload() dtoData: PaginatedProfilesDto) {
+    return this.profileService.getUserProfileCard(dtoData);
   }
 
   @MessagePattern({ cmd: profileServicePattern.getUserProfile })
-  getUserProfiles(@Payload() userId: string) {
-    return this.profileService.getUserProfiles(userId);
+  getUserProfiles(@Payload() payload: PaginatedProfilesDto) {
+    return this.profileService.getUserProfiles(payload);
   }
 
   @MessagePattern({ cmd: profileServicePattern.getProfileById })

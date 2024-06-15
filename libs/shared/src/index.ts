@@ -51,7 +51,8 @@ export * from './redis/expire-constants';
 
 // decotaors
 export * from './decorators/is-match.decorator';
-
+export * from './decorators/ispublic-decorator.decorator'
+export * from './decorators/swagger.api.decorator';
 
 
 

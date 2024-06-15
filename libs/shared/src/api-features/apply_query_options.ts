@@ -19,7 +19,9 @@ export const applyQueryOptions = async (
     query = query.orderBy(`${orderBy}`, orderDirection);
   }
 
-  query = query.skip(pageOptionsDto.skip).take(pageOptionsDto.take);
+  const skip = (pageOptionsDto.page - 1) * pageOptionsDto.take;
+
+  query = query.skip(skip).take(pageOptionsDto.take);
 
   const itemCount = await query.getCount();
 
