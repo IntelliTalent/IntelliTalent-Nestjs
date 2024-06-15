@@ -1,5 +1,6 @@
+import { PageOptionsDto } from "@app/shared/api-features/dtos/page-options.dto";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsUUID } from "class-validator";
+import { IsUUID } from "class-validator";
 import { UUID } from "typeorm/driver/mongodb/bson.typings";
 
 export class PaginatedMatchedJobDto {
@@ -17,15 +18,10 @@ export class PaginatedMatchedJobDto {
     @IsUUID()
     userId: string;
 
-    @ApiProperty({
-        description: 'page number',
-        type: Number,
-    })
-    page: number;
 
     @ApiProperty({
-        description: 'limit of the page',
-        type: Number,
+        description: 'page options',
+        type: PageOptionsDto,
     })
-    limit: number;
+    paginationOptions: PageOptionsDto;
 }

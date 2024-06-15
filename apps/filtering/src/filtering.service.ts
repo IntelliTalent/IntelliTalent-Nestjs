@@ -25,6 +25,8 @@ import { GetAppliedJobsDto } from '@app/services_communications/filteration-serv
 import { GetInterviewQuestionsResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-questions.dto';
 import { GetDetailedAppliedUsersDto } from '@app/services_communications/filteration-service/dtos/responses/get-detailed-applied-users.dto';
 import { GetInterviewAnswersResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-answers-response.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { PageMetaDto } from '@app/shared/api-features/dtos/page-meta.dto';
 @Injectable()
 export class FilteringService {
 
@@ -272,7 +274,8 @@ export class FilteringService {
     }
   }
 
-  async getAppliedUsers(userId: string, jobId: string, page: number, limit: number): Promise<GetAppliedUsersResponseDto> {
+  async getAppliedUsers(userId: string, jobId: string, paginationOptions: PageOptionsDto): Promise<GetAppliedUsersResponseDto> {
+    let { page, take: limit } = paginationOptions;
     // check if the user is the owner of the job
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -308,10 +311,13 @@ export class FilteringService {
 
     // Step 3: Construct the final result in the desired format
     const results = {
-      metadata: {
-        count: totalCount,
-        page: page,
-      },
+      metadata:new PageMetaDto({
+        pageOptionsDto: {
+          page,
+          take: limit
+        },
+        itemCount: totalCount,
+      }) ,
       appliedUsers: appliedUsers.map(user => ({
         profileId: user.profileId,
         stage: user.currentStage,
@@ -557,7 +563,8 @@ export class FilteringService {
   }
 
 
-  async getMatchedJobs(profileId: string, userId: string, page: number, limit: number): Promise<GetMatchedJobsDto> {
+  async getMatchedJobs(profileId: string, userId: string, paginationOptions: PageOptionsDto): Promise<GetMatchedJobsDto> {
+    let { page, take: limit } = paginationOptions;
     page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
     limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
     page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
@@ -612,15 +619,19 @@ export class FilteringService {
     }));
 
     return {
-      metadata:{
-        count: totalCount,
-        page: page,
-      },
+      metadata:new PageMetaDto({
+        pageOptionsDto: {
+          page,
+          take: limit
+        },
+        itemCount: totalCount,
+      }),
       matchedJobs: jobsDetails
     }
   }
 
-  async getAppliedJobs(userId: string, profileId: string, page: number, limit: number): Promise<GetAppliedJobsDto> {
+  async getAppliedJobs(userId: string, profileId: string, paginationOptions: PageOptionsDto): Promise<GetAppliedJobsDto> {
+    let { page, take: limit } = paginationOptions;
 
     // ensure the profile is owned by the user
     const profile = await firstValueFrom(
@@ -677,10 +688,13 @@ export class FilteringService {
     }));
 
     return {
-      metadata:{
-        count: totalCount,
-        page: page,
-      },
+      metadata:new PageMetaDto({
+        pageOptionsDto: {
+          page,
+          take: limit
+        },
+        itemCount: totalCount,
+      }),
       appliedJobs: jobsDetails
     }
   }
@@ -710,7 +724,8 @@ export class FilteringService {
     } 
   }
 
-  async getJobApplicants(userId: string, jobId: string, page: number, limit: number): Promise<GetDetailedAppliedUsersDto>{
+  async getJobApplicants(userId: string, jobId: string, paginationOptions: PageOptionsDto): Promise<GetDetailedAppliedUsersDto>{
+    let { page, take: limit } = paginationOptions;
     // check if the user is the owner of the job
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -746,10 +761,12 @@ export class FilteringService {
 
     // Step 3: Construct the final result in the desired format
     const results = {
-      metadata: {
-        count: totalCount,
-        page: page,
-      },
+      metadata: new PageMetaDto({
+        pageOptionsDto: {
+          page, take: limit
+        },
+        itemCount: totalCount,
+      }),
       appliedUsers
     };
     return results;

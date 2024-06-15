@@ -1,3 +1,4 @@
+import { PageMetaDto } from "@app/shared/api-features/dtos/page-meta.dto";
 import { StageType } from "@app/shared/enums/stage-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 
@@ -24,22 +25,9 @@ export class GetAppliedUsersResponseDto {
 
     @ApiProperty({
         description: 'Metadata of the response',
-        type: 'object',
-        properties: {
-            count: {
-                type: 'number',
-                example: 10
-            },
-            page: {
-                type: 'number',
-                example: 1
-            },
-        }
+        type: PageMetaDto,
     })
-    metadata: {
-        count: number;
-        page: number;
-    };
+    metadata: PageMetaDto;
 
     @ApiProperty({
         type: [AppliedUser]

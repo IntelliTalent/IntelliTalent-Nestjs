@@ -16,11 +16,10 @@ import { GetDetailedAppliedUsersDto } from '@app/services_communications/filtera
 import { GetInterviewAnswersResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-answers-response.dto';
 import { GetInterviewQuestionsResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-questions.dto';
 import { GetMatchedJobsDto } from '@app/services_communications/filteration-service/dtos/responses/get-matched-jobs.dto';
-import { GetStageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-stage-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
-import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
@@ -83,9 +82,9 @@ export class ApiFilterationController {
   })
   async getMatchedJobs(
     @CurrentUser() user: User,
-    @Param('profileId') profileId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('take') take: number,
   ) {
     console.log('getMatchedJobs', profileId);
     return this.filterationService.send(
@@ -95,8 +94,10 @@ export class ApiFilterationController {
       {
         userId: user.id,
         profileId,
-        page,
-        limit,
+        paginationOptions:{
+          page,
+          take
+        }
       } as PaginatedMatchedJobDto,
     );
   }
@@ -109,9 +110,9 @@ export class ApiFilterationController {
   })
   async getAppliedJobs(
     @CurrentUser() user: User,
-    @Param('profileId') profileId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('take') take: number,
   ) {
     console.log('getMatchedJobs', profileId);
     return this.filterationService.send(
@@ -121,8 +122,10 @@ export class ApiFilterationController {
       {
         userId: user.id,
         profileId,
-        page,
-        limit,
+        paginationOptions:{
+          page,
+          take
+        }
       } as PaginatedMatchedJobDto,
     );
   }
@@ -135,7 +138,7 @@ export class ApiFilterationController {
   })
   async getInterviewQuestions(
     @CurrentUser() user: User,
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
   ) {
     return this.filterationService.send(
       {
@@ -156,9 +159,9 @@ export class ApiFilterationController {
   })
   async getJobApplicants(
     @CurrentUser() user: User,
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('take') take: number,
   ) {
     return this.filterationService.send(
       {
@@ -167,8 +170,10 @@ export class ApiFilterationController {
       {
         userId: user.id,
         jobId,
-        page, 
-        limit
+        paginationOptions:{
+          page,
+          take
+        }
       } as PaginatedJobDto,
     );
   }
@@ -181,8 +186,8 @@ export class ApiFilterationController {
   })
   async getInterviewAnswers(
     @CurrentUser() user: User,
-    @Param('jobId') jobId: string,
-    @Param('profileId') profileId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     
   ) {
     return this.filterationService.send(
@@ -205,9 +210,9 @@ export class ApiFilterationController {
   })
   async getAppliedUsers(
     @CurrentUser() user: User,
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('take') take: number,
   ) {
     return this.filterationService.send(
       {
@@ -216,8 +221,10 @@ export class ApiFilterationController {
       {
         userId: user.id,
         jobId,
-        page,
-        limit,
+        paginationOptions:{
+          page,
+          take
+        }
       } as PaginatedJobDto,
     );
   }
@@ -230,8 +237,8 @@ export class ApiFilterationController {
   })
   async getStage(
     @CurrentUser() user: User,
-    @Param('jobId') jobId: string,
-    @Param('profileId') profileId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
   ) {
     return this.filterationService.send(
       {

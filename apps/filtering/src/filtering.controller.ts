@@ -37,7 +37,7 @@ export class FilteringController {
 
   @MessagePattern({ cmd: FilterationServicePattern.getAppliedUsers })
   getAppliedUsers(@Payload() data: PaginatedJobDto):Promise<GetAppliedUsersResponseDto> {
-    return this.filteringService.getAppliedUsers(data.userId, data.jobId, data.page, data.limit);
+    return this.filteringService.getAppliedUsers(data.userId, data.jobId, data.paginationOptions);
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.getUserStage })
@@ -73,12 +73,12 @@ export class FilteringController {
 
   @MessagePattern({ cmd: FilterationServicePattern.getMatchedJobs })
   getMatchedJobs(@Payload() data: PaginatedMatchedJobDto) {
-    return this.filteringService.getMatchedJobs(data.profileId, data.userId, data.page, data.limit);
+    return this.filteringService.getMatchedJobs(data.profileId, data.userId, data.paginationOptions);
   }
 
   @MessagePattern({cmd : FilterationServicePattern.getAppliedJobs})
   getAppliedJobs(@Payload() data: PaginatedMatchedJobDto){
-    return this.filteringService.getAppliedJobs(data.userId, data.profileId, data.page, data.limit);
+    return this.filteringService.getAppliedJobs(data.userId, data.profileId, data.paginationOptions);
   }
 
   @MessagePattern({cmd : FilterationServicePattern.getInterviewQuestions})
@@ -88,7 +88,7 @@ export class FilteringController {
 
   @MessagePattern({cmd: FilterationServicePattern.getJobApplicants})
   getJobApplicants(@Payload() data: PaginatedJobDto){
-    return this.filteringService.getJobApplicants(data.userId, data.jobId, data.page, data.limit);
+    return this.filteringService.getJobApplicants(data.userId, data.jobId, data.paginationOptions);
   }
 
   @MessagePattern({cmd: FilterationServicePattern.getInterviewAnswers})
