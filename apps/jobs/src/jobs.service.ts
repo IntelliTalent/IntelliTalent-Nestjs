@@ -570,15 +570,9 @@ export class JobsService {
 
     // Apply csRequired if provided
     if (csRequired) {
-      if (csRequired === 'Yes') {
-        queryBuilder.andWhere('job.csRequired = :csRequired', {
-          csRequired: true,
-        });
-      } else if (csRequired === 'No') {
-        queryBuilder.andWhere('job.csRequired = :csRequired', {
-          csRequired: false,
-        });
-      }
+      queryBuilder.andWhere('job.csRequired = :csRequired', {
+        csRequired: csRequired === 'Yes' ? true : false,
+      });
     }
 
     // Apply jobType if provided
