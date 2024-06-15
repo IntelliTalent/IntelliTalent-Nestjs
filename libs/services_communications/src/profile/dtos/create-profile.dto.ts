@@ -46,14 +46,17 @@ export class CreateProfileDto {
   @IsString()
   summary: string;
 
+  @IsOptional()
   @ApiProperty({ example: 'https://example.com/cv.pdf' })
   @IsString()
   cv: string;
 
+  @IsOptional()
   @ApiPropertyOptional({ example: 'https://linkedin.com/your-profile' })
   @IsString()
   linkedIn?: string;
 
+  @IsOptional()
   @ApiPropertyOptional({ example: 'https://github.com/your-profile' })
   @IsString()
   gitHub?: string;
@@ -241,8 +244,8 @@ export class CreateCertificateDto {
   @IsDateString()
   issuedAt: Date;
 
-  @ApiProperty({ required: false, example: '2021-12-31' })
   @IsOptional()
+  @ApiProperty({ required: false, example: '2021-12-31' })
   @IsDateString()
   validUntil: Date;
 

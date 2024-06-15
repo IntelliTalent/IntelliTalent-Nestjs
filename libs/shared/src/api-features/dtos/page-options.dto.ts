@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
@@ -58,7 +58,7 @@ export class PageOptionsDto {
   @IsInt()
   @Min(1)
   @IsOptional()
-  readonly page: number = 1;
+  page: number = 1;
 
   @ApiPropertyOptional({
     minimum: 1,
@@ -70,7 +70,7 @@ export class PageOptionsDto {
   @Min(1)
   @Max(200)
   @IsOptional()
-  readonly take: number = 10;
+  take: number = 10;
 
   @ApiPropertyOptional({
     required: false,
@@ -88,9 +88,5 @@ export class PageOptionsDto {
   @IsOptional({})
   endDate?: Date;
 
-
-  // skip() {
-  //   return (this.page - 1) * this.take;
-  // }
 
 }

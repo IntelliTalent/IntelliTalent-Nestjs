@@ -15,7 +15,10 @@ async function bootstrap() {
   });
 
   // use validation pipe
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    enableDebugMessages: true,
+  }));
 
   // set global prefix
   app.setGlobalPrefix('api/v1');

@@ -1,4 +1,4 @@
-import { Controller, UseFilters } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { profileServicePattern } from '@app/services_communications/profile/patterns/preofile.patterns';
 import {
@@ -18,6 +18,7 @@ import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class ProfileController {
   constructor(
     private githubScrapperService: GithubScrapperService,
