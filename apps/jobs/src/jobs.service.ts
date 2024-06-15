@@ -24,7 +24,6 @@ import {
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { ClientProxy } from '@nestjs/microservices';
-import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { firstValueFrom } from 'rxjs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -34,6 +33,7 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { isDefined } from 'class-validator';
+import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
 
 @Injectable()
 export class JobsService {
@@ -494,7 +494,7 @@ export class JobsService {
   async getJobById(jobId) {
     console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId},
+      where: { id: jobId },
     });
     console.log('job: ', job);
 
@@ -534,14 +534,14 @@ export class JobsService {
     return job;
   }
 
-  async getJobs(pageOptions: PageOptionsDto) {
+  async getJobs(pageOptions: JobsPageOptionsDto) {
     const {
-      orderBy,
-      orderDirection,
-      searchField,
-      searchValue,
-      startDate,
-      endDate,
+      jobTitle,
+      jobLocation,
+      publishDate,
+      jobType,
+      jobPlace,
+      csRequired,
       take,
       page,
     } = pageOptions;
@@ -554,35 +554,75 @@ export class JobsService {
 
     const queryBuilder = this.structuredJobRepository.createQueryBuilder('job');
 
-    // Apply orderBy and orderDirection
-    if (orderBy && orderDirection) {
-      queryBuilder.orderBy(`job.${orderBy}`, orderDirection);
-    }
-
-    // Apply searchField and searchValue
-    if (searchField && searchValue) {
-      queryBuilder.where(`job.${searchField} LIKE :searchValue`, {
-        searchValue: `%${searchValue}%`,
+    // Apply jobTitle if provided
+    if (jobTitle) {
+      queryBuilder.andWhere('LOWER(job.title) LIKE LOWER(:jobTitle)', {
+        jobTitle: `%${jobTitle}%`,
       });
     }
 
-    // Apply startDate and endDate
-    if (startDate && endDate) {
-      queryBuilder.andWhere('job.publishedAt BETWEEN :startDate AND :endDate', {
-        startDate,
-        endDate,
+    // Apply jobLocation if provided
+    if (jobLocation) {
+      queryBuilder.andWhere('LOWER(job.jobLocation) LIKE LOWER(:jobLocation)', {
+        jobLocation: `%${jobLocation}%`,
       });
-    } else if (startDate) {
-      queryBuilder.andWhere('job.publishedAt >= :startDate', { startDate });
-    } else if (endDate) {
-      queryBuilder.andWhere('job.publishedAt <= :endDate', { endDate });
+    }
+
+    // Apply csRequired if provided
+    if (csRequired) {
+      queryBuilder.andWhere('job.csRequired = :csRequired', {
+        csRequired: csRequired === 'Yes' ? true : false,
+      });
+    }
+
+    // Apply jobType if provided
+    if (jobType) {
+      const jobTypes = Array.isArray(jobType) ? jobType : [jobType];
+      queryBuilder.andWhere('job.type IN (:...jobTypes)', {
+        jobTypes,
+      });
+    }
+
+    // Apply jobPlace if provided
+    if (jobPlace) {
+      const jobPlaces = Array.isArray(jobPlace) ? jobPlace : [jobPlace];
+      queryBuilder.andWhere('job.jobPlace IN (:...jobPlaces)', {
+        jobPlaces,
+      });
+    }
+
+    // Apply publishDate if provided
+    if (publishDate) {
+      let date: Date;
+      const today = new Date();
+      switch (publishDate) {
+        case 'Last 24 hours':
+          date = new Date(today.setDate(today.getDate() - 1));
+          break;
+        case 'Last 7 days':
+          date = new Date(today.setDate(today.getDate() - 7));
+          break;
+        case 'Last 30 days':
+          date = new Date(today.setDate(today.getDate() - 30));
+          break;
+        case 'Last 3 months':
+          date = new Date(today.setMonth(today.getMonth() - 3));
+          break;
+        default:
+          date = null;
+      }
+      if (date) {
+        queryBuilder.andWhere('job.publishedAt >= :publishDate', {
+          publishDate: date.toISOString(),
+        });
+      }
     }
 
     // Apply pagination
     queryBuilder.skip(skip).take(take);
 
     // Execute query and map the results to IJobs format
-    const jobs = await queryBuilder.getMany();
+    const [jobs, count] = await queryBuilder.getManyAndCount();
 
     const responseJobs: IJobs[] = jobs.map((job) => ({
       id: job.id,
@@ -605,7 +645,36 @@ export class JobsService {
 
     return {
       jobs: responseJobs,
+      totalRecords: count,
+      totalPages: Math.ceil(count / (take || 10)),
     };
+  }
+
+  async getUserJobs(userId: string) {
+    const jobs = await this.structuredJobRepository.find({
+      where: { userId },
+    });
+
+    const responseJobs: IJobs[] = jobs.map((job) => ({
+      id: job.id,
+      userId: job.userId,
+      title: job.title,
+      company: job.company,
+      jobLocation: job.jobLocation,
+      type: job.type,
+      skills: job.skills,
+      url: job.url,
+      description: job.description,
+      publishedAt: job.publishedAt,
+      jobPlace: job.jobPlace,
+      neededExperience: job.neededExperience,
+      education: job.education,
+      csRequired: job.csRequired,
+      isActive: job.isActive,
+      currentStage: job.currentStage,
+    }));
+
+    return { jobs: responseJobs };
   }
 
   async checkActiveJobs() {

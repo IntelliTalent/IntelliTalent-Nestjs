@@ -5,6 +5,7 @@ import {
   IJobs,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
+import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
 import {
   CurrentUser,
   Roles,
@@ -13,7 +14,6 @@ import {
   User,
   UserType,
 } from '@app/shared';
-import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
   Controller,
@@ -56,10 +56,27 @@ export class JobsController {
     isArray: true,
     description: 'List of jobs returned successfully.',
   })
-  async getJobs(@Query() filteration: PageOptionsDto) {
+  async getJobs(@Query() filteration: JobsPageOptionsDto) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobs },
       filteration,
+    );
+  }
+
+  @Get('/me')
+  @Roles([UserType.recruiter])
+  @ApiOperation({ summary: "Get all user's jobs" })
+  @ApiResponse({
+    status: 200,
+    type: IJobs,
+    isArray: true,
+    description: 'List of jobs returned successfully.',
+  })
+  @ApiBearerAuth(AUTH_HEADER)
+  async getUserJobs(@CurrentUser() user: User) {
+    return this.jobsService.send(
+      { cmd: jobsServicePatterns.getUserJobs },
+      user.id,
     );
   }
 
@@ -73,7 +90,7 @@ export class JobsController {
     description: 'Job details returned successfully.',
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
-  async getJobById(@Param('jobId') jobId: string) {
+  async getJobById(@Param('jobId', new ParseUUIDPipe()) jobId: string) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
       jobId,
@@ -90,7 +107,7 @@ export class JobsController {
     description: 'Job details returned successfully.',
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
-  async getJobDetailsById(@Param('jobId') jobId: string) {
+  async getJobDetailsById(@Param('jobId', new ParseUUIDPipe()) jobId: string) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobDetailsById },
       jobId,
@@ -124,7 +141,7 @@ export class JobsController {
   @ApiBearerAuth(AUTH_HEADER)
   @ApiNotFoundResponse({ description: 'Job not found' })
   async updateJob(
-    @Param('jobId') jobId: string,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @Body() editJob: EditJobDto,
     @CurrentUser() user: User,
   ) {
