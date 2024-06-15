@@ -26,6 +26,8 @@ import {
   Patch,
   Delete,
   NotImplementedException,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
@@ -39,6 +41,7 @@ import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Profiles')
 @Controller('profiles')
+@UseInterceptors(ClassSerializerInterceptor)
 export class ProfileController {
   constructor(
     @Inject(ServiceName.PROFILE_SERVICE) private profileService: ClientProxy,
