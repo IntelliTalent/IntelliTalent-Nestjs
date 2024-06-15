@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { UserType } from '../enums/user-type.enum';
 import { AbstractEntity } from './abstract.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity()
 export class User extends AbstractEntity {
@@ -107,4 +107,13 @@ export class User extends AbstractEntity {
   })
   @Exclude()
   isVerified: boolean;
+
+  @ApiProperty({
+    description: 'createdAt of the user',
+    example: '2021-12-12T00:00:00.000Z',
+  })
+  @Expose()
+  get joinedAt(): string {
+    return this.createdAt.toISOString();
+  }
 }
