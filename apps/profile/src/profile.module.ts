@@ -18,7 +18,6 @@ import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongoDBName } from '@app/shared/config/mongodb.config';
-import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -32,9 +31,6 @@ import { MongooseModule } from '@nestjs/mongoose';
     SharedModule.registerRedis(RedisDBName.profiles_DB),
     SharedModule.registerMongoDB(MongoDBName.FormFieldsDB),
     SharedModule.registerRmq(ServiceName.AUTOFILL_SERVICE),
-    MongooseModule.forFeature([
-      { name: FormField.name, schema: FormFieldSchema },
-    ]),
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([
       Profile,
