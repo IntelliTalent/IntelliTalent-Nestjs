@@ -64,6 +64,7 @@ export class AtsService {
       if (filter === CustomFiltersEnum.languages) {
         if (
           jobFilters[filter] !== null &&
+          jobFilters[filter] !== undefined &&
           jobFilters[filter].length > 0 &&
           !jobFilters[filter].every((lang: string) =>
             profile.languages.includes(lang),
@@ -76,21 +77,27 @@ export class AtsService {
         filter === CustomFiltersEnum.country
       ) {
         if (
-          profile[filter] !== null &&
-          profile[filter] !== '' &&
+          jobFilters[filter] !== null &&
+          jobFilters[filter] !== undefined &&
+          jobFilters[filter] !== '' &&
           profile[filter] !== jobFilters[filter]
         ) {
           return false;
         }
       } else if (filter === CustomFiltersEnum.graduatedFromCS) {
         if (
-          profile[filter] !== null &&
+          jobFilters[filter] !== null &&
+          jobFilters[filter] !== undefined &&
           profile[filter] !== jobFilters[filter]
         ) {
           return false;
         }
       } else if (filter === CustomFiltersEnum.yearsOfExperience) {
-        if (profile[filter] !== null && profile[filter] < jobFilters[filter]) {
+        if (
+          jobFilters[filter] !== null &&
+          jobFilters[filter] !== undefined &&
+          profile[filter] < jobFilters[filter]
+        ) {
           return false;
         }
       }

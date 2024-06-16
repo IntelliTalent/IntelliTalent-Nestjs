@@ -28,7 +28,6 @@ class CustomFilters {
   @ApiProperty({ required: false, type: [String] })
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsString({ each: true })
   languages?: string[];
 
