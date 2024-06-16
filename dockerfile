@@ -8,6 +8,7 @@ ENV NODE_ENV=${NODE_ENV}
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
+RUN  npm install --save-dev @types/multer
 COPY . .
 RUN npm run build ${APP}
 
