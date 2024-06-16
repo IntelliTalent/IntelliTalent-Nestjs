@@ -140,7 +140,10 @@ export class UserService {
 
     Object.assign(user, updateUser);
 
-    this.initFormFields(user, false);
+    if(user.type === UserType.jobSeeker) {
+      this.initFormFields(user, false);
+    }
+
 
     return this.userRepository.save(user);
   }
