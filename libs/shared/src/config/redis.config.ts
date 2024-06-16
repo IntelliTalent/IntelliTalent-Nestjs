@@ -5,7 +5,8 @@ export enum RedisDBName {
   mailingDB = 'mailingDB',
   jobsDB = 'jobsDB',
   profiles_DB = 'profiles_DB',
-  testingDB = 'testingDB',
+  testingDB1 = 'testingDB1',
+  testingDB2 = 'testingDB2',
 }
 
 export const getRedisDatabase = async (dbName: RedisDBName) => {
@@ -16,8 +17,10 @@ export const getRedisDatabase = async (dbName: RedisDBName) => {
       return await getConfigVariables(Constants.REDIS.dbName.jobsDB);
     case RedisDBName.profiles_DB:
       return await getConfigVariables(Constants.REDIS.dbName.profiles_DB);
-    case RedisDBName.testingDB:
-      return await getConfigVariables(Constants.REDIS.dbName.testingDB);
+    case RedisDBName.testingDB1:
+      return await getConfigVariables(Constants.REDIS.dbName.testingDB1);
+    case RedisDBName.testingDB2:
+      return await getConfigVariables(Constants.REDIS.dbName.testingDB2);
   }
 };
 

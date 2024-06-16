@@ -44,7 +44,8 @@ export const Constants = {
       mailingDB: 'REDIS_MAILING_DB',
       jobsDB: 'REDIS_JOBS_DB',
       profiles_DB: 'REDIS_PROFILES_DB',
-      testingDB: 'REDIS_TESTING_DB',
+      testingDB1: 'REDIS_TESTING_DB_1',
+      testingDB2: 'REDIS_TESTING_DB_2',
     },
   },
   RABBITMQ: {
