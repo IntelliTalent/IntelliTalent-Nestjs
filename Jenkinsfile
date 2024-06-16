@@ -7,8 +7,9 @@ pipeline {
       steps {
         echo "------------------------------ up the start ---------------------------------------------"
         sh"""
-          docker compose down
-          docker compose up -d
+          cp /intelli/.env ../.env
+          docker-compose down
+          docker-compose up -d
         """
       }
     }
