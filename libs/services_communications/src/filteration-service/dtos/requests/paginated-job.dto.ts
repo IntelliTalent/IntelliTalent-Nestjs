@@ -1,7 +1,7 @@
+import { PageOptionsDto } from "@app/shared/api-features/dtos/page-options.dto";
 import { JobDto } from "./job.dto";
 
 export class PaginatedJobDto extends JobDto {
     userId: string;
-    page: number;
-    limit: number;
+    paginationOptions: PageOptionsDto;
 }

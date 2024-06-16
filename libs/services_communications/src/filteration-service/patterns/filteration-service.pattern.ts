@@ -8,4 +8,9 @@ export const FilterationServicePattern = {
     submitInterview: 'submitInterview',
     reviewInterview: 'reviewInterview',
     selectProfile: 'selectProfile',
+    getMatchedJobs: 'getMatchedJobs',
+    getAppliedJobs: 'getAppliedJobs',
+    getInterviewQuestions: 'getInterviewQuestions',
+    getJobApplicants: 'getJobApplicants',
+    getInterviewAnswers: 'getInterviewAnswers',
 };
