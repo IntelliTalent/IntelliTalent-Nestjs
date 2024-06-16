@@ -7,7 +7,7 @@ services:
       target: development
       args:
         app: gateway
-    command: sleep 50000 #npm run start:dev
+    command: npm run start:dev
     restart: unless-stopped
     ports:
       - '3000:3000'
