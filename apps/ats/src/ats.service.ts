@@ -63,6 +63,8 @@ export class AtsService {
     for (const filter in jobFilters) {
       if (filter === CustomFiltersEnum.languages) {
         if (
+          jobFilters[filter] !== null &&
+          jobFilters[filter].length > 0 &&
           !jobFilters[filter].every((lang: string) =>
             profile.languages.includes(lang),
           )
@@ -71,14 +73,24 @@ export class AtsService {
         }
       } else if (
         filter === CustomFiltersEnum.city ||
-        filter === CustomFiltersEnum.country ||
-        filter === CustomFiltersEnum.graduatedFromCS
+        filter === CustomFiltersEnum.country
       ) {
-        if (profile[filter] !== jobFilters[filter]) {
+        if (
+          profile[filter] !== null &&
+          profile[filter] !== '' &&
+          profile[filter] !== jobFilters[filter]
+        ) {
+          return false;
+        }
+      } else if (filter === CustomFiltersEnum.graduatedFromCS) {
+        if (
+          profile[filter] !== null &&
+          profile[filter] !== jobFilters[filter]
+        ) {
           return false;
         }
       } else if (filter === CustomFiltersEnum.yearsOfExperience) {
-        if (profile[filter] < jobFilters[filter]) {
+        if (profile[filter] !== null && profile[filter] < jobFilters[filter]) {
           return false;
         }
       }
@@ -438,6 +450,7 @@ export class AtsService {
         job.stages.customFilters,
         profileAndUser,
       );
+      console.log('isValid', isValid);
     }
 
     const matchScore = this._calculateMatchScore(job, profile);
