@@ -464,13 +464,12 @@ describe('AtsService', () => {
       }
     });
     it('should match profiles and jobs correctly and put a record in Filteration', async () => {
-      const jobId = uuidv4();
       const profileId = uuidv4();
       const userId = uuidv4();
 
       // fill redis jobs
       const jobString = JSON.stringify({
-        id: jobId,
+        id: uuidv4(),
         title: 'Software Engineer',
         company: 'Company 1',
         url: 'http://example.com',
@@ -479,7 +478,19 @@ describe('AtsService', () => {
           languages: ['English', 'Arabic'],
         },
       });
+      const jobString2 = JSON.stringify({
+        id: uuidv4(),
+        title: 'Software Engineer',
+        company: 'Company 1',
+        url: 'http://example.com',
+        skills: ['JavaScript', 'Python'],
+        customFilters: {
+          languages: ['English', 'Arabic'],
+        },
+      });
+      // push them as 2 jobs
       await atsService['jobsRedisDB'].rpush('jobs', jobString);
+      await atsService['jobsRedisDB'].rpush('jobs', jobString2);
 
       const profile = {
         id: profileId,
@@ -508,7 +519,6 @@ describe('AtsService', () => {
         'filterationRepository'
       ].findOne({
         where: {
-          jobId,
           profileId,
         },
       });
