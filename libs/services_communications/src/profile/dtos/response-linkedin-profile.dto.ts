@@ -70,7 +70,7 @@ export class ResponseExperienceLinkedinProfile {
   title: string;
 }
 
-export class ResponseLinkedinProfile {
+export class  ResponseLinkedinProfile {
   @ApiProperty({
     example:
       "Hi, I'm Yousef El-Waer,\n\na passionate and dedicated Software Backend Engineer based in Giza, Egypt. With a strong educational background in Computer Engineering from Cairo University, I have developed a solid foundation in software development and backend engineering.\n\nThroughout my professional journey, I have gained valuable experience in various areas of software engineering, including DevOps, database management, full-stack development, and system administration. I have had the opportunity to work with cutting-edge technologies and tools, such as Kubernetes, Docker, Ansible, and Jenkins, to build scalable and efficient software solutions.\n\nI am a firm believer in continuous learning and staying up-to-date with the latest industry trends. I have actively participated in training programs, workshops, and certifications to enhance my skills and expand my knowledge in cloud computing, DevOps practices, and backend development.\n\nWhat sets me apart is my ability to tackle complex problems, collaborate effectively with cross-functional teams, and deliver high-quality solutions. I am passionate about leveraging technology to drive innovation and create impactful software solutions that address real-world challenges.\n\nOutside of work, I enjoy exploring new technologies, contributing to open-source projects, and keeping myself engaged in the ever-evolving world of software engineering.",
