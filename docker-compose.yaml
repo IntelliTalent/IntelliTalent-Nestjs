@@ -15,8 +15,6 @@ services:
       - ../.env
     networks:
       - intelli-network
-    volumes:
-      - .:/usr/src/app
 
   # auth:
   #   build:
