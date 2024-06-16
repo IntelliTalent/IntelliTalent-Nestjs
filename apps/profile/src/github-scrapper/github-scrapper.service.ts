@@ -67,7 +67,7 @@ export class GithubScrapperService {
           this.redis
             .multi()
             .lpush(getRedisUserNameReposKey(userName), JSON.stringify(repo))
-            .expire(getRedisUserNameReposKey(userName), 3600)
+            .expire(getRedisUserNameReposKey(userName), 360000)
             .exec(),
         ),
       );

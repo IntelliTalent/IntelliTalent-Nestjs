@@ -1,4 +1,9 @@
-import { ClassSerializerInterceptor, Controller, UseFilters, UseInterceptors } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { profileServicePattern } from '@app/services_communications/profile/patterns/preofile.patterns';
 import {
@@ -32,10 +37,17 @@ export class ProfileController {
     linkedinUserInfo: Profile;
   }> {
     const { linkedinUserName, githubUserName } = scrapeProfileDto;
-    const githubUserInfo =
-      await this.githubScrapperService.scrapGithubProfile(githubUserName);
-    const linkedinUserInfo =
-      await this.linkedinScrapperService.scrapLinkedinProfile(linkedinUserName);
+
+    const githubUserInfo = githubUserName
+      ? await this.githubScrapperService.scrapGithubProfile(githubUserName)
+      : null;
+
+    const linkedinUserInfo = linkedinUserName
+      ? await this.linkedinScrapperService.scrapLinkedinProfile(
+          linkedinUserName,
+        )
+      : null;
+
     return { githubUserInfo, linkedinUserInfo };
   }
 

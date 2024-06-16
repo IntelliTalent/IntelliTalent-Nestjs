@@ -99,9 +99,7 @@ export class ProfileService {
     return 'Profile Deleted Successfully';
   }
 
-  async findProfiles(
-    options: FindManyOptions<Profile>,
-  ): Promise<Profile[]> {
+  async findProfiles(options: FindManyOptions<Profile>): Promise<Profile[]> {
     options.relations = {
       projects: true,
       experiences: true,
@@ -117,9 +115,7 @@ export class ProfileService {
     return profile;
   }
 
-  async findOneProfile(
-    options: FindOneOptions<Profile>,
-  ): Promise<Profile> {
+  async findOneProfile(options: FindOneOptions<Profile>): Promise<Profile> {
     options.relations = {
       projects: true,
       experiences: true,
@@ -136,8 +132,9 @@ export class ProfileService {
   }
 
   getUserProfileCard(dtoData: PaginatedProfilesDto): Promise<PageDto<Profile>> {
-    const { id , pageOptionsDto } = dtoData;
-    const profilesCards = this.profileRepository.createQueryBuilder('profile')
+    const { id, pageOptionsDto } = dtoData;
+    const profilesCards = this.profileRepository
+      .createQueryBuilder('profile')
       .where('profile.userId = :id', { id })
       .select([
         'profile.id',
@@ -151,13 +148,13 @@ export class ProfileService {
         'profile.summary',
       ]);
 
-
     return applyQueryOptions(profilesCards, pageOptionsDto);
   }
 
   getUserProfiles(payload: PaginatedProfilesDto): Promise<PageDto<Profile>> {
     const { id, pageOptionsDto } = payload;
-    const profiles = this.profileRepository.createQueryBuilder('profile')
+    const profiles = this.profileRepository
+      .createQueryBuilder('profile')
       .where('profile.userId = :id', { id })
       .leftJoinAndSelect('profile.projects', 'projects')
       .leftJoinAndSelect('profile.experiences', 'experiences')
