@@ -10,7 +10,6 @@ import {
 import { TriggerExtractInfoDto } from '@app/services_communications/cv-extractor-service/dtos/trigger-extract-info.dto';
 import { AUTH_HEADER } from '@app/services_communications';
 import { CvExtractorService } from './cv-extractor.service';
-import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 
 @ApiTags('CV Extractor')
 @Controller('cv')
@@ -33,7 +32,6 @@ export class CvExtractorController {
   }
 
   @Get('/extract')
-  @Public()
   @Roles([UserType.jobSeeker])
   @ApiOperation({ summary: 'Extract the info from a given cv' })
   @ApiResponse({
