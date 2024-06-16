@@ -56,6 +56,8 @@ export class GithubScrapperService {
   async storeUserRepos(userName: string) {
     let _hasNextPage = true;
     let pageNumber = 1;
+    await this.redis.del(getRedisUserNameReposKey(userName));
+
     do {
       const { response, hasNextPage } = await this.scrapUserRepos(
         userName,
