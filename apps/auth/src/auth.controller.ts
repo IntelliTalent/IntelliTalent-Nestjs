@@ -1,14 +1,25 @@
-import { Controller } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateUserDto,
   HealthCheckPatterns,
 } from '@app/services_communications';
-import { authServicePattern } from '@app/services_communications/authService';
-import { User } from '@app/shared';
+import {
+  ForgetPasswordDto,
+  ForgetPasswordToken,
+  authServicePattern,
+} from '@app/services_communications/authService';
+import { RpcExceptionsFilter, User } from '@app/shared';
 
 @Controller()
+@UseFilters(RpcExceptionsFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -19,12 +30,26 @@ export class AuthController {
 
   @MessagePattern({ cmd: authServicePattern.signUser })
   async login(@Payload() userandResponse: User) {
-    console.log('usersdsdsddsggg', userandResponse);
-    return this.authService.sign(userandResponse);
+    return this.authService.userToken(userandResponse);
   }
 
   @MessagePattern({ cmd: authServicePattern.register })
   async register(@Payload() newUser: CreateUserDto) {
     return this.authService.register(newUser);
+  }
+
+  @MessagePattern({ cmd: authServicePattern.forgetPassword })
+  async forgetPassword(@Payload() forgetPassowrdDto: ForgetPasswordDto) {
+    return this.authService.forgetPassword(forgetPassowrdDto.email);
+  }
+
+  @MessagePattern({ cmd: authServicePattern.resetPassword })
+  async resetPassword(@Payload() uuid: string) {
+    return this.authService.resetPassword(uuid);
+  }
+
+  @MessagePattern({ cmd: authServicePattern.verifyEmail })
+  async verifyEmail(@Payload() resetPassword: ForgetPasswordToken) {
+    return this.authService.verifyEmail(resetPassword);
   }
 }

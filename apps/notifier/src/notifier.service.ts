@@ -1,31 +1,44 @@
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { Redis } from 'ioredis';
+import { IEmail } from './templates';
+import { recentEmailsExpire, recentEmailsKey } from '@app/shared';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class NotifierService {
-  constructor(@InjectRedis() private readonly redis: Redis) {
-    console.log('NotifierService');
-    this.getValue('test');
+  constructor(
+    @InjectRedis() private readonly redis: Redis,
+    private readonly mailService: MailerService,
+  ) {}
+
+  sendEmails(emails: IEmail[]) {
+    const now = Date.now();
+    emails.forEach(async (email) => {
+      // Update this email in Redis to be true
+      const score = now + recentEmailsExpire; // score as future timestamp
+      await this.redis.zadd(recentEmailsKey, score, email.to); // Add to sorted set
+
+      // send the email
+      await this.sendMail(email);
+    });
   }
 
-  getHello(): string {
-    return 'Hello World!';
+  @Cron('0 0 * * * *') // Every hour
+  async cleanupExpiredEmails() {
+    const now = Date.now();
+    await this.redis.zremrangebyscore(recentEmailsKey, '-inf', now); // Removes all past timestamps
   }
 
+  async sendMail(email: IEmail) {
+    console.log('sending email', email);
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
-  async handleCron() {
-    await this.redis.set('waer', 'wwwaaeerrr');
-    const result = await this.redis.get('waer');
-    console.log('resusdafadsflt', result);
-  }
-
-  async getValue(key: string) {
-    await this.redis.set(key, key);
-    const result = await this.redis.get(key);
-    console.log('result', result);
-    // return result;
+    await this.mailService.sendMail({
+      to: email.to,
+      from: email.from,
+      subject: email.subject,
+      html: email.html,
+    });
   }
 }

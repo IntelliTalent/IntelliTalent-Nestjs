@@ -1,28 +1,36 @@
 import { Entity, Column, PrimaryColumn, Index, Unique } from 'typeorm';
-import { StageType } from '../enums/stageType.enum';
 import { AbstractEntity } from './abstract.entity';
+import { StageType } from '../enums/stage-type.enum';
 
-interface QuizData {
+export interface QuizData {
   grade: number;
   quizDate: Date;
 }
 
-interface InterviewData {
+export interface InterviewData {
   answers: string[];
-  grade: number;
+  recordedAnswers: string[];
+  grade?: number;
   interviewDate: Date;
 }
 
-interface MatchData {
+export interface MatchData {
+  // match score of the ATS
   matchScore: number;
+  // flag to indicate if the profile passed the custom filter
+  isValid: boolean;
 }
 
-interface AppliedData {
+export interface AppliedData {
   appliedAt: Date;
 }
 
+export interface SelectionData { 
+  selectedAt: Date;
+}
+
 // Union type for all possible stage data
-type StageData = QuizData | InterviewData | MatchData | AppliedData;
+export type StageData = QuizData | InterviewData | MatchData | AppliedData | SelectionData;
 
 
 @Entity()
@@ -30,21 +38,38 @@ type StageData = QuizData | InterviewData | MatchData | AppliedData;
 export class Filteration extends AbstractEntity {
 
   @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid', nullable: false })
   jobId: string;
 
   @Index()
-  @PrimaryColumn()
-  @Column({ type: 'uuid', nullable: false })
+  @PrimaryColumn({ type: 'uuid', nullable: false })
   profileId: string;
+
+  @Column({ type: 'uuid', nullable: false })
+  userId: string;
 
   @Column({ type: 'boolean', nullable: false, default: true })
   isQualified: boolean;
 
   @Column({ type: 'json', nullable: true })
-  stageData: StageData;
+  matchData: MatchData;
+
+  @Column({ type: 'json', nullable: true })
+  quizData: QuizData;
+  
+  @Column({ type: 'json', nullable: true })
+  interviewData: InterviewData;
+  
+  @Column({ type: 'json', nullable: true })
+  appliedData: AppliedData;
+
+  @Column({ type: 'json', nullable: true })
+  selectionData: SelectionData;
 
   @Column({ type: 'enum', enum: StageType, default: StageType.matched })
   currentStage: StageType;
+
+  @Column({ type: 'boolean', nullable: false, default: false })
+  isClosed: boolean;
 }
+

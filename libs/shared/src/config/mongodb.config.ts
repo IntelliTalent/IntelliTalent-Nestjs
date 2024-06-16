@@ -1,22 +1,21 @@
 import getConfigVariables from './configVariables.config';
 import { Constants } from './environment.constants';
 
-export enum MonogoDBName {
+export enum MongoDBName {
   ScrappedJobsDB = 'ScrappedJobsDB',
   FormFieldsDB = 'FormFieldsDB',
   QuizzesDB = 'QuizzesDB',
   InterviewQuestionsDB = 'InterviewQuestionsDB',
+  FilterationDB = 'FilterationDB',
 }
 
-export const getMongoDatabase = async (dbName: MonogoDBName) => {
+export const getMongoDatabase = async (dbName: MongoDBName) => {
   switch (dbName) {
-    case MonogoDBName.ScrappedJobsDB:
+    case MongoDBName.ScrappedJobsDB:
       return await getConfigVariables(Constants.MONGODB.dbName.ScrappedJobsDB);
-    case MonogoDBName.FormFieldsDB:
+    case MongoDBName.FormFieldsDB:
       return await getConfigVariables(Constants.MONGODB.dbName.FormFieldsDB);
-    case MonogoDBName.QuizzesDB:
-      return await getConfigVariables(Constants.MONGODB.dbName.QuizzesDB);
-    case MonogoDBName.InterviewQuestionsDB:
+    case MongoDBName.InterviewQuestionsDB:
       return await getConfigVariables(
         Constants.MONGODB.dbName.InterviewQuestionsDB,
       );
@@ -53,7 +52,6 @@ export const getMongoUrl = async (dbName: string) => {
     MONGO_INITDB_ROOT_USERNAME,
   } = await getMongoDBConfig();
   const url = `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/`;
-  console.log('waer ', url);
 
   return url;
 };

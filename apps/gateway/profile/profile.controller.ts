@@ -1,130 +1,206 @@
 import {
   CreateProfileDto,
-  ResponseProfileDto,
-  ResponseProfileNames,
-  UpdateCertificationsDto,
-  UpdateEducationsDto,
-  UpdateExperienceDto,
-  UpdatePersonalInfoDto,
-  UpdateProjectsDto,
-  UpdateSkillsDto,
+  profileServicePattern,
+  ResponseScrapGithubRepoSto,
+  ScrapeProfile,
+  getUserRepos,
+  AUTH_HEADER,
+  DeleteProfileDto,
+  UpdateProfileDto,
+  ResponseProfileCardsDto,
 } from '@app/services_communications';
-import { CurrentUser, User } from '@app/shared';
+import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
+import { ResponseScrapeProfileDto } from '@app/services_communications/profile/dtos/response-scrape-profile.dto';
+import {
+  ApiPaginatedResponse,
+  CurrentUser,
+  Profile,
+  Roles,
+  ServiceName,
+  User,
+  UserType,
+} from '@app/shared';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
+import { IsUUIDDto } from '@app/shared/dtos/uuid.dto';
 import {
   Controller,
   Get,
   Post,
-  Put,
   Param,
-  NotFoundException,
   Body,
-  NotImplementedException,
+  Inject,
+  Query,
+  Patch,
+  Delete,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiNotFoundResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Profiles')
 @Controller('profiles')
+@UseInterceptors(ClassSerializerInterceptor)
 export class ProfileController {
-  @Get('cards')
-  @ApiOperation({ summary: 'Get profile cards' })
+  constructor(
+    @Inject(ServiceName.PROFILE_SERVICE) private profileService: ClientProxy,
+  ) {}
+
+  //  TODO: we need to apply rate limit here for profile
+  @Post('scrape')
+  @ApiOperation({ summary: 'Scrape profile' })
   @ApiResponse({
     status: 200,
-    description: 'Returns profile cards',
-    type: ResponseProfileDto,
-    isArray: true,
+    description: 'Scraped profile',
+    type: ResponseScrapeProfileDto,
   })
-  async getProfileCards(@CurrentUser() user: User) {
-    throw new NotImplementedException();
-  }
-
-  @Get('names')
-  @ApiOperation({ summary: 'Get profile names' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns profile names',
-    isArray: true,
-    type: ResponseProfileNames,
-  })
-  async getProfileNames(@CurrentUser() user: User) {
-    throw new NotImplementedException();
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get profile by ID' })
-  @ApiNotFoundResponse({ description: 'Profile not found' })
-  @ApiResponse({
-    type: ResponseProfileDto
-  })
-  async getProfileById(@CurrentUser() user: User, @Param('id') id: string) {
-    throw new NotFoundException();
+  @Public()
+  async scrapeProfile(
+    @Body() scrapeProfileDto: ScrapeProfile,
+  ): Promise<ResponseScrapeProfileDto> {
+    return firstValueFrom(
+      this.profileService.send(
+        { cmd: profileServicePattern.scrapeProfile },
+        scrapeProfileDto,
+      ),
+    );
   }
 
   @Post('create')
+  @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'Create a new profile' })
-  @ApiResponse({ status: 201, description: 'Profile created successfully' })
-  async createProfile(
+  @ApiResponse({
+    status: 201,
+    description: 'Profile created successfully',
+    type: Profile,
+  })
+  @Roles([UserType.jobSeeker])
+  createProfile(
     @CurrentUser() user: User,
     @Body() createProfileDto: CreateProfileDto,
   ) {
-    throw new NotImplementedException();
+    createProfileDto.userId = user.id;
+    return this.profileService.send(
+      { cmd: profileServicePattern.createProfile },
+      createProfileDto,
+    );
   }
 
-  @Put(':id/update-personal-info')
-  @ApiOperation({ summary: 'Update personal information of a profile' })
-  async updatePersonalInfo(
-    @Param('id') id: string,
-    @Body() personalInfo: UpdatePersonalInfoDto,
+  @ApiBearerAuth(AUTH_HEADER)
+  @Get('repos/:username')
+  @ApiOperation({ summary: 'Get user repos' })
+  @ApiResponse({
+    status: 200,
+    isArray: true,
+    type: ResponseScrapGithubRepoSto,
+  })
+  async getUserRepos(
+    @Query() pageOptionsDto: PageOptionsDto,
+    @Param('username') userName: string,
   ) {
-    throw new NotImplementedException();
+    const payload: getUserRepos = {
+      username: userName,
+      pageOptionsDto: pageOptionsDto,
+    };
+    return this.profileService.send(
+      { cmd: profileServicePattern.getUserRepos },
+      payload,
+    );
   }
 
-  @Put(':id/update-experience')
-  @ApiOperation({ summary: 'Update experience of a profile' })
-  async updateExperience(
-    @Param('id') id: string,
-    @Body() updateExperienceDto: UpdateExperienceDto,
+  @Get('cards')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Get profile cards' })
+  @ApiPaginatedResponse(ResponseProfileCardsDto)
+  @Roles([UserType.jobSeeker])
+  getProfileCards(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
   ) {
-    throw new NotImplementedException();
+    const payload: PaginatedProfilesDto = {
+      id: user.id,
+      pageOptionsDto,
+    };
+    return this.profileService.send(
+      { cmd: profileServicePattern.getUserProfileCard },
+      payload,
+    );
   }
 
-  @Put(':id/update-education')
-  @ApiOperation({ summary: 'Update education of a profile' })
-  async updateEducation(
-    @Param('id') id: string,
-    @Body() updateEducation: UpdateEducationsDto,
+  @Get('all')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Get user profiles' })
+  @ApiPaginatedResponse(Profile)
+  @Roles([UserType.jobSeeker])
+  getUserProfiles(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
   ) {
-    throw new NotImplementedException();
+    const payload: PaginatedProfilesDto = {
+      id: user.id,
+      pageOptionsDto,
+    };
+    return this.profileService.send(
+      { cmd: profileServicePattern.getUserProfile },
+      payload,
+    );
   }
 
-  @Put(':id/update-projects')
-  @ApiOperation({ summary: 'Update projects of a profile' })
-  async updateProjects(
-    @Param('id') id: string,
-    @Body() updateProjectsdto: UpdateProjectsDto,
-  ) {
-    throw new NotImplementedException();
+  @Get(':id')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Get profile by ID' })
+  @ApiNotFoundResponse({ description: 'Profile not found' })
+  @ApiResponse({
+    type: Profile,
+  })
+  getProfileById(@Param() dto: IsUUIDDto) {
+    return this.profileService.send(
+      { cmd: profileServicePattern.getProfileById },
+      dto.id,
+    );
   }
 
-  @Put(':id/update-skills')
-  @ApiOperation({ summary: 'Update skills of a profile' })
-  async updateSkills(
-    @Param('id') id: string,
-    @Body() updateskills: UpdateSkillsDto,
+  @Patch(':id')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Update a profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    type: Profile,
+  })
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Param() dto: IsUUIDDto,
+    @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    throw new NotImplementedException();
+    updateProfileDto.userId = user.id;
+    updateProfileDto.profileId = dto.id;
+    return this.profileService.send(
+      { cmd: profileServicePattern.updateProfile },
+      updateProfileDto,
+    );
   }
 
-  @Put(':id/update-certificates')
-  @ApiOperation({ summary: 'Update certificates of a profile' })
-  async updateCertificates(
-    @Param('id') id: string,
-    @Body() certificates: UpdateCertificationsDto,
-  ) {
-    throw new NotImplementedException();
+  @Delete(':id')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'Delete a profile' })
+  @ApiResponse({ status: 200, description: 'Profile deleted successfully' })
+  deleteProfile(@CurrentUser() user: User, @Param() dto: IsUUIDDto) {
+    const deleteProfileDto: DeleteProfileDto = {
+      userId: user.id,
+      profileId: dto.id,
+    };
+    return this.profileService.send(
+      { cmd: profileServicePattern.deleteProfile },
+      deleteProfileDto,
+    );
   }
 }

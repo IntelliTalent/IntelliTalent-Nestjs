@@ -1,6 +1,8 @@
-import { JobPlace, JobType, StageType } from '@app/shared';
+import { JobPlace, JobType } from '@app/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -9,6 +11,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 
 class CustomFilters {
@@ -25,6 +28,7 @@ class CustomFilters {
   @ApiProperty({ required: false, type: [String] })
   @IsOptional()
   @IsArray()
+  @ArrayNotEmpty()
   @IsString({ each: true })
   languages?: string[];
 
@@ -41,28 +45,33 @@ class CustomFilters {
 
 class Interview {
   @ApiProperty()
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  endDate?: Date;
+  endDate: Date;
 
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
+  @ApiProperty({ type: [String] })
   @IsArray()
+  @ArrayNotEmpty()
   @IsString({ each: true })
-  interviewQuestions?: string[];
+  interviewQuestions: string[];
 }
 
 export class CreateJobDto {
+  userId?: string;
+
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   title: string;
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   company: string;
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   jobLocation: string;
 
   @ApiProperty({ enum: JobType })
@@ -70,11 +79,14 @@ export class CreateJobDto {
   type: JobType;
 
   @ApiProperty({ type: [String] })
-  @IsNotEmpty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   skills: string[];
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   description: string;
 
   @ApiProperty({ enum: JobPlace })
@@ -88,6 +100,7 @@ export class CreateJobDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsString()
   education?: string;
 
   @ApiProperty({ required: false })
@@ -102,18 +115,9 @@ export class CreateJobDto {
 
   @ApiProperty({ type: CustomFilters, required: false })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => CustomFilters)
   customFilters?: CustomFilters;
-
-  @ApiProperty({
-    enum: StageType,
-    isArray: true,
-    required: false,
-    example: '0: INTERVIEW, 1: QUIZ',
-  })
-  @IsOptional()
-  @IsArray()
-  @IsEnum(StageType, { each: true })
-  stagesOrder?: StageType[];
 
   @ApiProperty({ type: Date, required: false })
   @IsOptional()
@@ -122,5 +126,7 @@ export class CreateJobDto {
 
   @ApiProperty({ type: Interview, required: false })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => Interview)
   interview?: Interview;
 }

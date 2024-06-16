@@ -12,6 +12,7 @@ export const getServiceDatabse = async (
     username: await getConfigVariables(Constants.DB.dbUserName),
     password: await getConfigVariables(Constants.DB.dbPassword),
     autoLoadEntities: true,
+    logging: false, // Set to true in development
     synchronize: true, // Set to false in production
     retryAttempts: 15, // Number of times to retry connecting
     retryDelay: 10000, // Delay between connection retries (in milliseconds)
@@ -40,8 +41,36 @@ export const getServiceDatabse = async (
       Object.assign(configObject, {
         database: await getConfigVariables(Constants.DB.dbName.STRUCTUREJOBSDB),
       });
+      break;
 
+    case ServiceName.ATS_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),
+      });
+      break;
+
+    case ServiceName.FILTERATION_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.FILTERATIONDB),
+      });
+      break;
+
+    case ServiceName.QUIZ_SERVICE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.QUIZDB),
+      });
+      break;
+
+    case ServiceName.TESTING_DATABASE:
+      Object.assign(configObject, {
+        database: await getConfigVariables(Constants.DB.dbName.TESTINGDB),
+      });
+      break;
+
+
+    default:
+      throw new Error('Service not found');
   }
+
   return configObject;
 };
-

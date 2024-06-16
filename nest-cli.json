@@ -144,6 +144,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/custom-job/tsconfig.app.json"
       }
+    },
+    "quizzes": {
+      "type": "application",
+      "root": "apps/quizzes",
+      "entryFile": "main",
+      "sourceRoot": "apps/quizzes/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/quizzes/tsconfig.app.json"
+      }
     }
   }
 }

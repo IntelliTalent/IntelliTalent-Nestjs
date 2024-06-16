@@ -1,17 +1,31 @@
-import { Controller } from '@nestjs/common';
-import { UserService } from './user.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  ClassSerializerInterceptor,
+  Controller,
+  Inject,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
+import { UserService } from './user.service';
+import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  changePasswordDto,
   CreateUserDto,
   HealthCheckPatterns,
   userServicePatterns,
 } from '@app/services_communications';
-import { User } from '@app/shared';
+import { RpcExceptionsFilter, ServiceName, User } from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
+import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
+import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/get-users.dto';
 
 @Controller()
+@UseFilters(RpcExceptionsFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+  ) {}
 
   @MessagePattern({ cmd: HealthCheckPatterns })
   getHello() {
@@ -25,15 +39,18 @@ export class UserController {
 
   @MessagePattern({ cmd: userServicePatterns.findUserById })
   findUserById(@Payload() id: string): Promise<User> {
-    console.log('userId', id);
     return this.userService.findUser({
-      id: id,
+      where: {
+        id,
+      },
     });
   }
 
   @MessagePattern({ cmd: userServicePatterns.findUserByEmail })
   findUserByEmail(@Payload() email: string): Promise<User> {
-    return this.userService.findUser({ email });
+    return this.userService.findUser({
+      where: { email },
+    });
   }
 
   @MessagePattern({ cmd: userServicePatterns.updateUser })
@@ -66,4 +83,47 @@ export class UserController {
   ): Promise<User> {
     return this.userService.validateUser(email, password);
   }
+
+  @MessagePattern({ cmd: userServicePatterns.resetPassword })
+  changePasswordWithToken(
+    @Payload()
+    { id, password }: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return this.userService.changePasswordUsingToken(id, password);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.verifyUser })
+  verifyUser(@Payload() id: string): Promise<User> {
+    return this.userService.verifyUser(id);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.changePassword })
+  changePassword(
+    @Payload()
+    dto: changePasswordDto,
+  ): Promise<{ message: string }> {
+    return this.userService.changePassword(dto);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.getAllJobSeekers })
+  async getAllJobSeekers(pageOptions: PageOptionsDto): Promise<User[]> {
+    return this.userService.getAllJobSeekers(pageOptions);
+  }
+
+  @MessagePattern({ cmd: userServicePatterns.getUsersByIds })
+  getUsersByIds(@Payload() dto: GetUsersByIdsDto) {
+    return this.userService.getUsersByIds(dto.usersIds);
+  }
+
+
+  @MessagePattern({ cmd: userServicePatterns.findVerifiedUser })
+  findVerifiedUser(@Payload() id: string): Promise<User> {
+    return this.userService.findUser({
+      where: {
+        id,
+        isVerified: true,
+      },
+    });
+  }
+
 }

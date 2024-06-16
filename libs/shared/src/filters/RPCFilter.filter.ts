@@ -1,34 +1,37 @@
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  HttpException,
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
   HttpStatus,
 } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
-@Injectable()
-export class  implements NestInterceptor {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler<any>,
-  ): Observable<any> | Promise<Observable<any>> {
-    return next.handle().pipe(
-      catchError((exception) => {
+@Catch()
+export class RpcExceptionsFilter implements ExceptionFilter {
+  constructor() {}
 
-        if (exception instanceof RpcException) {
-          // If the exception is already an object response, rethrow it
-          throw exception;
-        }
+  catch(exception: any, host: ArgumentsHost): any {
+    try {
+      if (exception.error) {
+        return throwError(() => exception);
+      }
 
-        throw new RpcException({
-          statusCode: exception.getStatus(),
-          message: exception.getResponse(),
-        });
-      }),
-    );
+      const response = exception.getResponse();
+      const status = exception.getStatus() ?? HttpStatus.BAD_REQUEST;
+      return throwError(
+        () =>
+          new RpcException({
+            statusCode: status,
+            timestamp: new Date().toISOString(),
+            path: host.switchToHttp().getRequest().url,
+            error: typeof response === 'string' ? response : response.error,
+            message: typeof response === 'string' ? response : response.message,
+          }),
+      );
+    } catch (e) {
+      console.log('RpcExceptionsFilter -> catch -> e', e);
+      return throwError(() => new RpcException(exception));
+    }
   }
 }

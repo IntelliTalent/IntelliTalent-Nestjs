@@ -9,8 +9,16 @@ import {
 } from './config/environment.constants';
 import { MongooseModule, MongooseModuleFactoryOptions } from '@nestjs/mongoose';
 import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
-import { RedisDBName, getRedisConfig, getRedisDatabase } from './config/redis.config';
-import { MonogoDBName, getMongoDatabase, getMongoUrl } from './config/mongodb.config';
+import {
+  RedisDBName,
+  getRedisConfig,
+  getRedisDatabase,
+} from './config/redis.config';
+import {
+  MongoDBName,
+  getMongoDatabase,
+  getMongoUrl,
+} from './config/mongodb.config';
 import { getServiceDatabse } from './config/postgres.config';
 import { getRabbitMQOptions } from './config/rabbitmq.config';
 /**
@@ -70,16 +78,22 @@ export class SharedModule {
     };
   }
 
-  static registerMongoDB(dbName: MonogoDBName): DynamicModule {
+  static async getRedisDBURL(dbName: RedisDBName): Promise<string> {
+    const redisDBNUm = await getRedisDatabase(dbName);
+    const { HOST, PASSWORD, PORT } = await getRedisConfig();
+    const url = `redis://:${PASSWORD}@${HOST}:${PORT}/${redisDBNUm}`;
+    return url;
+  }
+
+  static registerMongoDB(dbName: MongoDBName): DynamicModule {
     const mongoProviders = [
       {
         provide: 'MONGODB_CONNECTION',
         useFactory: async (): Promise<MongooseModuleFactoryOptions> => {
-          const monogoDbName = await getMongoDatabase(dbName);
-          const url = await getMongoUrl(monogoDbName);
-          console.log(url);
+          const mongoDbName = await getMongoDatabase(dbName);
+          const url = await getMongoUrl(mongoDbName);
           return {
-            dbName: monogoDbName,
+            dbName: mongoDbName,
             uri: url,
           };
         },
@@ -102,6 +116,7 @@ export class SharedModule {
   static registerPostgres(
     serviceType: ServiceName,
     entities: any[],
+    testingEnv = false,
   ): DynamicModule {
     const providers = [
       {
@@ -109,7 +124,7 @@ export class SharedModule {
         useFactory: async (): Promise<TypeOrmModuleOptions> => {
           const configObject: TypeOrmModuleOptions =
             await getServiceDatabse(serviceType);
-          Object.assign(configObject, { entities: entities });
+          Object.assign(configObject, { entities: entities, dropSchema: testingEnv });
           return configObject;
         },
       },
