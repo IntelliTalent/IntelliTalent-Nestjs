@@ -56,10 +56,37 @@ export class AtsService {
     return 'Hello World!';
   }
 
+  private _validateJobInfo(job: any, profile: any): boolean {
+    if (
+      job.neededExperience !== null &&
+      job.neededExperience !== undefined &&
+      profile.yearsOfExperience < job.neededExperience
+    ) {
+      return false;
+    }
+    if (
+      job.csRequired !== null &&
+      job.csRequired !== undefined &&
+      job.csRequired === true &&
+      profile.graduatedFromCS !== true
+    ) {
+      return false;
+    }
+    return true;
+  }
+
   private _validateCustomFilters(
     jobFilters: CustomFilters,
     profile: any,
   ): boolean {
+    // lower case all languages
+    profile.languages = profile.languages.map((lang: string) =>
+      lang.toLowerCase(),
+    );
+
+    console.log('profile.languages', profile.languages);
+    console.log('jobFilters.languages', jobFilters.languages);
+
     for (const filter in jobFilters) {
       if (filter === CustomFiltersEnum.languages) {
         if (
@@ -67,7 +94,7 @@ export class AtsService {
           jobFilters[filter] !== undefined &&
           jobFilters[filter].length > 0 &&
           !jobFilters[filter].every((lang: string) =>
-            profile.languages.includes(lang),
+            profile.languages.includes(lang.toLowerCase()),
           )
         ) {
           return false;
@@ -80,23 +107,7 @@ export class AtsService {
           jobFilters[filter] !== null &&
           jobFilters[filter] !== undefined &&
           jobFilters[filter] !== '' &&
-          profile[filter] !== jobFilters[filter]
-        ) {
-          return false;
-        }
-      } else if (filter === CustomFiltersEnum.graduatedFromCS) {
-        if (
-          jobFilters[filter] !== null &&
-          jobFilters[filter] !== undefined &&
-          profile[filter] !== jobFilters[filter]
-        ) {
-          return false;
-        }
-      } else if (filter === CustomFiltersEnum.yearsOfExperience) {
-        if (
-          jobFilters[filter] !== null &&
-          jobFilters[filter] !== undefined &&
-          profile[filter] < jobFilters[filter]
+          profile[filter].toLowerCase() !== jobFilters[filter].toLowerCase()
         ) {
           return false;
         }
@@ -299,6 +310,12 @@ export class AtsService {
 
       jobs.forEach((job) => {
         profileUsers.forEach((profile) => {
+          const isValidJobInfo = this._validateJobInfo(job, profile);
+
+          if (!isValidJobInfo) {
+            return;
+          }
+
           // check if there is custom filters in the job
           if (job.customFilters) {
             // validate custom filters, if no match, continue to the next profile
@@ -450,14 +467,15 @@ export class AtsService {
 
     let isValid: boolean = true;
 
+    isValid = this._validateJobInfo(job, profile);
+
     // check if there is custom filters in the job
-    if (job.stages.customFilters) {
+    if (isValid && job.stages.customFilters) {
       // validate custom filters, if no match, continue to the next profile
       isValid = this._validateCustomFilters(
         job.stages.customFilters,
         profileAndUser,
       );
-      console.log('isValid', isValid);
     }
 
     const matchScore = this._calculateMatchScore(job, profile);
