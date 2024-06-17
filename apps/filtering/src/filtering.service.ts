@@ -44,7 +44,7 @@ export class FilteringService {
   }
 
 
-  async applyJob(profileId: string, jobId: string, userId: string): Promise<StageResponseDto> {
+  async applyJob(profileId: string, jobId: string, userId: string, email: string): Promise<StageResponseDto> {
     // get the profile details and ensure that the user is the owner of the profile 
     const profile = await firstValueFrom(
       this.profileService.send(
@@ -64,7 +64,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById
+          cmd: jobsServicePatterns.getJobDetailsById
         },
         jobId
       ),
@@ -74,7 +74,7 @@ export class FilteringService {
       throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
     }
     // check if user applied to the job before
-    const filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
+    let filteration = await this.filterationRepository.findOneBy({ jobId, profileId });
     // create a new filteration
     if (!filteration) {
       // call the  ATS service to match the user with the job to ensure the user passed the match score and custom filters
@@ -93,18 +93,11 @@ export class FilteringService {
       if (status != ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS) {
         throw new BadRequestException(status);
       }
-      const job: StructuredJob = await firstValueFrom(
-        this.jobService.send(
-          {
-            cmd: jobsServicePatterns.getJobDetailsById
-          },
-          jobId
-        ),
-      );
       const newFilteration = this.filterationRepository.create({
         jobId,
         profileId,
         userId,
+        email,
         currentStage: StageType.applied,
         matchData,
         isQualified: matchData.isValid && (matchData.matchScore > MATCHING_THRESHOLD),
@@ -112,7 +105,20 @@ export class FilteringService {
           appliedAt: new Date()
         }
       });
-      const savedFilteration = await this.filterationRepository.save(newFilteration);
+      filteration = await this.filterationRepository.save(newFilteration);
+    } else if (filteration.currentStage === StageType.matched) {
+      // check if the user passed the match score and custom filters
+      filteration.currentStage = StageType.applied;
+      filteration.appliedData = {
+        appliedAt: new Date()
+      };
+      filteration.isQualified = filteration.matchData.matchScore > MATCHING_THRESHOLD && filteration.matchData.isValid;
+      await this.filterationRepository.save(filteration);
+    } else {
+      throw new BadRequestException(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
+    }
+
+    if(filteration.isQualified){
       const userDetails: User = await firstValueFrom(
         this.userService.send(
           {
@@ -139,26 +145,12 @@ export class FilteringService {
           deadline: new Date(job.stages.quizEndDate),
         } as CreateQuizDto
       );
-      return {
-        message: FILTERATION_CONSTANTS.USER_APPLIED,
-        stage: StageType.applied,
-        stageData: savedFilteration.appliedData
-      }
-    } else if (filteration.currentStage === StageType.matched) {
-      // check if the user passed the match score and custom filters
-      filteration.currentStage = StageType.applied;
-      filteration.appliedData = {
-        appliedAt: new Date()
-      };
-      filteration.isQualified = filteration.matchData.matchScore > MATCHING_THRESHOLD && filteration.matchData.isValid;
-      await this.filterationRepository.save(filteration);
-      return {
-        message: FILTERATION_CONSTANTS.USER_APPLIED,
-        stage: StageType.applied,
-        stageData: filteration.appliedData
-      }
-    } else {
-      throw new BadRequestException(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
+    }
+
+    return {
+      message: FILTERATION_CONSTANTS.USER_APPLIED,
+      stage: StageType.applied,
+      stageData: filteration.appliedData
     }
   }
 
@@ -724,7 +716,7 @@ export class FilteringService {
     } 
   }
 
-  async getJobApplicants(userId: string, jobId: string, paginationOptions: PageOptionsDto): Promise<GetDetailedAppliedUsersDto>{
+  async getJobApplicants(userId: string, jobId: string, isQualified: boolean, paginationOptions: PageOptionsDto): Promise<GetDetailedAppliedUsersDto>{
     let { page, take: limit } = paginationOptions;
     // check if the user is the owner of the job
     const job: StructuredJob = await firstValueFrom(
@@ -744,20 +736,36 @@ export class FilteringService {
     page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
     limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
     limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+    let totalCount = 0;
+    let appliedUsers: Filteration[] = [];
 
-    // Step 1: Count the total number of documents matching the jobId
-    const totalCount = await this.filterationRepository
+    if(isQualified !== null && isQualified !== undefined){
+      totalCount = await this.filterationRepository
+        .createQueryBuilder('filteration')
+        .where('filteration.jobId = :jobId AND filteration.isQualified = :isQualified', { jobId, isQualified })
+        .getCount();
+      // get the qualified or unqualified users
+      appliedUsers = await this.filterationRepository
+        .createQueryBuilder('filteration')
+        .where('filteration.jobId = :jobId AND filteration.isQualified = :isQualified', { jobId, isQualified })
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getMany();
+    }else{
+      // Step 1: Count the total number of documents matching the jobId
+      totalCount = await this.filterationRepository
       .createQueryBuilder('filteration')
       .where('filteration.jobId = :jobId', { jobId })
       .getCount();
 
-    // Step 2: Get the applied users with pagination
-    const appliedUsers = await this.filterationRepository
-      .createQueryBuilder('filteration')
-      .where('filteration.jobId = :jobId', { jobId })
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getMany();
+      // Step 2: Get the applied users with pagination
+      appliedUsers = await this.filterationRepository
+        .createQueryBuilder('filteration')
+        .where('filteration.jobId = :jobId', { jobId })
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getMany();
+    }
 
     // Step 3: Construct the final result in the desired format
     const results = {
@@ -796,6 +804,50 @@ export class FilteringService {
       questions: job.stages?.interview?.interviewQuestions,
       answers: filteration.interviewData?.answers,
       recordedAnswers: filteration.interviewData?.recordedAnswers
+    }
+  }
+
+  async getInterviewedApplicants(userId: string, jobId: string, paginationOptions: PageOptionsDto): Promise<GetDetailedAppliedUsersDto>{
+    // check if the user is the owner of the job
+    const job: StructuredJob = await firstValueFrom(
+      this.jobService.send(
+        {
+          cmd: jobsServicePatterns.getJobDetailsById
+        },
+        jobId
+      ),
+    );
+    if(!job || job.userId !== userId){
+      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
+    }
+
+    let { page, take: limit } = paginationOptions;
+    page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
+    limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
+    page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
+    limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
+    limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+    
+    // Get the applicants who took the interview and have not received a grade yet
+    const interviewedApplicants = await this.filterationRepository
+    .createQueryBuilder('filteration')
+    .where('filteration.jobId = :jobId', { jobId })
+    .andWhere('filteration.interviewData IS NOT NULL')
+    .andWhere('filteration.interviewData ->> \'interviewDate\' IS NOT NULL')
+    .andWhere('filteration.interviewData ->> \'grade\' IS NULL')
+    .skip((page - 1) * limit)
+    .take(limit)
+    .getMany();
+
+    
+    return {
+      metadata: new PageMetaDto({
+        pageOptionsDto: {
+          page, take: limit
+        },
+        itemCount: interviewedApplicants.length,
+      }),
+      appliedUsers: interviewedApplicants
     }
   }
 
