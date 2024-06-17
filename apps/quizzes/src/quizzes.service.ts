@@ -15,6 +15,7 @@ import {
   GetUserQuizzesDto,
   IQuizzesGeneratorDto,
   JobQuizzesIdentifierDto,
+  PaginatedJobQuizzesIdentifierDto,
   QuizIdentifierDto,
   quizzesGeneratorPattern,
   SubmitQuizDto,
@@ -26,6 +27,8 @@ import {
   GeneratedQuizQuestion,
 } from '@app/services_communications/quizzes/interfaces/quiz.interface';
 import { Quiz } from '@app/shared/entities/quiz.entity';
+import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class QuizzesService {
@@ -35,10 +38,11 @@ export class QuizzesService {
     @Inject(ServiceName.QUIZ_GENERATOR_SERVICE)
     private readonly quizzesGenerator: ClientProxy,
   ) {
+    // const jobUUID = uuidv4();
     // for (let i = 0; i < 30; i++) {
     //   // create array from 1 to 8708dsdssd
     //   const usersDetails: UserQuizDetailsDto[] = Array.from(
-    //     { length: 27 },
+    //     { length: 30 },
     //     (_, i) => {
     //       return {
     //         userId: i.toString(),
@@ -49,7 +53,7 @@ export class QuizzesService {
     //   const deadline = new Date();
     //   deadline.setDate(deadline.getDate() + 2);
     //   this.createQuiz({
-    //     jobId: '109de94e-1a1b-46c0-9371-3162129dcd7e',
+    //     jobId: jobUUID,
     //     skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
     //     numberOfQuestions: 5,
     //     recruiterId: '1',
@@ -60,7 +64,7 @@ export class QuizzesService {
     // }
   }
 
-  async createQuiz(createQuizDto: CreateQuizDto) {
+  async createQuiz(createQuizDto: CreateQuizDto): Promise<Quiz[]> {
     const { usersDetails } = createQuizDto;
 
     const payload: IQuizzesGeneratorDto = {
@@ -114,11 +118,15 @@ export class QuizzesService {
         }),
       );
     }
-    await this.quizRepository.save(quizzesEntities);
+
+    return this.quizRepository.save(quizzesEntities);
   }
 
   async submitQuiz(submitQuiz: SubmitQuizDto): Promise<{ percentage: number }> {
     const { jobId, userId } = Quiz.decodeQuizURL(submitQuiz.quizEncodedId);
+
+    if (!jobId || !userId)
+      throw new BadRequestException('Invalid quiz identifier');
 
     // Retrieve the quiz
     const quiz = await this.quizRepository.findOneBy({
@@ -155,10 +163,11 @@ export class QuizzesService {
   async getQuiz(getQuiz: QuizIdentifierDto) {
     const { jobId, userId } = Quiz.decodeQuizURL(getQuiz.quizEncodedId);
 
+    if (!jobId || !userId)
+      throw new BadRequestException('Invalid quiz identifier');
+
     if (getQuiz.userWhoRequestedId !== userId)
       throw new ForbiddenException('You are not allowed to access this quiz.');
-
-    console.log('getQuiz', jobId, userId);
 
     const quiz = await this.quizRepository.findOne({
       where: {
@@ -212,41 +221,53 @@ export class QuizzesService {
     return quiz;
   }
 
-  async getUsersScores(correctQuiz: JobQuizzesIdentifierDto) {
-    const jobQuizzesScores = await this.quizRepository.find({
-      where: {
-        jobId: correctQuiz.jobId,
-      },
-      select: ['userId', 'recruiterId', 'score', 'questionsAnswers'],
-    });
+  async getUsersScores(correctQuiz: PaginatedJobQuizzesIdentifierDto) {
+    const { page, take } = correctQuiz.pageOptionsDto;
+    const jobQuizzesScores = this.quizRepository
+      .createQueryBuilder('quiz')
+      .where('quiz.jobId = :jobId', { jobId: correctQuiz.jobId })
+      .select([
+        'quiz.userId',
+        'quiz.recruiterId',
+        'quiz.score',
+        'quiz.questionsAnswers',
+      ]);
 
-    if (correctQuiz.recruiterId !== jobQuizzesScores[0].recruiterId)
+    const { data, meta } = await applyQueryOptions(
+      jobQuizzesScores,
+      correctQuiz.pageOptionsDto,
+    );
+
+    if (!data || data.length === 0)
+      throw new NotFoundException('No quizzes found for this job.');
+
+    if (correctQuiz.recruiterId !== data[0].recruiterId)
       throw new ForbiddenException('You are not allowed to access this quiz.');
 
-    return jobQuizzesScores.map((quiz) => ({
-      userId: quiz.userId,
-      percentage: Math.round((quiz.score / quiz.questionsAnswers.length) * 100),
-    }));
+    return {
+      data: data.map((quiz) => ({
+        userId: quiz.userId,
+        percentage: Math.round((quiz.score / quiz.questionsAnswers.length) * 100),
+      })),
+      meta,
+    }
   }
 
   async getUserQuizzes(getUserQuizDto: GetUserQuizzesDto) {
-    const quezzies = await this.quizRepository.find({
-      where: {
-        userId: getUserQuizDto.userId,
-      },
-      select: [
-        'userId',
-        'jobId',
-        'randomSlug',
-        'score',
-        'deadline',
-        'isTaken',
-        'name',
-        'email',
-      ],
-    });
-
-    return quezzies;
+    const quizzesQuery = this.quizRepository
+      .createQueryBuilder('quiz')
+      .where('quiz.userId = :userId', { userId: getUserQuizDto.userId })
+      .select([
+        'quiz.userId',
+        'quiz.jobId',
+        'quiz.randomSlug',
+        'quiz.score',
+        'quiz.deadline',
+        'quiz.isTaken',
+        'quiz.name',
+        'quiz.email',
+      ]);
+    return applyQueryOptions(quizzesQuery, getUserQuizDto.pageOptionsDto);
   }
 
   async getQuizSlugs(getQuiz: GetQuizSlugsDto) {

@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ScrapeProfile {
@@ -6,11 +6,13 @@ export class ScrapeProfile {
   @ApiPropertyOptional({
     example: 'waer1',
   })
-  githubUserName: string;
+  @IsOptional()
+  githubUserName?: string;
 
   @ApiPropertyOptional({
     example: 'yousef-elwaer',
   })
   @IsString()
-  linkedinUserName: string;
+  @IsOptional()
+  linkedinUserName?: string;
 }

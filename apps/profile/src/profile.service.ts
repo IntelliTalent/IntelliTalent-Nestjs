@@ -7,7 +7,10 @@ import {
   AuthFormFieldsDto,
   AutofillServicePattern,
 } from '@app/services_communications/autofill';
+import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
 import { Profile, ServiceName } from '@app/shared';
+import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
+import { PageDto } from '@app/shared/api-features/dtos/page.dto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -96,9 +99,7 @@ export class ProfileService {
     return 'Profile Deleted Successfully';
   }
 
-  private async findProfiles(
-    options: FindManyOptions<Profile>,
-  ): Promise<Profile[]> {
+  async findProfiles(options: FindManyOptions<Profile>): Promise<Profile[]> {
     options.relations = {
       projects: true,
       experiences: true,
@@ -114,9 +115,7 @@ export class ProfileService {
     return profile;
   }
 
-  private async findOneProfile(
-    options: FindOneOptions<Profile>,
-  ): Promise<Profile> {
+  async findOneProfile(options: FindOneOptions<Profile>): Promise<Profile> {
     options.relations = {
       projects: true,
       experiences: true,
@@ -132,27 +131,37 @@ export class ProfileService {
     return profile;
   }
 
-  getUserProfileCard(userId: string): Promise<Profile[]> {
-    return this.profileRepository.find({
-      where: { userId },
-      select: [
-        'id',
-        'jobTitle',
-        'yearsOfExperience',
-        'skills',
-        'linkedIn',
-        'gitHub',
-        'cv',
-        'graduatedFromCS',
-        'summary'
-      ],
-    });
+  getUserProfileCard(dtoData: PaginatedProfilesDto): Promise<PageDto<Profile>> {
+    const { id, pageOptionsDto } = dtoData;
+    const profilesCards = this.profileRepository
+      .createQueryBuilder('profile')
+      .where('profile.userId = :id', { id })
+      .select([
+        'profile.id',
+        'profile.jobTitle',
+        'profile.yearsOfExperience',
+        'profile.skills',
+        'profile.linkedIn',
+        'profile.gitHub',
+        'profile.cv',
+        'profile.graduatedFromCS',
+        'profile.summary',
+      ]);
+
+    return applyQueryOptions(profilesCards, pageOptionsDto);
   }
 
-  getUserProfiles(userId: string): Promise<Profile[]> {
-    return this.findProfiles({
-      where: { userId },
-    });
+  getUserProfiles(payload: PaginatedProfilesDto): Promise<PageDto<Profile>> {
+    const { id, pageOptionsDto } = payload;
+    const profiles = this.profileRepository
+      .createQueryBuilder('profile')
+      .where('profile.userId = :id', { id })
+      .leftJoinAndSelect('profile.projects', 'projects')
+      .leftJoinAndSelect('profile.experiences', 'experiences')
+      .leftJoinAndSelect('profile.educations', 'educations')
+      .leftJoinAndSelect('profile.certificates', 'certificates');
+
+    return applyQueryOptions(profiles, pageOptionsDto);
   }
 
   getProfileById(profileId: string): Promise<Profile> {

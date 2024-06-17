@@ -56,6 +56,8 @@ export class GithubScrapperService {
   async storeUserRepos(userName: string) {
     let _hasNextPage = true;
     let pageNumber = 1;
+    await this.redis.del(getRedisUserNameReposKey(userName));
+
     do {
       const { response, hasNextPage } = await this.scrapUserRepos(
         userName,
@@ -67,7 +69,7 @@ export class GithubScrapperService {
           this.redis
             .multi()
             .lpush(getRedisUserNameReposKey(userName), JSON.stringify(repo))
-            .expire(getRedisUserNameReposKey(userName), 3600)
+            .expire(getRedisUserNameReposKey(userName), 360000)
             .exec(),
         ),
       );
@@ -88,15 +90,35 @@ export class GithubScrapperService {
       stop,
     );
     const response = repos.map((repo) => JSON.parse(repo));
-    return response;
+
+    // Get the total number of repositories
+    const itemCount = await this.redis.llen(getRedisUserNameReposKey(username));
+
+    // Calculate page count
+    const pageCount = Math.ceil(itemCount / take);
+
+    // Prepare metadata
+    const meta = {
+      page,
+      take,
+      itemCount,
+      pageCount,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < pageCount
+    };
+
+    return { data: response, meta };
   }
+
+
+
   async scrapUserRepos(userName: string, pageNumber = 1, perPage = 30) {
     const octokit = await this.getOctokit();
 
     const { data } = await octokit.rest.repos.listForUser({
       username: userName,
       sort: 'created',
-      direction: 'desc',
+      direction: 'asc',
       per_page: perPage,
       page: pageNumber,
     });

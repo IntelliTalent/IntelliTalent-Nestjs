@@ -1,4 +1,9 @@
-import { Controller, UseFilters } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { profileServicePattern } from '@app/services_communications/profile/patterns/preofile.patterns';
 import {
@@ -14,9 +19,11 @@ import { LinkedinScrapperService } from './linkedin-scrapper/linkedin-scrapper.s
 import { ProfileService } from './profile.service';
 import { Profile, RpcExceptionsFilter } from '@app/shared';
 import { GetProfilesByUsersIdsDto } from '@app/services_communications/profile/dtos/get-profiles-by-users-ids.dto';
+import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class ProfileController {
   constructor(
     private githubScrapperService: GithubScrapperService,
@@ -30,10 +37,17 @@ export class ProfileController {
     linkedinUserInfo: Profile;
   }> {
     const { linkedinUserName, githubUserName } = scrapeProfileDto;
-    const githubUserInfo =
-      await this.githubScrapperService.scrapGithubProfile(githubUserName);
-    const linkedinUserInfo =
-      await this.linkedinScrapperService.scrapLinkedinProfile(linkedinUserName);
+
+    const githubUserInfo = githubUserName
+      ? await this.githubScrapperService.scrapGithubProfile(githubUserName)
+      : null;
+
+    const linkedinUserInfo = linkedinUserName
+      ? await this.linkedinScrapperService.scrapLinkedinProfile(
+          linkedinUserName,
+        )
+      : null;
+
     return { githubUserInfo, linkedinUserInfo };
   }
 
@@ -59,13 +73,13 @@ export class ProfileController {
   }
 
   @MessagePattern({ cmd: profileServicePattern.getUserProfileCard })
-  getUserProfileCard(@Payload() userId: string) {
-    return this.profileService.getUserProfileCard(userId);
+  getUserProfileCard(@Payload() dtoData: PaginatedProfilesDto) {
+    return this.profileService.getUserProfileCard(dtoData);
   }
 
   @MessagePattern({ cmd: profileServicePattern.getUserProfile })
-  getUserProfiles(@Payload() userId: string) {
-    return this.profileService.getUserProfiles(userId);
+  getUserProfiles(@Payload() payload: PaginatedProfilesDto) {
+    return this.profileService.getUserProfiles(payload);
   }
 
   @MessagePattern({ cmd: profileServicePattern.getProfileById })

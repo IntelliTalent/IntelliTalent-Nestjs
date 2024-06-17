@@ -9,8 +9,17 @@ import {
   UpdateProfileDto,
   ResponseProfileCardsDto,
 } from '@app/services_communications';
+import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
 import { ResponseScrapeProfileDto } from '@app/services_communications/profile/dtos/response-scrape-profile.dto';
-import { CurrentUser, Profile, ServiceName, User } from '@app/shared';
+import {
+  ApiPaginatedResponse,
+  CurrentUser,
+  Profile,
+  Roles,
+  ServiceName,
+  User,
+  UserType,
+} from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import { IsUUIDDto } from '@app/shared/dtos/uuid.dto';
@@ -24,7 +33,8 @@ import {
   Query,
   Patch,
   Delete,
-  NotImplementedException,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
@@ -38,6 +48,7 @@ import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Profiles')
 @Controller('profiles')
+@UseInterceptors(ClassSerializerInterceptor)
 export class ProfileController {
   constructor(
     @Inject(ServiceName.PROFILE_SERVICE) private profileService: ClientProxy,
@@ -71,6 +82,7 @@ export class ProfileController {
     description: 'Profile created successfully',
     type: Profile,
   })
+  @Roles([UserType.jobSeeker])
   createProfile(
     @CurrentUser() user: User,
     @Body() createProfileDto: CreateProfileDto,
@@ -104,40 +116,41 @@ export class ProfileController {
     );
   }
 
-  @Get('cv/result')
-  getCvExtractorResult() {
-    throw new NotImplementedException('Not implemented');
-  }
-
   @Get('cards')
   @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'Get profile cards' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns profile cards',
-    type: ResponseProfileCardsDto,
-    isArray: true,
-  })
-  getProfileCards(@CurrentUser() user: User) {
+  @ApiPaginatedResponse(ResponseProfileCardsDto)
+  @Roles([UserType.jobSeeker])
+  getProfileCards(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
+  ) {
+    const payload: PaginatedProfilesDto = {
+      id: user.id,
+      pageOptionsDto,
+    };
     return this.profileService.send(
       { cmd: profileServicePattern.getUserProfileCard },
-      user.id,
+      payload,
     );
   }
 
   @Get('all')
   @ApiBearerAuth(AUTH_HEADER)
   @ApiOperation({ summary: 'Get user profiles' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns user profiles',
-    type: Profile,
-    isArray: true,
-  })
-  getUserProfiles(@CurrentUser() user: User) {
+  @ApiPaginatedResponse(Profile)
+  @Roles([UserType.jobSeeker])
+  getUserProfiles(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
+  ) {
+    const payload: PaginatedProfilesDto = {
+      id: user.id,
+      pageOptionsDto,
+    };
     return this.profileService.send(
       { cmd: profileServicePattern.getUserProfile },
-      user.id,
+      payload,
     );
   }
 

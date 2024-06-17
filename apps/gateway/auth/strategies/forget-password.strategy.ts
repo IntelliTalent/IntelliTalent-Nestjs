@@ -38,13 +38,12 @@ export class ForgetPasswordStrategy extends PassportStrategy(
    */
   async validate(payload: ForgetPasswordToken): Promise<User> {
 
-    const user: User = await firstValueFrom(
+    const user = await firstValueFrom(
       this.userService.send(
         { cmd: userServicePatterns.findUserById },
         payload.id,
       ),
     );
-
     return { ...user, ...payload };
   }
 }

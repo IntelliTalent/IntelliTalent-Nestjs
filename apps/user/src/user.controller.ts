@@ -114,4 +114,16 @@ export class UserController {
   getUsersByIds(@Payload() dto: GetUsersByIdsDto) {
     return this.userService.getUsersByIds(dto.usersIds);
   }
+
+
+  @MessagePattern({ cmd: userServicePatterns.findVerifiedUser })
+  findVerifiedUser(@Payload() id: string): Promise<User> {
+    return this.userService.findUser({
+      where: {
+        id,
+        isVerified: true,
+      },
+    });
+  }
+
 }
