@@ -19,9 +19,7 @@ export class CustomJobsStages extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Interview, {
-    cascade: true,
-  })
+  @OneToOne(() => Interview, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn()
   interview: Interview;
 

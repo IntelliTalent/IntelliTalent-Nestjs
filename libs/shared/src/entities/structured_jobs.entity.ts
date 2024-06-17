@@ -77,7 +77,7 @@ export class StructuredJob extends AbstractEntity {
   @Column({ type: 'enum', enum: StageType, default: StageType.Active })
   currentStage: StageType;
 
-  @OneToOne(() => CustomJobsStages)
+  @OneToOne(() => CustomJobsStages, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn()
   stages: CustomJobsStages;
 }
