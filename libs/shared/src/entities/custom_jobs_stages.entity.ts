@@ -9,8 +9,6 @@ import { AbstractEntity } from './abstract.entity';
 import { Interview } from './interview.entity';
 
 export interface CustomFilters {
-  yearsOfExperience?: number;
-  graduatedFromCS?: boolean;
   languages?: string[];
   country?: string;
   city?: string;
