@@ -295,6 +295,7 @@ export class FilteringService {
                 lastName: userDetails.lastName,
                 jobTitle: job.title,
                 jobId: job.id,
+                profileId: user.profileId,
               } as InterviewTemplateData,
             };
           }),

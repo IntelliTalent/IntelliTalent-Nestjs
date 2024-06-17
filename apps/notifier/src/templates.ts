@@ -157,7 +157,7 @@ export function interviewEmailTemplate(
   templateData: InterviewTemplateData,
 ): IEmailTemplate {
   const subject = 'Interview Email';
-  const interviewUrl = `${getConfigVariables(Constants.FRONT_END_URL)}/interview/${templateData.jobId}`;
+  const interviewUrl = `${getConfigVariables(Constants.FRONT_END_URL)}/interview/${templateData.profileId}/${templateData.jobId}`;
   const html = `
       <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
       <p> Job Title: ${templateData.jobTitle}</p>
