@@ -251,7 +251,7 @@ export class FilteringService {
               data: {
                 firstName: userDetails.firstName,
                 lastName: userDetails.lastName,
-                quizSlug: quiz.encodedQuizIdentifier(),
+                quizSlug: quiz.identifier,
                 jobTitle: job.title,
               } as QuizEmailTemplateData,
             };
