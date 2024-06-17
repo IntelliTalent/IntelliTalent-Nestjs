@@ -174,8 +174,10 @@ export class QuizzesService {
         userId: userId,
         jobId: jobId,
       },
-      select: ['questions'],
+      select: ['questions', 'isTaken'],
     });
+
+
 
 
     if(!quiz) throw new NotFoundException('Quiz not found');
