@@ -1,4 +1,5 @@
 import { ApplyJobRequest } from '@app/services_communications/filteration-service/dtos/requests/apply-job-request.dto';
+import { AuthApplyJobRequestDto } from '@app/services_communications/filteration-service/dtos/requests/auth-appy-job-request.dto';
 import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
 import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
 import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
@@ -49,9 +50,10 @@ export class ApiFilterationController {
       },
       {
         userId: user.id,
+        email: user.email,
         profileId: filterJob.profileId,
         jobId: filterJob.jobId,
-      } as ApplyJobRequest,
+      } as AuthApplyJobRequestDto,
     );
   }
 
@@ -160,6 +162,7 @@ export class ApiFilterationController {
   async getJobApplicants(
     @CurrentUser() user: User,
     @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @Query('isQualified') isQualified: boolean,
     @Query('page') page: number,
     @Query('take') take: number,
   ) {
@@ -170,6 +173,7 @@ export class ApiFilterationController {
       {
         userId: user.id,
         jobId,
+        isQualified,
         paginationOptions:{
           page,
           take
@@ -199,6 +203,34 @@ export class ApiFilterationController {
         jobId,
         profileId
       } as GetInterviewAnswersDto,
+    );
+  }
+
+
+  @ApiOperation({ summary: 'Get the interviewed users of the job' })
+  @Get('interviewed-users/:jobId')
+  @ApiOkResponse({
+    description: 'The applied users for the job',
+    type: GetInterviewAnswersResponse
+  })
+  async getInterviewedUsers(
+    @CurrentUser() user: User,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @Query('page') page: number,
+    @Query('take') take: number,
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getInterviewedApplicants,
+      },
+      {
+        userId: user.id,
+        jobId,
+        paginationOptions:{
+          page,
+          take
+        }
+      } as PaginatedJobDto,
     );
   }
 
@@ -248,7 +280,7 @@ export class ApiFilterationController {
         userId: user.id,
         jobId,
         profileId,
-      } as ApplyJobRequest,
+      } as AuthApplyJobRequestDto,
     );
   }
 
@@ -353,7 +385,7 @@ export class ApiFilterationController {
       {
         ...selectProfile,
         userId: user.id,
-      } as ApplyJobRequest,
+      } as AuthApplyJobRequestDto,
     );
   }
 

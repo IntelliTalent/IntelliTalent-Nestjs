@@ -48,6 +48,9 @@ export class Filteration extends AbstractEntity {
   @Column({ type: 'uuid', nullable: false })
   userId: string;
 
+  @Column({ type: 'varchar', nullable: false })
+  email: string;
+
   @Column({ type: 'boolean', nullable: false, default: true })
   isQualified: boolean;
 

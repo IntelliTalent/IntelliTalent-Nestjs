@@ -4,7 +4,6 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
-import { ApplyJobRequest } from '@app/services_communications/filteration-service/dtos/requests/apply-job-request.dto';
 import { PaginatedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-job.dto';
 import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
 import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
@@ -14,6 +13,7 @@ import { GetInterviewQuestionsDto } from '@app/services_communications/filterati
 import { GetInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-answers.dto';
 import { RpcExceptionsFilter } from '@app/shared';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
+import { AuthApplyJobRequestDto } from '@app/services_communications/filteration-service/dtos/requests/auth-appy-job-request.dto';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -26,8 +26,8 @@ export class FilteringController {
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.filterJob })
-  applyJob(@Payload() data: ApplyJobRequest): Promise<StageResponseDto> {
-    return this.filteringService.applyJob(data.profileId, data.jobId, data.userId);
+  applyJob(@Payload() data: AuthApplyJobRequestDto): Promise<StageResponseDto> {
+    return this.filteringService.applyJob(data.profileId, data.jobId, data.userId, data.email);
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.beginCurrentStage })
@@ -41,7 +41,7 @@ export class FilteringController {
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.getUserStage })
-  getUserStage(@Payload() data:ApplyJobRequest) {
+  getUserStage(@Payload() data:AuthApplyJobRequestDto) {
     return this.filteringService.getUserStage(data.userId, data.jobId, data.profileId);
   }
 
@@ -67,7 +67,7 @@ export class FilteringController {
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.selectProfile })
-  selectProfile(@Payload() data: ApplyJobRequest) {
+  selectProfile(@Payload() data: AuthApplyJobRequestDto) {
     return this.filteringService.selectProfile(data.userId, data.jobId, data.profileId);
   }
 
@@ -88,12 +88,17 @@ export class FilteringController {
 
   @MessagePattern({cmd: FilterationServicePattern.getJobApplicants})
   getJobApplicants(@Payload() data: PaginatedJobDto){
-    return this.filteringService.getJobApplicants(data.userId, data.jobId, data.paginationOptions);
+    return this.filteringService.getJobApplicants(data.userId, data.jobId,data.isQualified, data.paginationOptions);
   }
 
   @MessagePattern({cmd: FilterationServicePattern.getInterviewAnswers})
   getInterviewAnswers(@Payload() data: GetInterviewAnswersDto){
     return this.filteringService.getInterviewAnswers(data.userId, data.jobId, data.profileId);
+  }
+
+  @MessagePattern({cmd: FilterationServicePattern.getInterviewedApplicants})
+  getInterviewedApplicants(@Payload() data: PaginatedJobDto){
+    return this.filteringService.getInterviewedApplicants(data.userId, data.jobId, data.paginationOptions);
   }
 
 }

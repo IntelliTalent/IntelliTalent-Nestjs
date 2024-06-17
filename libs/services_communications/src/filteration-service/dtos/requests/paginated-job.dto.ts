@@ -3,5 +3,6 @@ import { JobDto } from "./job.dto";
 
 export class PaginatedJobDto extends JobDto {
     userId: string;
+    isQualified?: boolean;
     paginationOptions: PageOptionsDto;
 }
