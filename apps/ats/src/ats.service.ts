@@ -84,9 +84,6 @@ export class AtsService {
       lang.toLowerCase(),
     );
 
-    console.log('profile.languages', profile.languages);
-    console.log('jobFilters.languages', jobFilters.languages);
-
     for (const filter in jobFilters) {
       if (filter === CustomFiltersEnum.languages) {
         if (
