@@ -49,6 +49,9 @@ export class Quiz extends AbstractEntity {
   @Column({ type: 'boolean', default: false })
   isTaken: boolean;
 
+  @Column({ type: "int", default: 0 })
+  visitCount: number;
+
 
   identifier: string;
 
