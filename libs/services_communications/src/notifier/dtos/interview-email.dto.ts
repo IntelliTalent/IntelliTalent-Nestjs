@@ -3,4 +3,5 @@ export class InterviewTemplateData {
   lastName: string;
   jobTitle: string;
   jobId: string;
+  profileId: string;
 }

@@ -176,17 +176,21 @@ export class JobsService {
     if (job.currentStage === StageType.Quiz && job.stages?.interview) {
       // Stop the quiz cron job
       const jobName = this.getJobName(job.id, 'quiz');
-      const existingJob = this.schedulerRegistry.getCronJob(jobName);
-      existingJob.stop();
-      this.schedulerRegistry.deleteCronJob(jobName);
+      if (this.schedulerRegistry.doesExist('cron', jobName)) {
+        const existingJob = this.schedulerRegistry.getCronJob(jobName);
+        existingJob.stop();
+        this.schedulerRegistry.deleteCronJob(jobName);
+      }
 
       job.currentStage = StageType.Interview;
     } else if (job.currentStage === StageType.Interview) {
       // Stop the interview cron job
       const jobName = this.getJobName(job.id, 'interview');
-      const existingJob = this.schedulerRegistry.getCronJob(jobName);
-      existingJob.stop();
-      this.schedulerRegistry.deleteCronJob(jobName);
+      if (this.schedulerRegistry.doesExist('cron', jobName)) {
+        const existingJob = this.schedulerRegistry.getCronJob(jobName);
+        existingJob.stop();
+        this.schedulerRegistry.deleteCronJob(jobName);
+      }
 
       job.currentStage = StageType.Final;
     } else {
