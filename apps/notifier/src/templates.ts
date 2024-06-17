@@ -4,6 +4,7 @@ import {
   ForgetPasswordTemplateData,
   InterviewTemplateData,
   QuizEmailTemplateData,
+  RejectionEmailTemplateData,
   ResetPasswordTemplateData,
   SendEmailsDto,
   senderEmail,
@@ -78,6 +79,16 @@ export function handleTemplate(data: SendEmailsDto): IEmail[] {
           ...interviewEmailTemplate(mailData.data as InterviewTemplateData),
         };
       });
+
+      case EmailTemplates.REJECTION:
+      return data.templateData.map((mailData) => {
+        return {
+          to: mailData.to,
+          from: senderEmail,
+          ...rejectionEmailTemplate(mailData.data as RejectionEmailTemplateData),
+        };
+      });
+
   }
 }
 
@@ -162,6 +173,19 @@ export function interviewEmailTemplate(
       <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
       <p> Job Title: ${templateData.jobTitle}</p>
       <a href="${interviewUrl}">Interview</a>
+      `;
+  return { subject, html };
+}
+
+export function rejectionEmailTemplate(
+  templateData: RejectionEmailTemplateData,
+): IEmailTemplate {
+  const { firstName, jobCompany, jobTitle, lastName, stage} = templateData;
+  const subject = 'Update on your application for ${jobTitle} at ${jobCompany}';
+  const html = `
+      <h1>Hi ${firstName} ${lastName},</h1>
+      <p> unless you are a good fit for the role, we will not be moving forward with your application for ${jobTitle} at ${jobCompany}</p>
+      <p> so for the ${stage} stage, we will not be moving forward with your application</p>
       `;
   return { subject, html };
 }
