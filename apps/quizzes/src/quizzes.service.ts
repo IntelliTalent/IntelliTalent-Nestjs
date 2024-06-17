@@ -177,6 +177,11 @@ export class QuizzesService {
       select: ['questions'],
     });
 
+
+    if(!quiz) throw new NotFoundException('Quiz not found');
+
+    if(quiz.isTaken) throw new BadRequestException('You have already taken this quiz.');
+
     if (quiz.deadline < new Date())
       throw new BadRequestException(
         'The deadline for this quiz has passed. You can not access it anymore.',
