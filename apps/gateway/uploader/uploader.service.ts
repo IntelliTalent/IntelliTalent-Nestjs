@@ -11,7 +11,7 @@ export class UploaderService {
     this._getBlobServiceInstance();
   }
 
-  public async uploadFile(file : Express.Multer.File): Promise<UploadResponseDto> {
+  public async uploadFile(file: any): Promise<UploadResponseDto> {
     // generate uuid string
     const generatedUuid = uuidv4();
     const file_name = generatedUuid + '-' + file.originalname;
@@ -23,7 +23,6 @@ export class UploaderService {
       link,
     };
   }
-
 
   private blobClientService: BlobServiceClient;
 
