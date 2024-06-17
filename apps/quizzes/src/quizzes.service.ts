@@ -247,10 +247,12 @@ export class QuizzesService {
     return {
       data: data.map((quiz) => ({
         userId: quiz.userId,
-        percentage: Math.round((quiz.score / quiz.questionsAnswers.length) * 100),
+        percentage: Math.round(
+          (quiz.score / quiz.questionsAnswers.length) * 100,
+        ),
       })),
       meta,
-    }
+    };
   }
 
   async getUserQuizzes(getUserQuizDto: GetUserQuizzesDto) {
@@ -275,7 +277,7 @@ export class QuizzesService {
       where: {
         jobId: getQuiz.jobId,
       },
-      select: ['randomSlug', 'userId', 'email'],
+      select: ['randomSlug', 'userId', 'email', 'jobId'],
     });
 
     return quizSlugs;

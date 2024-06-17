@@ -31,6 +31,7 @@ export class RpcExceptionsFilter implements ExceptionFilter {
       );
     } catch (e) {
       console.log('RpcExceptionsFilter -> catch -> e', e);
+      console.log(exception);
       return throwError(() => new RpcException(exception));
     }
   }

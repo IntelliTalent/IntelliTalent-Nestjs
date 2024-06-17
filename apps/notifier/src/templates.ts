@@ -147,8 +147,8 @@ export function quizEmailTemplate(
   const quizUrl = `${getConfigVariables(Constants.FRONT_END_URL)}/quiz/${templateData.quizSlug}`;
   const html = `
       <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
-      <p> Quiz Slug: ${quizUrl}</p>
       <p> Job Title: ${templateData.jobTitle}</p>
+      <a href="${quizUrl}">Quiz</a>
       `;
   return { subject, html };
 }
@@ -157,10 +157,11 @@ export function interviewEmailTemplate(
   templateData: InterviewTemplateData,
 ): IEmailTemplate {
   const subject = 'Interview Email';
+  const interviewUrl = `${getConfigVariables(Constants.FRONT_END_URL)}/interview/${templateData.jobId}`;
   const html = `
       <h1>Hi ${templateData.firstName} ${templateData.lastName},</h1>
       <p> Job Title: ${templateData.jobTitle}</p>
-      <p> Job Url: ${templateData.jobUrl}</p>
+      <a href="${interviewUrl}">Interview</a>
       `;
   return { subject, html };
 }

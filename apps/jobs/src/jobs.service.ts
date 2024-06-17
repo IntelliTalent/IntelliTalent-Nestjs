@@ -785,7 +785,7 @@ export class JobsService {
     }
 
     // Deactivate the job
-    this.deactivateJobAndBeginNextStage(existingJob);
+    await this.deactivateJobAndBeginNextStage(existingJob);
 
     return {
       message: 'Job deactivated successfully.',
@@ -824,7 +824,7 @@ export class JobsService {
     }
 
     // Deactivate the job
-    this.moveJobToNextStage(existingJob);
+    await this.moveJobToNextStage(existingJob);
 
     return {
       message: 'Job moved to next stage successfully.',
