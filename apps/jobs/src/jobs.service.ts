@@ -69,6 +69,8 @@ export class JobsService {
           company: job.company,
           url: job.url,
           skills: job.skills,
+          neededExperience: job.neededExperience,
+          csRequired: job.csRequired,
           customFilters: null,
         }),
       );
@@ -91,6 +93,8 @@ export class JobsService {
         company: job.company,
         url: job.url,
         skills: job.skills,
+        neededExperience: job.neededExperience,
+        csRequired: job.csRequired,
         customFilters: job.stages.customFilters,
       });
 
