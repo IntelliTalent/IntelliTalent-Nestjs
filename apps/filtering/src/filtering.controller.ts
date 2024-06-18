@@ -32,7 +32,7 @@ export class FilteringController {
 
   @MessagePattern({ cmd: FilterationServicePattern.beginCurrentStage })
   beginCurrentStage(@Payload() data: JobDto) {
-    return this.filteringService.beginCurrentStage(data.jobId);
+    return this.filteringService.beginCurrentStage(data.jobId, data.previousStage);
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.getAppliedUsers })

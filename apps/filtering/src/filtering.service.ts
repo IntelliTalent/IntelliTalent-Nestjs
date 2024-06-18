@@ -199,7 +199,7 @@ export class FilteringService {
     };
   }
 
-  async beginCurrentStage(jobId: string): Promise<StageResponseDto> {
+  async beginCurrentStage(jobId: string, previousStage: JobStageType): Promise<StageResponseDto> {
     // get the job details from the job service
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -210,195 +210,18 @@ export class FilteringService {
       ),
     );
 
+
     // check if the job exists and is open
     if (!job) {
       throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
     }
 
     if (job.currentStage === JobStageType.Quiz) {
-      // call the quiz service to get the quiz slugs
-      const quizzes: Quiz[] = await firstValueFrom(
-        this.quizService.send(
-          {
-            cmd: quizzesPattern.getQuizSlugs,
-          },
-          {
-            jobId,
-          } as GetQuizSlugsDto,
-        ),
-      );
-
-      const usersIds = quizzes.map((quiz) => quiz.userId);
-      // call the mail service to send the mails to the users to start the quiz
-      const usersDetails: User[] = await firstValueFrom(
-        this.userService.send(
-          {
-            cmd: userServicePatterns.getUsersByIds,
-          },
-          {
-            usersIds,
-          } as GetUsersByIdsDto,
-        ),
-      );
-      // make a map that contains the user id and the user details
-      const usersMap = new Map<string, User>();
-      usersDetails.forEach((user) => {
-        usersMap.set(user.id, user);
-      });
-      // get the filteration details for each user
-      const filterationsDetails = await this.filterationRepository.find({
-        where: {
-          jobId,
-          currentStage: StageType.applied,
-        }
-      });
-      const filterationsMap = new Map<string, Filteration>();
-      filterationsDetails.forEach((filteration) => {
-        filterationsMap.set(filteration.userId, filteration);
-      });
-      const quizzesTemplateData = await Promise.all(
-        quizzes.map(async (quiz: Quiz) => {
-          const userDetails = usersMap.get(quiz.userId);
-          const filteration = filterationsMap.get(quiz.userId);
-          if (filteration.isQualified) {
-            filteration.currentStage = StageType.quiz;
-            filteration.quizData = {
-              quizDate: new Date(),
-            } as QuizData;
-            await this.filterationRepository.save(filteration);
-            return {
-              to: quiz.email,
-              data: {
-                firstName: userDetails.firstName,
-                lastName: userDetails.lastName,
-                quizSlug: quiz.identifier,
-                jobTitle: job.title,
-              } as QuizEmailTemplateData,
-            };
-          } else {
-            filteration.currentStage = StageType.failed;
-            filteration.isQualified = false;
-            await this.filterationRepository.save(filteration);
-            return {
-              to: quiz.email,
-              data: {
-                firstName: userDetails.firstName,
-                lastName: userDetails.lastName,
-                jobTitle: job.title,
-                jobCompany: job.company,
-                stage: StageType.quiz,
-              } as RejectionEmailTemplateData,
-            };
-          }
-        })
-      );
-
-      const sendEmailsDto: SendEmailsDto = {
-        template: EmailTemplates.QUIZ,
-        templateData: quizzesTemplateData,
-      };
-
-      if (quizzesTemplateData.length > 0) {
-        this.notifierService.emit(
-          {
-            cmd: NotifierEvents.sendEmail,
-          },
-          sendEmailsDto,
-        );
-      }
-    } else if(job.currentStage === JobStageType.Interview) {
-      // call the mail service to send the mails to the users to start the interview
-      const appliedUsers = await this.filterationRepository.findBy({
-        jobId: job.id,
-        currentStage: StageType.quiz,
-      });
-      // get the quiz score for each user from quiz service
-      const usersScores = await firstValueFrom(this.quizService.send({
-        cmd: quizzesPattern.getUsersScores,
-      },
-        {
-          jobId: job.id,
-          recruiterId: job.userId,
-          pageOptionsDto: {
-            page: 1,
-            take: appliedUsers.length
-          }
-        } as PaginatedJobQuizzesIdentifierDto
-      ));
-      const quizScoresMap = new Map<string, number>();
-      usersScores.data.forEach((userScore) => {
-        quizScoresMap.set(userScore.userId, userScore.percentage);
-      });
-
-      const filterationsDetails = await this.filterationRepository.find({
-        where: {
-          jobId: job.id,
-          currentStage: StageType.quiz,
-        }
-      });
-      const filterationsMap = new Map<string, Filteration>();
-      filterationsDetails.forEach((filteration) => {
-        filterationsMap.set(filteration.userId, filteration);
-      });
-
-
-      const interviewTemplateData: TemplateData[] = await Promise.all(
-        appliedUsers.map(async (user) => {
-          // get the user details from the user service
-          const userDetails: User = await firstValueFrom(
-            this.userService.send(
-              {
-                cmd: userServicePatterns.findUserById,
-              },
-              user.userId,
-            ),
-          );
-          if (quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) {
-            const filteration = filterationsMap.get(user.userId);
-            filteration.currentStage = StageType.interview;
-            filteration.interviewData = {
-              interviewDate: new Date(),
-            } as InterviewData;
-            await this.filterationRepository.save(filteration);
-            return {
-              to: user.profileId,
-              data: {
-                firstName: userDetails.firstName,
-                lastName: userDetails.lastName,
-                jobTitle: job.title,
-                jobId: job.id,
-                profileId: user.profileId,
-              } as InterviewTemplateData,
-            };
-
-          } else {
-            const filteration = filterationsMap.get(user.userId);
-            filteration.currentStage = StageType.failed;
-            filteration.isQualified = false;
-            await this.filterationRepository.save(filteration);
-            return {
-              to: user.profileId,
-              data: {
-                firstName: userDetails.firstName,
-                lastName: userDetails.lastName,
-                jobTitle: job.title,
-                jobCompany: job.company,
-                stage: StageType.interview,
-              } as RejectionEmailTemplateData
-            }
-          }
-        }),
-      );
-      const sendInterviewEmailsDto: SendEmailsDto = {
-        template: EmailTemplates.INTERVIEW,
-        templateData: interviewTemplateData,
-      };
-      this.notifierService.send(
-        {
-          cmd: NotifierEvents.sendEmail,
-        },
-        sendInterviewEmailsDto,
-      );
+      await this.beginQuizStage(job);
+    } else if (job.currentStage === JobStageType.Interview) {
+      await this.beginInterviewStage(job, previousStage);
+    } else if (job.currentStage === JobStageType.Final) {
+      await this.beginFinalStage(job, previousStage);
     } else {
       throw new BadRequestException(FILTERATION_CONSTANTS.NOT_VALID_STAGE);
     }
@@ -702,14 +525,6 @@ export class FilteringService {
     }
     const totalGrade = grades.reduce((acc, grade) => acc + grade, 0);
     filteration.interviewData.grade = totalGrade / grades.length;
-    if (filteration.interviewData.grade > 50) {
-      filteration.currentStage = StageType.candidate;
-      filteration.isQualified = true;
-    } else {
-      filteration.currentStage = StageType.failed;
-      filteration.isQualified = false;
-    }
-
     await this.filterationRepository.save(filteration);
     return {
       message: FILTERATION_CONSTANTS.RECRUITER_REVIEWED_INTERVIEW,
@@ -1113,6 +928,322 @@ export class FilteringService {
         itemCount: interviewedApplicants.length,
       }),
       appliedUsers: interviewedApplicants,
+    };
+  }
+
+  private async beginQuizStage(job: StructuredJob): Promise<StageResponseDto> {
+    // call the quiz service to get the quiz slugs
+    const quizzes: Quiz[] = await firstValueFrom(
+      this.quizService.send(
+        {
+          cmd: quizzesPattern.getQuizSlugs,
+        },
+        {
+          jobId: job.id,
+        } as GetQuizSlugsDto,
+      ),
+    );
+
+    const usersIds = quizzes.map((quiz) => quiz.userId);
+    // call the mail service to send the mails to the users to start the quiz
+    const usersDetails: User[] = await firstValueFrom(
+      this.userService.send(
+        {
+          cmd: userServicePatterns.getUsersByIds,
+        },
+        {
+          usersIds,
+        } as GetUsersByIdsDto,
+      ),
+    );
+    // make a map that contains the user id and the user details
+    const usersMap = new Map<string, User>();
+    usersDetails.forEach((user) => {
+      usersMap.set(user.id, user);
+    });
+    // get the filteration details for each user
+    const filterationsDetails = await this.filterationRepository.find({
+      where: {
+        jobId: job.id,
+        currentStage: StageType.applied,
+      }
+    });
+    const filterationsMap = new Map<string, Filteration>();
+    filterationsDetails.forEach((filteration) => {
+      filterationsMap.set(filteration.userId, filteration);
+    });
+    const quizzesTemplateData: TemplateData[] = [];
+    const rejectionTemplateData: TemplateData[] = [];
+
+    quizzes.map(async (quiz: Quiz) => {
+      const userDetails = usersMap.get(quiz.userId);
+      const filteration = filterationsMap.get(quiz.userId);
+      if (filteration.isQualified) {
+        filteration.currentStage = StageType.quiz;
+        filteration.quizData = {
+          quizDate: new Date(),
+        } as QuizData;
+        await this.filterationRepository.save(filteration);
+        quizzesTemplateData.push({
+          to: quiz.email,
+          data: {
+            firstName: userDetails.firstName,
+            lastName: userDetails.lastName,
+            quizSlug: quiz.identifier,
+            jobTitle: job.title,
+          } as QuizEmailTemplateData,
+        });
+      } else {
+        filteration.currentStage = StageType.failed;
+        filteration.isQualified = false;
+        await this.filterationRepository.save(filteration);
+        rejectionTemplateData.push({
+          to: quiz.email,
+          data: {
+            firstName: userDetails.firstName,
+            lastName: userDetails.lastName,
+            jobTitle: job.title,
+            jobCompany: job.company,
+            stage: StageType.quiz,
+          } as RejectionEmailTemplateData,
+        });
+      }
+    });
+    if (quizzesTemplateData.length > 0) {
+      const sendEmailsDto: SendEmailsDto = {
+        template: EmailTemplates.QUIZ,
+        templateData: quizzesTemplateData,
+      };
+      this.notifierService.emit(
+        {
+          cmd: NotifierEvents.sendEmail,
+        },
+        sendEmailsDto,
+      );
+    }
+    if (rejectionTemplateData.length > 0) {
+      const sendEmailsDto: SendEmailsDto = {
+        template: EmailTemplates.REJECTION,
+        templateData: rejectionTemplateData,
+      };
+      this.notifierService.emit(
+        {
+          cmd: NotifierEvents.sendEmail,
+        },
+        sendEmailsDto,
+      );
+    }
+    return {
+      message: FILTERATION_CONSTANTS.STAGE_STARTED,
+      stage: job.currentStage,
+    };
+  }
+
+  private async beginInterviewStage(job: StructuredJob, previousStage: JobStageType): Promise<StageResponseDto> {
+    // call the mail service to send the mails to the users to start the interview
+    const appliedUsers = await this.filterationRepository.findBy({
+      jobId: job.id,
+      currentStage: previousStage === JobStageType.Active ? StageType.applied : StageType.quiz
+    });
+    let usersScores = null;
+    let quizScoresMap = new Map<string, number>();
+    if (previousStage === JobStageType.Quiz) {
+      // get the quiz score for each user from quiz service
+      usersScores = await firstValueFrom(this.quizService.send({
+        cmd: quizzesPattern.getUsersScores,
+      },
+        {
+          jobId: job.id,
+          recruiterId: job.userId,
+          pageOptionsDto: {
+            page: 1,
+            take: appliedUsers.length
+          }
+        } as PaginatedJobQuizzesIdentifierDto
+      ));
+      quizScoresMap = new Map<string, number>();
+      usersScores.data.forEach((userScore) => {
+        quizScoresMap.set(userScore.userId, userScore.percentage);
+      });
+    }
+
+    const filterationsMap = new Map<string, Filteration>();
+    appliedUsers.forEach((filteration) => {
+      filterationsMap.set(filteration.userId, filteration);
+    });
+
+    const interviewTemplateData: TemplateData[] = [];
+    const rejectionTemplateData: TemplateData[] = [];
+
+    appliedUsers.forEach(async (user) => {
+      // get the user details from the user service
+      const userDetails: User = await firstValueFrom(
+        this.userService.send(
+          {
+            cmd: userServicePatterns.findUserById,
+          },
+          user.userId,
+        ),
+      );
+      if (
+        (quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD && previousStage === JobStageType.Quiz)
+        ||
+        (user.isQualified && previousStage === JobStageType.Active)) {
+        const filteration = filterationsMap.get(user.userId);
+        filteration.currentStage = StageType.interview;
+        filteration.interviewData = {
+          interviewDate: new Date(),
+        } as InterviewData;
+        await this.filterationRepository.save(filteration);
+        interviewTemplateData.push({
+          to: user.profileId,
+          data: {
+            firstName: userDetails.firstName,
+            lastName: userDetails.lastName,
+            jobTitle: job.title,
+            jobId: job.id,
+            profileId: user.profileId,
+          } as InterviewTemplateData,
+        });
+
+      } else {
+        const filteration = filterationsMap.get(user.userId);
+        filteration.currentStage = StageType.failed;
+        filteration.isQualified = false;
+        await this.filterationRepository.save(filteration);
+        rejectionTemplateData.push({
+          to: user.profileId,
+          data: {
+            firstName: userDetails.firstName,
+            lastName: userDetails.lastName,
+            jobTitle: job.title,
+            jobCompany: job.company,
+            stage: previousStage,
+          } as RejectionEmailTemplateData
+        });
+      }
+    },
+    );
+    if (interviewTemplateData.length > 0) {
+      const sendInterviewEmailsDto: SendEmailsDto = {
+        template: EmailTemplates.INTERVIEW,
+        templateData: interviewTemplateData,
+      };
+      this.notifierService.emit(
+        {
+          cmd: NotifierEvents.sendEmail,
+        },
+        sendInterviewEmailsDto,
+      );
+    }
+    if (rejectionTemplateData.length > 0) {
+      const sendRejectionEmailsDto: SendEmailsDto = {
+        template: EmailTemplates.REJECTION,
+        templateData: rejectionTemplateData,
+      };
+      this.notifierService.emit(
+        {
+          cmd: NotifierEvents.sendEmail,
+        },
+        sendRejectionEmailsDto,
+      );
+    }
+    return {
+      message: FILTERATION_CONSTANTS.STAGE_STARTED,
+      stage: job.currentStage,
+    };
+
+  }
+
+  private async beginFinalStage(job: StructuredJob, previousStage: JobStageType): Promise<StageResponseDto> {
+    // call the mail service to send the mails to the users to start the interview
+    const appliedUsers = await this.filterationRepository.findBy({
+      jobId: job.id,
+      currentStage: previousStage === JobStageType.Active ? StageType.applied : (previousStage === JobStageType.Quiz ? StageType.quiz : StageType.interview)
+    });
+    let usersScores = null;
+    let quizScoresMap = new Map<string, number>();
+    if (previousStage === JobStageType.Quiz) {
+      // get the quiz score for each user from quiz service
+      usersScores = await firstValueFrom(this.quizService.send({
+        cmd: quizzesPattern.getUsersScores,
+      },
+        {
+          jobId: job.id,
+          recruiterId: job.userId,
+          pageOptionsDto: {
+            page: 1,
+            take: appliedUsers.length
+          }
+        } as PaginatedJobQuizzesIdentifierDto
+      ));
+      quizScoresMap = new Map<string, number>();
+      usersScores.data.forEach((userScore) => {
+        quizScoresMap.set(userScore.userId, userScore.percentage);
+      });
+    }
+
+    const filterationsMap = new Map<string, Filteration>();
+    appliedUsers.forEach((filteration) => {
+      filterationsMap.set(filteration.userId, filteration);
+    });
+
+    const rejectionTemplateData: TemplateData[] = [];
+
+    appliedUsers.map(async (user) => {
+      // get the user details from the user service
+      const userDetails: User = await firstValueFrom(
+        this.userService.send(
+          {
+            cmd: userServicePatterns.findUserById,
+          },
+          user.userId,
+        ),
+      );
+      if (
+        (quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD && previousStage === JobStageType.Quiz)
+        ||
+        (user.isQualified && previousStage === JobStageType.Active)
+        ||
+        (user.interviewData.grade > FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD && previousStage === JobStageType.Interview)
+      ) {
+        const filteration = filterationsMap.get(user.userId);
+        filteration.currentStage = StageType.candidate;
+        await this.filterationRepository.save(filteration);
+      } else {
+        const filteration = filterationsMap.get(user.userId);
+        filteration.currentStage = StageType.failed;
+        filteration.isQualified = false;
+        await this.filterationRepository.save(filteration);
+        rejectionTemplateData.push({
+          to: user.profileId,
+          data: {
+            firstName: userDetails.firstName,
+            lastName: userDetails.lastName,
+            jobTitle: job.title,
+            jobCompany: job.company,
+            stage: previousStage,
+          } as RejectionEmailTemplateData
+        });
+      }
+    },
+    );
+    if (rejectionTemplateData.length > 0) {
+      const sendInterviewEmailsDto: SendEmailsDto = {
+        template: EmailTemplates.REJECTION,
+        templateData: rejectionTemplateData,
+      };
+
+      this.notifierService.emit(
+        {
+          cmd: NotifierEvents.sendEmail,
+        },
+        sendInterviewEmailsDto,
+      );
+    }
+    return {
+      message: FILTERATION_CONSTANTS.STAGE_STARTED,
+      stage: job.currentStage,
     };
   }
 }
