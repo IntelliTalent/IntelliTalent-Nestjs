@@ -2,7 +2,7 @@ import { AuthFormFieldsDto } from '@app/services_communications/autofill/dtos/au
 import { FormFieldsDto } from '@app/services_communications/autofill/dtos/form-fields.dto';
 import { AutofillServicePattern } from '@app/services_communications/autofill/patterns/autofill-service.pattern';
 import { CurrentUser, ServiceName, User } from '@app/shared';
-import { Body, Controller, Get, Inject, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, ParseArrayOptions, ParseArrayPipe, Patch, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -41,7 +41,7 @@ export class ApiAutofillController {
     @Get()
     async getFormFields(
         @CurrentUser() user: User,
-        @Query('fields') fields: [string]
+        @Query('fields',new ParseArrayPipe({optional: true})) fields: [string]
     ) {
         return this.autoFillService.send(
             {
