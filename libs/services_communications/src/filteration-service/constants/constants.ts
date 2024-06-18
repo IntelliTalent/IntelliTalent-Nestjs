@@ -24,3 +24,4 @@ export const DEFAULT_PAGE = 1;
 export const DEFAULT_LIMIT = 12;
 export const MAX_LIMIT = 12;
 export const NUMBER_OF_QUESTIONS = 5;
+export const QUIZ_PASS_THRESHOLD = 50;
