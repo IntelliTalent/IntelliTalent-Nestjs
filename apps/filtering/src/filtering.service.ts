@@ -277,6 +277,7 @@ export class FilteringService {
             };
           } else {
             filteration.currentStage = StageType.failed;
+            filteration.isQualified = false;
             await this.filterationRepository.save(filteration);
             return {
               to: quiz.email,
@@ -291,10 +292,10 @@ export class FilteringService {
           }
         })
       );
-      
+
       const sendEmailsDto: SendEmailsDto = {
         template: EmailTemplates.QUIZ,
-        templateData: quizzesTemplateData ,
+        templateData: quizzesTemplateData,
       };
 
       if (quizzesTemplateData.length > 0) {
@@ -305,7 +306,7 @@ export class FilteringService {
           sendEmailsDto,
         );
       }
-    } else {
+    } else if(job.currentStage === JobStageType.Interview) {
       // call the mail service to send the mails to the users to start the interview
       const appliedUsers = await this.filterationRepository.findBy({
         jobId: job.id,
@@ -373,7 +374,7 @@ export class FilteringService {
           } else {
             const filteration = filterationsMap.get(user.userId);
             filteration.currentStage = StageType.failed;
-            filteration.isQualified = true;
+            filteration.isQualified = false;
             await this.filterationRepository.save(filteration);
             return {
               to: user.profileId,
@@ -398,6 +399,8 @@ export class FilteringService {
         },
         sendInterviewEmailsDto,
       );
+    } else {
+      throw new BadRequestException(FILTERATION_CONSTANTS.NOT_VALID_STAGE);
     }
     return {
       message: FILTERATION_CONSTANTS.STAGE_STARTED,
@@ -699,14 +702,14 @@ export class FilteringService {
     }
     const totalGrade = grades.reduce((acc, grade) => acc + grade, 0);
     filteration.interviewData.grade = totalGrade / grades.length;
-    if(filteration.interviewData.grade > 50){
+    if (filteration.interviewData.grade > 50) {
       filteration.currentStage = StageType.candidate;
       filteration.isQualified = true;
-    }else{
+    } else {
       filteration.currentStage = StageType.failed;
       filteration.isQualified = false;
     }
-    
+
     await this.filterationRepository.save(filteration);
     return {
       message: FILTERATION_CONSTANTS.RECRUITER_REVIEWED_INTERVIEW,
