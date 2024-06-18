@@ -138,6 +138,8 @@ export class JobsService {
   }
 
   private async deactivateJobAndBeginNextStage(job: StructuredJob) {
+    const currentStage = job.currentStage;
+
     // If the job is already scheduled, remove it
     const jobName = this.getJobName(job.id, 'job');
     if (this.schedulerRegistry.doesExist('cron', jobName)) {
@@ -161,17 +163,17 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    if (job.currentStage !== StageType.Final) {
-      this.filtrationService.emit(
-        {
-          cmd: jobsServicePatterns.beginCurrentStage,
-        },
-        { jobId: job.id },
-      );
-    }
+    this.filtrationService.emit(
+      {
+        cmd: jobsServicePatterns.beginCurrentStage,
+      },
+      { jobId: job.id, previousStage: currentStage },
+    );
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
+    const currentStage = job.currentStage;
+
     // Update the current stage of the job
     if (job.currentStage === StageType.Quiz && job.stages?.interview) {
       // Stop the quiz cron job
@@ -200,14 +202,12 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    if (job.currentStage !== StageType.Final) {
-      this.filtrationService.emit(
-        {
-          cmd: jobsServicePatterns.beginCurrentStage,
-        },
-        { jobId: job.id },
-      );
-    }
+    this.filtrationService.emit(
+      {
+        cmd: jobsServicePatterns.beginCurrentStage,
+      },
+      { jobId: job.id, previousStage: currentStage },
+    );
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
