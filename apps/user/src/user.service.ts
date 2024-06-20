@@ -43,7 +43,9 @@ export class UserService {
     return 'Hello World From User Service!';
   }
 
-  async doesUserExist(findUserInterface: FindOptionsWhere<User>): Promise<boolean> {
+  async doesUserExist(
+    findUserInterface: FindOptionsWhere<User>,
+  ): Promise<boolean> {
     return await this.userRepository.existsBy(findUserInterface);
   }
 
@@ -140,10 +142,9 @@ export class UserService {
 
     Object.assign(user, updateUser);
 
-    if(user.type === UserType.jobSeeker) {
+    if (user.type === UserType.jobSeeker) {
       this.initFormFields(user, false);
     }
-
 
     return this.userRepository.save(user);
   }
@@ -173,7 +174,7 @@ export class UserService {
       .getOne();
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password(not found)');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
