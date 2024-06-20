@@ -227,6 +227,7 @@ export class QuizzesService {
 
   async getUsersScores(correctQuiz: PaginatedJobQuizzesIdentifierDto) {
     const { page, take } = correctQuiz.pageOptionsDto;
+    console.log('correctQuiz', correctQuiz);
     const jobQuizzesScores = this.quizRepository
       .createQueryBuilder('quiz')
       .where('quiz.jobId = :jobId', { jobId: correctQuiz.jobId })
