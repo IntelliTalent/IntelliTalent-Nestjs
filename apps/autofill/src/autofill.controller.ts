@@ -1,7 +1,7 @@
 import { AutofillService } from './autofill.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FormFieldsResponseDto } from '@app/services_communications/autofill/dtos/form-fields-response.dto';
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { AutofillServicePattern } from '@app/services_communications/autofill/patterns/autofill-service.pattern';
 import { GetFieldsDto } from '@app/services_communications/autofill/dtos/get-fields.dto';
 import { AuthFormFieldsDto } from '@app/services_communications/autofill/dtos/auth-form-fields.dto';
@@ -9,11 +9,6 @@ import { AuthFormFieldsDto } from '@app/services_communications/autofill/dtos/au
 @Controller()
 export class AutofillController {
   constructor(private readonly autofillService: AutofillService) {}
-
-  @Get()
-  getHello(): string {
-    return this.autofillService.getHello();
-  }
 
   @MessagePattern({ cmd: AutofillServicePattern.init })
   async init(
