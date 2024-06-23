@@ -6,12 +6,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AutofillHelper } from './autofill.helper';
 import * as AUTOFILL_CONSTANTS from '@app/services_communications/autofill/index';
+import { isEmpty } from 'class-validator';
 
 @Injectable()
 export class AutofillService {
   constructor(
     @InjectModel(FormField.name) private formFieldModel: Model<FormField>,
-  ) {}
+  ) { }
   getHello(): string {
     return 'Hello World!';
   }
@@ -35,7 +36,6 @@ export class AutofillService {
       data: data.data,
     });
 
-    console.log(newUser.data);
     return {
       message: AUTOFILL_CONSTANTS.INITIATED_SUCCESSFULLY,
       formFields: Object.fromEntries(newUser.data),
@@ -52,6 +52,11 @@ export class AutofillService {
       return {
         message: AUTOFILL_CONSTANTS.USER_NOT_FOUND,
         formFields: {},
+      };
+    } else if (isEmpty(fields) || fields.length < 1) {
+      return {
+        message: AUTOFILL_CONSTANTS.SUCCESS,
+        formFields: Object.fromEntries(userData),
       };
     }
     const result = AutofillHelper.getMostSimilar(
@@ -71,6 +76,11 @@ export class AutofillService {
     newFieldsValues: { [s: string]: string },
   ): Promise<FormFieldsResponseDto> {
     const oldFormField = await this.formFieldModel.findOne({ userId }).exec();
+
+    if (!oldFormField) {
+      return this.init(userId, { data: newFieldsValues });
+    }
+
     let newKeys = AutofillHelper.getMostSimilar(
       oldFormField.data,
       Object.keys(newFieldsValues),

@@ -5,6 +5,7 @@ export enum EmailTemplates {
   RESETPASSWORD = 3,
   QUIZ,
   INTERVIEW,
+  REJECTION,
 }
 
 export const senderEmail = 'admin@intelliTalent.com';

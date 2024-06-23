@@ -15,20 +15,9 @@ import {
 } from 'class-validator';
 
 class CustomFilters {
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsNumber()
-  yearsOfExperience?: number;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsBoolean()
-  graduatedFromCS?: boolean;
-
   @ApiProperty({ required: false, type: [String] })
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsString({ each: true })
   languages?: string[];
 

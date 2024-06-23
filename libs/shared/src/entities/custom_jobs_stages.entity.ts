@@ -9,8 +9,6 @@ import { AbstractEntity } from './abstract.entity';
 import { Interview } from './interview.entity';
 
 export interface CustomFilters {
-  yearsOfExperience?: number;
-  graduatedFromCS?: boolean;
   languages?: string[];
   country?: string;
   city?: string;
@@ -21,9 +19,7 @@ export class CustomJobsStages extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Interview, {
-    cascade: true,
-  })
+  @OneToOne(() => Interview, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn()
   interview: Interview;
 

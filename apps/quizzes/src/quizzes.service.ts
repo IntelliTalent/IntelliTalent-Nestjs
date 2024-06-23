@@ -174,24 +174,28 @@ export class QuizzesService {
         userId: userId,
         jobId: jobId,
       },
-      select: ['questions'],
+      select: ['questions', 'visitCount'],
     });
+
+    if (!quiz) throw new NotFoundException('Quiz not found');
 
     if (quiz.deadline < new Date())
       throw new BadRequestException(
         'The deadline for this quiz has passed. You can not access it anymore.',
       );
 
-    if (!quiz.isTaken) {
-      quiz.isTaken = true;
-    } else {
-      throw new BadRequestException('You have already take this quiz.');
-    }
+    if (quiz.visitCount < 3) {
 
-    await this.quizRepository.update(
-      { userId: userId, jobId: jobId },
-      { isTaken: true },
-    );
+      await this.quizRepository.update(
+        { userId: userId, jobId: jobId },
+        { visitCount: quiz.visitCount + 1 },
+      );
+
+    } else {
+      throw new BadRequestException(
+        'You have reached the maximum number of visits for this quiz.',
+      );
+    }
 
     return quiz;
   }
@@ -223,6 +227,7 @@ export class QuizzesService {
 
   async getUsersScores(correctQuiz: PaginatedJobQuizzesIdentifierDto) {
     const { page, take } = correctQuiz.pageOptionsDto;
+    console.log('correctQuiz', correctQuiz);
     const jobQuizzesScores = this.quizRepository
       .createQueryBuilder('quiz')
       .where('quiz.jobId = :jobId', { jobId: correctQuiz.jobId })
@@ -247,10 +252,12 @@ export class QuizzesService {
     return {
       data: data.map((quiz) => ({
         userId: quiz.userId,
-        percentage: Math.round((quiz.score / quiz.questionsAnswers.length) * 100),
+        percentage: Math.round(
+          (quiz.score / quiz.questionsAnswers.length) * 100,
+        ),
       })),
       meta,
-    }
+    };
   }
 
   async getUserQuizzes(getUserQuizDto: GetUserQuizzesDto) {
@@ -275,7 +282,7 @@ export class QuizzesService {
       where: {
         jobId: getQuiz.jobId,
       },
-      select: ['randomSlug', 'userId', 'email'],
+      select: ['randomSlug', 'userId', 'email', 'jobId'],
     });
 
     return quizSlugs;

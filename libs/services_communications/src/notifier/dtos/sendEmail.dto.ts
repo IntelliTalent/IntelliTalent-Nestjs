@@ -3,6 +3,7 @@ import { AtsEmailTemplateData } from './ats-email.template.dto';
 import { ForgetPasswordTemplateData } from './forget-password-template-data';
 import { InterviewTemplateData } from './interview-email.dto';
 import { QuizEmailTemplateData } from './quiz.-emaildto';
+import { RejectionEmailTemplateData } from './rejection-email-template.dto';
 import { ResetPasswordTemplateData } from './reset-password-email-data.dto';
 import { VerifyEmailTemplateData } from './verify-email-template-data.dto';
 
@@ -14,7 +15,8 @@ export class TemplateData {
     | ResetPasswordTemplateData
     | InterviewTemplateData
     | QuizEmailTemplateData
-    | AtsEmailTemplateData;
+    | AtsEmailTemplateData
+    | RejectionEmailTemplateData;
 }
 
 export class SendEmailsDto {

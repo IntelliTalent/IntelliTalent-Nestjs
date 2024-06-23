@@ -1,4 +1,11 @@
-import { Controller, Get, Post, UseFilters } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Post,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AtsService } from './ats.service';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { atsServicePattern } from '@app/services_communications/ats-service';
@@ -7,6 +14,7 @@ import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class AtsController {
   constructor(private readonly atsService: AtsService) {}
 
@@ -21,7 +29,9 @@ export class AtsController {
   }
 
   @MessagePattern({ cmd: atsServicePattern.matchProfileAndJob })
-  matchProfileAndJob(@Payload() profileAndJobDto: ProfileAndJobDto): Promise<object> {
+  matchProfileAndJob(
+    @Payload() profileAndJobDto: ProfileAndJobDto,
+  ): Promise<object> {
     return this.atsService.matchProfileAndJob(profileAndJobDto);
   }
 }

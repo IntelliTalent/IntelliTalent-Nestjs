@@ -9,6 +9,6 @@ export class SubmitQuizDto extends QuizIdentifierDto {
   @ArrayMinSize(1)
   @Type(() => Number)
   @IsInt({ each: true })
-  @Min(0, { each: true })
+  @Min(-1, { each: true })
   userAnswers: number[];
 }

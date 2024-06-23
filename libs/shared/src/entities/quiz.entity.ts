@@ -1,6 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import { parse, stringify } from 'querystring';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { AfterLoad, Column, Entity, PrimaryColumn } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 
 export interface Question {
@@ -49,6 +49,13 @@ export class Quiz extends AbstractEntity {
   @Column({ type: 'boolean', default: false })
   isTaken: boolean;
 
+  @Column({ type: "int", default: 0 })
+  visitCount: number;
+
+
+  identifier: string;
+
+
   @Expose()
   percentage(): number {
     if (!this.questionsAnswers || !this.score) return undefined;
@@ -56,6 +63,7 @@ export class Quiz extends AbstractEntity {
   }
 
   @Expose({})
+  @AfterLoad()
   encodedQuizIdentifier(): string {
     if (!this.userId || !this.jobId || !this.randomSlug) return undefined;
 
@@ -66,6 +74,8 @@ export class Quiz extends AbstractEntity {
         randomSlug: this.randomSlug,
       }),
     ).toString('base64');
+
+    this.identifier = encodedParams;
 
     return encodedParams;
   }

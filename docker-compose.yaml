@@ -7,7 +7,7 @@ services:
       target: development
       args:
         app: gateway
-    command: npm run dev-gateway
+    command: npm run start:dev
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -80,7 +80,6 @@ services:
   #   volumes:
   #     - .:/usr/src/app
 
-
   # autofill:
   #   build:
   #     context: .
@@ -96,7 +95,6 @@ services:
   #     - intelli-network
   #   volumes:
   #     - .:/usr/src/app
-
 
   # profile:
   #   build:
@@ -114,7 +112,6 @@ services:
   #   volumes:
   #     - .:/usr/src/app
 
-
   # filtering:
   #   build:
   #     context: .
@@ -131,7 +128,6 @@ services:
   #   volumes:
   #     - .:/usr/src/app
 
-
   # user:
   #   build:
   #     context: .
@@ -147,8 +143,6 @@ services:
   #     - intelli-network
   #   volumes:
   #     - .:/usr/src/app
-
-
 
 networks:
   intelli-network:

@@ -69,6 +69,8 @@ export class JobsService {
           company: job.company,
           url: job.url,
           skills: job.skills,
+          neededExperience: job.neededExperience,
+          csRequired: job.csRequired,
           customFilters: null,
         }),
       );
@@ -91,6 +93,8 @@ export class JobsService {
         company: job.company,
         url: job.url,
         skills: job.skills,
+        neededExperience: job.neededExperience,
+        csRequired: job.csRequired,
         customFilters: job.stages.customFilters,
       });
 
@@ -134,6 +138,8 @@ export class JobsService {
   }
 
   private async deactivateJobAndBeginNextStage(job: StructuredJob) {
+    const currentStage = job.currentStage;
+
     // If the job is already scheduled, remove it
     const jobName = this.getJobName(job.id, 'job');
     if (this.schedulerRegistry.doesExist('cron', jobName)) {
@@ -157,32 +163,36 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    if (job.currentStage !== StageType.Final) {
-      this.filtrationService.emit(
-        {
-          cmd: jobsServicePatterns.beginCurrentStage,
-        },
-        { jobId: job.id },
-      );
-    }
+    this.filtrationService.emit(
+      {
+        cmd: jobsServicePatterns.beginCurrentStage,
+      },
+      { jobId: job.id, previousStage: currentStage },
+    );
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
+    const currentStage = job.currentStage;
+
     // Update the current stage of the job
     if (job.currentStage === StageType.Quiz && job.stages?.interview) {
       // Stop the quiz cron job
       const jobName = this.getJobName(job.id, 'quiz');
-      const existingJob = this.schedulerRegistry.getCronJob(jobName);
-      existingJob.stop();
-      this.schedulerRegistry.deleteCronJob(jobName);
+      if (this.schedulerRegistry.doesExist('cron', jobName)) {
+        const existingJob = this.schedulerRegistry.getCronJob(jobName);
+        existingJob.stop();
+        this.schedulerRegistry.deleteCronJob(jobName);
+      }
 
       job.currentStage = StageType.Interview;
     } else if (job.currentStage === StageType.Interview) {
       // Stop the interview cron job
       const jobName = this.getJobName(job.id, 'interview');
-      const existingJob = this.schedulerRegistry.getCronJob(jobName);
-      existingJob.stop();
-      this.schedulerRegistry.deleteCronJob(jobName);
+      if (this.schedulerRegistry.doesExist('cron', jobName)) {
+        const existingJob = this.schedulerRegistry.getCronJob(jobName);
+        existingJob.stop();
+        this.schedulerRegistry.deleteCronJob(jobName);
+      }
 
       job.currentStage = StageType.Final;
     } else {
@@ -192,14 +202,12 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    if (job.currentStage !== StageType.Final) {
-      this.filtrationService.emit(
-        {
-          cmd: jobsServicePatterns.beginCurrentStage,
-        },
-        { jobId: job.id },
-      );
-    }
+    this.filtrationService.emit(
+      {
+        cmd: jobsServicePatterns.beginCurrentStage,
+      },
+      { jobId: job.id, previousStage: currentStage },
+    );
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
@@ -492,11 +500,9 @@ export class JobsService {
   }
 
   async getJobById(jobId) {
-    console.log('jobId: ', jobId);
     const job = await this.structuredJobRepository.findOne({
       where: { id: jobId },
     });
-    console.log('job: ', job);
 
     if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
@@ -783,7 +789,7 @@ export class JobsService {
     }
 
     // Deactivate the job
-    this.deactivateJobAndBeginNextStage(existingJob);
+    await this.deactivateJobAndBeginNextStage(existingJob);
 
     return {
       message: 'Job deactivated successfully.',
@@ -822,7 +828,7 @@ export class JobsService {
     }
 
     // Deactivate the job
-    this.moveJobToNextStage(existingJob);
+    await this.moveJobToNextStage(existingJob);
 
     return {
       message: 'Job moved to next stage successfully.',
