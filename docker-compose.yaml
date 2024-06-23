@@ -7,7 +7,7 @@ services:
       target: development
       args:
         app: gateway
-    command: npm run start:dev gateway
+    command: npm run dev-gateway
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -15,8 +15,6 @@ services:
       - ../.env
     networks:
       - intelli-network
-    volumes:
-      - .:/usr/src/app
 
   auth:
     build:
