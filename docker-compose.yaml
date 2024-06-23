@@ -7,7 +7,7 @@ services:
       target: development
       args:
         app: gateway
-    command: sleep 50000 #npm run start:dev
+    command: npm run start:dev gateway
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -18,139 +18,133 @@ services:
     volumes:
       - .:/usr/src/app
 
-  # auth:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: auth
-  #   command: npm run start:dev auth
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
+  auth:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: auth
+    command: npm run start:dev auth
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
-  # jobs:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: jobs
-  #   command: npm run start:dev jobs
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
+  jobs:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: jobs
+    command: npm run start:dev jobs
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
-  # ats:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: ats
-  #   command: npm run start:dev ats
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
+  ats:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: ats
+    command: npm run start:dev ats
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
-  # notifier:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: notifier
-  #   command: npm run start:dev notifier
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
+  notifier:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: notifier
+    command: npm run start:dev notifier
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
+  autofill:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: autofill
+    command: npm run start:dev autofill
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
-  # autofill:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: autofill
-  #   command: npm run start:dev autofill
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
+  profile:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: profile
+    command: npm run start:dev profile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
+  filtering:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: filtering
+    command: npm run start:dev filtering
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
-  # profile:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: profile
-  #   command: npm run start:dev profile
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
-
-
-  # filtering:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: filtering
-  #   command: npm run start:dev filtering
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
-
-
-  # user:
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfile
-  #     target: development
-  #     args:
-  #       app: user
-  #   command: npm run start:dev user
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ../.env
-  #   networks:
-  #     - intelli-network
-  #   volumes:
-  #     - .:/usr/src/app
-
-
+  user:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+      target: development
+      args:
+        app: user
+    command: npm run start:dev user
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - intelli-network
+    volumes:
+      - .:/usr/src/app
 
 networks:
   intelli-network:
