@@ -50,6 +50,8 @@ describe('Autofill service', () => {
     }).compile();
 
     autofillService = app.get<AutofillService>(AutofillService);
+    const formFieldsModel = autofillService['formFieldModel'];
+    formFieldsModel.deleteMany({}).exec();
   });
 
   it('should be defined', () => {
