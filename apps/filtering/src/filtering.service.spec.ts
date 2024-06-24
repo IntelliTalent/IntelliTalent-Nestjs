@@ -114,7 +114,8 @@ describe('Filtering service test', () => {
   });
 
   beforeEach(async () => {
-    await filteringService._deleteAll();
+    const filterationRepository = filteringService['filterationRepository'];
+    await filterationRepository.delete({});
   });
 
   it('should be defined', () => {

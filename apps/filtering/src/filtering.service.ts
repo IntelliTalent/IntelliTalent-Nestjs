@@ -67,10 +67,6 @@ export class FilteringService {
     @InjectRepository(Filteration) private readonly filterationRepository: Repository<Filteration>,
   ) { }
 
-  async _deleteAll() {
-    await this.filterationRepository.delete({});
-  }
-
   async _getFilteration(profileId: string, jobId: string): Promise<Filteration> {
     return await this.filterationRepository.findOneBy({
       jobId,
