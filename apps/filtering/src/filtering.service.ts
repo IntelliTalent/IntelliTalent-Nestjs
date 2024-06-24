@@ -23,7 +23,6 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
@@ -61,17 +60,18 @@ export class FilteringService {
   constructor(
     @Inject(ServiceName.ATS_SERVICE) private readonly atsService: ClientProxy,
     @Inject(ServiceName.JOB_SERVICE) private readonly jobService: ClientProxy,
-    @Inject(ServiceName.NOTIFIER_SERVICE)
-    private readonly notifierService: ClientProxy,
+    @Inject(ServiceName.NOTIFIER_SERVICE) private readonly notifierService: ClientProxy,
     @Inject(ServiceName.QUIZ_SERVICE) private readonly quizService: ClientProxy,
-    @Inject(ServiceName.PROFILE_SERVICE)
-    private readonly profileService: ClientProxy,
+    @Inject(ServiceName.PROFILE_SERVICE) private readonly profileService: ClientProxy,
     @Inject(ServiceName.USER_SERVICE) private readonly userService: ClientProxy,
-    @InjectRepository(Filteration)
-    private readonly filterationRepository: Repository<Filteration>,
+    @InjectRepository(Filteration) private readonly filterationRepository: Repository<Filteration>,
   ) { }
-  getHello(): string {
-    return 'Hello World!';
+
+  async _getFilteration(profileId: string, jobId: string): Promise<Filteration> {
+    return await this.filterationRepository.findOneBy({
+      jobId,
+      profileId
+    });
   }
 
   async applyJob(
@@ -130,9 +130,7 @@ export class FilteringService {
         ),
       );
       const { status, ...matchData } = matchingResult;
-      if (status != ATS_CONSTANTS.ATS_MATCHING_DONE_STATUS) {
-        throw new BadRequestException(status);
-      }
+
       const newFilteration = this.filterationRepository.create({
         jobId,
         profileId,
@@ -140,8 +138,7 @@ export class FilteringService {
         email,
         currentStage: StageType.applied,
         matchData,
-        isQualified:
-          matchData.isValid && matchData.matchScore > MATCHING_THRESHOLD,
+        isQualified: matchData.isValid && matchData.matchScore > MATCHING_THRESHOLD,
         appliedData: {
           appliedAt: new Date(),
         },
@@ -908,6 +905,15 @@ export class FilteringService {
     limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
     limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
 
+    // Get the count of the applicants who took the interview and have not received a grade yet
+    const totalCount = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.jobId = :jobId', { jobId })
+      .andWhere('filteration.interviewData IS NOT NULL')
+      .andWhere("filteration.interviewData ->> 'interviewDate' IS NOT NULL")
+      .andWhere("filteration.interviewData ->> 'grade' IS NULL")
+      .getCount();
+
     // Get the applicants who took the interview and have not received a grade yet
     const interviewedApplicants = await this.filterationRepository
       .createQueryBuilder('filteration')
@@ -925,7 +931,7 @@ export class FilteringService {
           page,
           take: limit,
         },
-        itemCount: interviewedApplicants.length,
+        itemCount: totalCount,
       }),
       appliedUsers: interviewedApplicants,
     };
@@ -975,7 +981,8 @@ export class FilteringService {
     const quizzesTemplateData: TemplateData[] = [];
     const rejectionTemplateData: TemplateData[] = [];
 
-    quizzes.map(async (quiz: Quiz) => {
+    // quizzes.map(async (quiz: Quiz) => {
+    for(const quiz of quizzes){
       const userDetails = usersMap.get(quiz.userId);
       const filteration = filterationsMap.get(quiz.userId);
       if (filteration.isQualified) {
@@ -1008,7 +1015,7 @@ export class FilteringService {
           } as RejectionEmailTemplateData,
         });
       }
-    });
+    }
     if (quizzesTemplateData.length > 0) {
       const sendEmailsDto: SendEmailsDto = {
         template: EmailTemplates.QUIZ,
@@ -1075,7 +1082,7 @@ export class FilteringService {
     const interviewTemplateData: TemplateData[] = [];
     const rejectionTemplateData: TemplateData[] = [];
 
-    appliedUsers.forEach(async (user) => {
+    for (const user of appliedUsers){
       // get the user details from the user service
       const userDetails: User = await firstValueFrom(
         this.userService.send(
@@ -1086,9 +1093,9 @@ export class FilteringService {
         ),
       );
       if (
-        (quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD && previousStage === JobStageType.Quiz)
+        (previousStage === JobStageType.Quiz && quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD)
         ||
-        (user.isQualified && previousStage === JobStageType.Active)) {
+        (previousStage === JobStageType.Active && user.isQualified )) {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.interview;
         filteration.interviewData = {
@@ -1122,8 +1129,7 @@ export class FilteringService {
           } as RejectionEmailTemplateData
         });
       }
-    },
-    );
+    }
     if (interviewTemplateData.length > 0) {
       const sendInterviewEmailsDto: SendEmailsDto = {
         template: EmailTemplates.INTERVIEW,
@@ -1190,7 +1196,8 @@ export class FilteringService {
 
     const rejectionTemplateData: TemplateData[] = [];
 
-    appliedUsers.map(async (user) => {
+    // appliedUsers.map(async (user) => {
+    for(const user of appliedUsers){
       // get the user details from the user service
       const userDetails: User = await firstValueFrom(
         this.userService.send(
@@ -1201,11 +1208,11 @@ export class FilteringService {
         ),
       );
       if (
-        (quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD && previousStage === JobStageType.Quiz)
+        (previousStage === JobStageType.Quiz && quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD )
         ||
-        (user.isQualified && previousStage === JobStageType.Active)
+        (previousStage === JobStageType.Active && user.isQualified )
         ||
-        (user.interviewData.grade > FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD && previousStage === JobStageType.Interview)
+        (previousStage === JobStageType.Interview && user.interviewData.grade > FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD )
       ) {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.candidate;
@@ -1226,8 +1233,8 @@ export class FilteringService {
           } as RejectionEmailTemplateData
         });
       }
-    },
-    );
+    }
+
     if (rejectionTemplateData.length > 0) {
       const sendInterviewEmailsDto: SendEmailsDto = {
         template: EmailTemplates.REJECTION,
