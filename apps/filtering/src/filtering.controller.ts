@@ -1,4 +1,4 @@
-import { Controller, Get, UseFilters } from '@nestjs/common';
+import { Controller, UseFilters } from '@nestjs/common';
 import { FilteringService } from './filtering.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
@@ -19,11 +19,6 @@ import { AuthApplyJobRequestDto } from '@app/services_communications/filteration
 @UseFilters(RpcExceptionsFilter)
 export class FilteringController {
   constructor(private readonly filteringService: FilteringService) { }
-
-  @Get()
-  getHello(): string {
-    return this.filteringService.getHello();
-  }
 
   @MessagePattern({ cmd: FilterationServicePattern.filterJob })
   applyJob(@Payload() data: AuthApplyJobRequestDto): Promise<StageResponseDto> {

@@ -422,8 +422,10 @@ export class JobsService {
       if (jobEndDate) {
         // Check that the job end date is before the quiz end date and before the interview end date
         if (
-          existingJob.stages.quizEndDate &&
-          existingJob.stages.quizEndDate < jobEndDate
+          (quizEndDate && quizEndDate < jobEndDate) ||
+          (!quizEndDate &&
+            existingJob.stages.quizEndDate &&
+            existingJob.stages.quizEndDate < jobEndDate)
         ) {
           throw new BadRequestException(
             'Job end date must be before quiz end date',
@@ -431,8 +433,10 @@ export class JobsService {
         }
 
         if (
-          existingJob.stages.interview &&
-          existingJob.stages.interview.endDate < jobEndDate
+          (interview && interview.endDate < jobEndDate) ||
+          (!interview &&
+            existingJob.stages.interview &&
+            existingJob.stages.interview.endDate < jobEndDate)
         ) {
           throw new BadRequestException(
             'Job end date must be before interview end date',
@@ -445,15 +449,22 @@ export class JobsService {
 
       if (quizEndDate) {
         // Check that the quiz end date is after the job end date and before the interview end date
-        if (existingJob.jobEndDate && existingJob.jobEndDate > quizEndDate) {
+        if (
+          (jobEndDate && jobEndDate > quizEndDate) ||
+          (!jobEndDate &&
+            existingJob.jobEndDate &&
+            existingJob.jobEndDate > quizEndDate)
+        ) {
           throw new BadRequestException(
             'Quiz end date must be after job end date',
           );
         }
 
         if (
-          existingJob.stages.interview &&
-          existingJob.stages.interview.endDate < quizEndDate
+          (interview && interview.endDate < quizEndDate) ||
+          (!interview &&
+            existingJob.stages.interview &&
+            existingJob.stages.interview.endDate < quizEndDate)
         ) {
           throw new BadRequestException(
             'Quiz end date must be before interview end date',
@@ -467,8 +478,10 @@ export class JobsService {
       if (interview) {
         // Check that the interview end date is after the job end date and after the quiz end date
         if (
-          existingJob.jobEndDate &&
-          existingJob.jobEndDate > interview.endDate
+          (jobEndDate && jobEndDate > interview.endDate) ||
+          (!jobEndDate &&
+            existingJob.jobEndDate &&
+            existingJob.jobEndDate > interview.endDate)
         ) {
           throw new BadRequestException(
             'Interview end date must be after job end date',
@@ -476,8 +489,10 @@ export class JobsService {
         }
 
         if (
-          existingJob.stages.quizEndDate &&
-          existingJob.stages.quizEndDate > interview.endDate
+          (quizEndDate && quizEndDate > interview.endDate) ||
+          (!quizEndDate &&
+            existingJob.stages.quizEndDate &&
+            existingJob.stages.quizEndDate > interview.endDate)
         ) {
           throw new BadRequestException(
             'Interview end date must be after quiz end date',
