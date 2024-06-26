@@ -13,9 +13,6 @@ export class AutofillService {
   constructor(
     @InjectModel(FormField.name) private formFieldModel: Model<FormField>,
   ) { }
-  getHello(): string {
-    return 'Hello World!';
-  }
 
   async init(
     userId: string,
@@ -24,12 +21,8 @@ export class AutofillService {
     // get the user
     const user = await this.formFieldModel.findOne({ userId }).exec();
     if (user) {
-      user.data = new Map(Object.entries(data.data));
-      await user.save();
-      return {
-        message: AUTOFILL_CONSTANTS.INITIATED_SUCCESSFULLY,
-        formFields: Object.fromEntries(user.data),
-      };
+      // call patch fields to update the user data
+      return this.patchFields(userId, data.data);
     }
     const newUser = await this.formFieldModel.create({
       userId,
@@ -44,7 +37,7 @@ export class AutofillService {
 
   async getFields(
     userId: string,
-    fields: [string],
+    fields: string[],
   ): Promise<FormFieldsResponseDto> {
     const userData = (await this.formFieldModel.findOne({ userId }).exec())
       ?.data;
