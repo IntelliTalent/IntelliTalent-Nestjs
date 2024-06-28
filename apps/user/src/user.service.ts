@@ -239,7 +239,12 @@ export class UserService {
       },
     });
 
-    await this.validateUser(user.email, currentPassword);
+    try {
+      await this.validateUser(user.email, currentPassword);
+    } catch (error) {
+      console.log(error);
+      throw new UnauthorizedException('Invalid current password');
+    }
 
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     const hashedPassword = await bcrypt.hash(newPassword, salt);

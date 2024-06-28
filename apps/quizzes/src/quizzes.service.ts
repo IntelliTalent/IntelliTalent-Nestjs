@@ -154,6 +154,7 @@ export class QuizzesService {
 
     quiz.userAnswers = submitQuiz.userAnswers;
     quiz.score = score;
+    quiz.isTaken = true;
     await this.quizRepository.save(quiz);
     return {
       percentage: (score / questionsAnswers.length) * 100,
@@ -192,6 +193,12 @@ export class QuizzesService {
       );
 
     } else {
+
+      await this.quizRepository.update(
+        { userId: userId, jobId: jobId },
+        { isTaken: true },
+      );
+
       throw new BadRequestException(
         'You have reached the maximum number of visits for this quiz.',
       );
@@ -227,7 +234,6 @@ export class QuizzesService {
 
   async getUsersScores(correctQuiz: PaginatedJobQuizzesIdentifierDto) {
     const { page, take } = correctQuiz.pageOptionsDto;
-    console.log('correctQuiz', correctQuiz);
     const jobQuizzesScores = this.quizRepository
       .createQueryBuilder('quiz')
       .where('quiz.jobId = :jobId', { jobId: correctQuiz.jobId })

@@ -41,7 +41,7 @@ export class JobsService {
     @InjectRedis()
     private readonly redis: Redis,
     @InjectRepository(StructuredJob)
-    private readonly structuredJobRepository: Repository<StructuredJob>,
+    readonly structuredJobRepository: Repository<StructuredJob>,
     @InjectRepository(CustomJobsStages)
     private readonly customJobsStagesRepository: Repository<CustomJobsStages>,
     @InjectRepository(Interview)
@@ -75,6 +75,7 @@ export class JobsService {
         }),
       );
 
+      console.log('jobs', ...jobsString)
       // Append the jobs to the existing list in Redis
       await this.redis.rpush('jobs', ...jobsString);
 
@@ -271,13 +272,17 @@ export class JobsService {
   }
 
   async createJob(newJob: CreateJobDto) {
-    try {
       // Check that dates are valid
+
+
+      // check if job endDate is after now
+      if (newJob.jobEndDate && new Date(newJob.jobEndDate) < new Date()) {
+        throw new BadRequestException('Job end date must be after now');
+      }
+
       // Check that interview end date is after quiz end date
       if (newJob.quizEndDate && newJob.interview?.endDate) {
         if (newJob.interview?.endDate < newJob.quizEndDate) {
-          console.log('Interview end date must be after quiz end date');
-
           throw new BadRequestException(
             'Interview end date must be after quiz end date',
           );
@@ -287,8 +292,6 @@ export class JobsService {
       // Check that interview end date is after job end date
       if (newJob.jobEndDate && newJob.interview?.endDate) {
         if (newJob.jobEndDate > newJob.interview?.endDate) {
-          console.log('Interview end date must be after job end date');
-
           throw new BadRequestException(
             'Interview end date must be after job end date',
           );
@@ -374,13 +377,9 @@ export class JobsService {
       }
 
       return savedJob;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
   }
 
   async editJob(editJob: EditJobDto) {
-    try {
       const {
         jobId,
         userId,
@@ -509,12 +508,9 @@ export class JobsService {
       await this.structuredJobRepository.save(existingJob);
 
       return existingJob;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
   }
 
-  async getJobById(jobId) {
+  async getJobById(jobId: string) {
     const job = await this.structuredJobRepository.findOne({
       where: { id: jobId },
     });
@@ -551,6 +547,10 @@ export class JobsService {
       where: { id: jobId },
       relations: ['stages', 'stages.interview'],
     });
+
+    if(!job) {
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
 
     return job;
   }
@@ -716,6 +716,7 @@ export class JobsService {
       url: job.url,
     }));
 
+
     // Call scrapper service to check the jobs and return list of ids and isActive
     const updatedJobs = JSON.parse(
       await firstValueFrom(
@@ -775,6 +776,11 @@ export class JobsService {
       }
     });
     await Promise.all(bulkInsertPromises);
+
+    // if the number of jobs is less than 1, return that mean dont call the ats or the redis
+    if(addedJobs.length < 1){
+      return;
+    }
 
     // Insert the new jobs to redis
     await this.insertScrappedJobsToRedis(addedJobs);
@@ -849,4 +855,7 @@ export class JobsService {
       message: 'Job moved to next stage successfully.',
     };
   }
+
+
+
 }

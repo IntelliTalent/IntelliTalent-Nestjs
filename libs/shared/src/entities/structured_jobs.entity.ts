@@ -19,6 +19,7 @@ export enum StageType {
 
 @Entity()
 @Index(['title', 'company', 'publishedAt'], { unique: true })
+
 export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
