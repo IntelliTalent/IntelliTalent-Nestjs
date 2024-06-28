@@ -33,7 +33,7 @@ export class AppController {
     const usersCount = 5;
     // create x users
 
-    let users: User[] = firstValueFrom(
+    let users: User[] = await firstValueFrom(
       this.userService.send({ cmd: SeederEvent }, usersCount),
     );
 
