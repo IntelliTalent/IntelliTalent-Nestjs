@@ -1,8 +1,9 @@
+import { IJobs } from "@app/services_communications/jobs-service";
 import { StructuredJob } from "@app/shared";
 import { PageMetaDto } from "@app/shared/api-features/dtos/page-meta.dto";
 import { ApiProperty } from "@nestjs/swagger";
 
-export class AppliedJob extends StructuredJob {
+export class AppliedJob extends IJobs {
     @ApiProperty({
         description: 'the current stage of the user',
         example: 'Applied'
@@ -31,5 +32,5 @@ export class GetAppliedJobsDto {
         }
     })
     appliedJobs: AppliedJob[];
-    
+
 }

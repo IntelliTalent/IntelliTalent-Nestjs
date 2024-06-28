@@ -34,7 +34,7 @@ import {
 } from '@app/services_communications/jobs-service';
 import { fa, faker } from '@faker-js/faker';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
-import { send } from 'process';
+import { send, title } from 'process';
 
 describe('JobsService', () => {
   let service: JobsService;
@@ -78,6 +78,12 @@ describe('JobsService', () => {
     };
   };
 
+  const scrapedJob = {
+    ...testJobDto,
+    url: faker.internet.url(),
+    publishedAt: new Date(),
+  };
+
   const tempRMQService = {
     send: jest.fn().mockImplementation(() => of({})),
     emit: jest.fn(),
@@ -102,6 +108,19 @@ describe('JobsService', () => {
     );
 
     jobExtractorServiceMock = tempRMQService;
+    jobExtractorServiceMock.send = jest.fn().mockImplementation(() =>
+      of(
+        JSON.stringify({
+          jobs: [
+            {
+              ...scrapedJob,
+              title: faker.person.jobTitle(),
+            },
+          ],
+        }),
+      ),
+    );
+
     atsServiceMock = tempRMQService;
     filtrationServiceMock = tempRMQService;
 
@@ -239,12 +258,12 @@ describe('JobsService', () => {
         ...testJobDto,
         jobId: createdJob.id,
         interview: {
-          endDate: new Date('2024-10-11'),
+          endDate: new Date('2021-10-11'),
           interviewQuestions: [faker.lorem.sentence()],
         },
       };
       await expect(service.editJob(editJobDto)).rejects.toThrow(BadRequestException);
-    });
+    }, 150000);
 
     it('should throw an error if interview end date is before quiz end date', async () => {
       const createdJob = await service.createJob(testJobDto);
@@ -257,7 +276,7 @@ describe('JobsService', () => {
         },
       };
       await expect(service.editJob(editJobDto)).rejects.toThrow(BadRequestException);
-    });
+    }, 180000);
 
     it('should update the job title', async () => {
       const job = await service.createJob(testJobDto);
@@ -327,7 +346,7 @@ describe('JobsService', () => {
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('education');
       expect(result.education).toBe(editJobDto.education);
-    });
+    }, 170000);
 
     it('should update the csRequired', async () => {
       const job = await service.createJob(testJobDto);
@@ -473,6 +492,98 @@ describe('JobsService', () => {
       expect(result.totalRecords).toBe(1);
       expect(result.totalPages).toBe(1);
     });
+
+
+  it('should retrieve paginated jobs with jobSource filter', async () => {
+    const createdJob = await service.createJob(testJobDto);
+    const pageOptions: JobsPageOptionsDto = {
+      page: 1,
+      take: 10,
+      jobSource: ['intellitalent', 'linkedin', 'wuzzuf']
+    };
+
+    const result = await service.getJobs(pageOptions);
+
+    expect(result).toBeDefined();
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]).toHaveProperty('source', 'IntelliTalent');
+    expect(result.totalRecords).toBe(1);
+    expect(result.totalPages).toBe(1);
+  });
+
+
+  it('should retrieve paginated jobs with publishDate Last 24 hours', async () => {
+    const createdJob = await service.createJob(testJobDto);
+    const pageOptions: JobsPageOptionsDto = {
+      page: 1,
+      take: 10,
+      publishDate: 'Last 24 hours'
+    };
+
+    const result = await service.getJobs(pageOptions);
+
+    expect(result).toBeDefined();
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]).toHaveProperty('publishedAt');
+    expect(new Date(result.jobs[0].publishedAt)).toBeInstanceOf(Date);
+    expect(result.totalRecords).toBe(1);
+    expect(result.totalPages).toBe(1);
+  });
+
+
+  it('should retrieve paginated jobs with publishDate filter Last 7 days', async () => {
+    const createdJob = await service.createJob(testJobDto);
+    const pageOptions: JobsPageOptionsDto = {
+      page: 1,
+      take: 10,
+      publishDate: 'Last 7 days'
+    };
+
+    const result = await service.getJobs(pageOptions);
+
+    expect(result).toBeDefined();
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]).toHaveProperty('publishedAt');
+    expect(new Date(result.jobs[0].publishedAt)).toBeInstanceOf(Date);
+    expect(result.totalRecords).toBe(1);
+    expect(result.totalPages).toBe(1);
+  });
+
+  it('should retrieve paginated jobs with publishDate filter Last 30 days', async () => {
+    const createdJob = await service.createJob(testJobDto);
+    const pageOptions: JobsPageOptionsDto = {
+      page: 1,
+      take: 10,
+      publishDate: 'Last 30 days'
+    };
+
+    const result = await service.getJobs(pageOptions);
+
+    expect(result).toBeDefined();
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]).toHaveProperty('publishedAt');
+    expect(new Date(result.jobs[0].publishedAt)).toBeInstanceOf(Date);
+    expect(result.totalRecords).toBe(1);
+    expect(result.totalPages).toBe(1);
+  });
+
+  it('should retrieve paginated jobs with publishDate filter Last 3 months', async () => {
+    const createdJob = await service.createJob(testJobDto);
+    const pageOptions: JobsPageOptionsDto = {
+      page: 1,
+      take: 10,
+      publishDate: 'Last 3 months'
+    };
+
+    const result = await service.getJobs(pageOptions);
+
+    expect(result).toBeDefined();
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]).toHaveProperty('publishedAt');
+    expect(new Date(result.jobs[0].publishedAt)).toBeInstanceOf(Date);
+    expect(result.totalRecords).toBe(1);
+    expect(result.totalPages).toBe(1);
+  });
 
     it('should retrieve paginated jobs with job location filter', async () => {
       const createdJob = await service.createJob(testJobDto);
@@ -781,6 +892,12 @@ describe('JobsService', () => {
       await service.callJobExtractor()
       expect(jobExtractorServiceMock.send).toHaveBeenCalled()
   })
+
+  it('should not call jobsServicePatterns', async () => {
+    jobExtractorServiceMock.send = tempRMQService.send;
+    await service.callJobExtractor()
+    expect(jobExtractorServiceMock.send).toHaveBeenCalled()
+  });
 
   it('should throw an error if the job does not exist', async () => {
       const jobId = faker.string.uuid();

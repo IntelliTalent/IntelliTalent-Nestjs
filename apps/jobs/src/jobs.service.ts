@@ -76,7 +76,6 @@ export class JobsService {
         }),
       );
 
-      console.log('jobs', ...jobsString)
       // Append the jobs to the existing list in Redis
       await this.redis.rpush('jobs', ...jobsString);
 
@@ -800,10 +799,12 @@ export class JobsService {
         await this.structuredJobRepository.save(job as any);
         addedJobs.push(job);
       } catch (error) {
+        console.error(`Error saving job: ${error.message}`);
         return;
       }
     });
     await Promise.all(bulkInsertPromises);
+
 
     // if the number of jobs is less than 1, return that mean dont call the ats or the redis
     if(addedJobs.length < 1){

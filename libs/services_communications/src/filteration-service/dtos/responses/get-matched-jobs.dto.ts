@@ -1,8 +1,9 @@
+import { IJobs } from "@app/services_communications/jobs-service";
 import { StructuredJob } from "@app/shared";
 import { PageMetaDto } from "@app/shared/api-features/dtos/page-meta.dto";
 import { ApiProperty } from "@nestjs/swagger";
 
-export class MatchedJob extends StructuredJob{
+export class MatchedJob extends IJobs {
     @ApiProperty({
         description: 'Match score of the ATS',
         type: 'number',
