@@ -23,7 +23,7 @@ export class User extends AbstractEntity {
   @Factory(faker => faker.internet.email())
   email: string;
 
-  @Factory(faker => faker.internet.password())
+  @Factory(faker => "$2a$12$ssnHJiRax4kp.TgXbx8RNu2T9OC.hzSgwReoD1l5SPLIY7R66on7K")
   @Column({ select: false })
   password: string;
 

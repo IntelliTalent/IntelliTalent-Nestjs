@@ -25,9 +25,15 @@ export enum JobSource {
   Wuzzuf = 2,
 }
 
-@Entity()
+
+
+export const struttedJobTableName = 'structured_jobs';
+
+@Entity({
+  name: struttedJobTableName,
+})
 @Index(['title', 'company', 'publishedAt'], { unique: true })
-@Index('idx_job_source', ['source'])
+@Index('sourceIndex', ['source', 'jobId'], )
 export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

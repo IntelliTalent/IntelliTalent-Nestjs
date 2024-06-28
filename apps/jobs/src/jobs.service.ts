@@ -14,10 +14,11 @@ import {
   ServiceName,
   StageType,
   StructuredJob,
+  struttedJobTableName,
   UnstructuredJobs,
 } from '@app/shared';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import {
   CreateJobDto,
   EditJobDto,
@@ -26,7 +27,7 @@ import {
 } from '@app/services_communications/jobs-service';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Redis } from 'ioredis';
@@ -58,7 +59,12 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-  ) {}
+    @InjectEntityManager()
+    private entityManager: EntityManager,
+  ) {
+  }
+
+
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
