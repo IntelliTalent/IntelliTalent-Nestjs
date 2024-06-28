@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsPhoneNumber,
   IsString,
   IsStrongPassword,
@@ -78,6 +79,7 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @IsString()
+  @IsOptional()
   address: string;
 
   @ApiProperty({
@@ -91,6 +93,7 @@ export class CreateUserDto {
     description: 'Photo URL of the user',
     example: 'https://avatars.githubusercontent.com/u/70758177?v=4',
   })
+  @IsOptional()
   @IsString()
   photo: string;
 
