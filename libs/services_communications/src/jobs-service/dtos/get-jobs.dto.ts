@@ -53,6 +53,14 @@ export class JobsPageOptionsDto {
   jobPlace?: string | string[];
 
   @ApiPropertyOptional({
+    required: false,
+    description: 'Job sources to search for',
+  })
+  @IsOptional()
+  @IsString({ each: true })
+  jobSource?: string | string[];
+
+  @ApiPropertyOptional({
     minimum: 1,
     default: 1,
   })
