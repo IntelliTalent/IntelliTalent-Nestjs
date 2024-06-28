@@ -10,6 +10,7 @@ import {
   Constants,
   CustomJobsStages,
   Interview,
+  JobSource,
   ServiceName,
   StageType,
   StructuredJob,
@@ -537,6 +538,7 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
       currentStage: job.currentStage,
+      source: job.jobSource,
     };
     return responseJob;
   }
@@ -562,6 +564,7 @@ export class JobsService {
       publishDate,
       jobType,
       jobPlace,
+      jobSource,
       csRequired,
       take,
       page,
@@ -609,6 +612,29 @@ export class JobsService {
       const jobPlaces = Array.isArray(jobPlace) ? jobPlace : [jobPlace];
       queryBuilder.andWhere('job.jobPlace IN (:...jobPlaces)', {
         jobPlaces,
+      });
+    }
+
+    // Apply jobSource if provided
+    if (jobSource) {
+      const jobSources = (
+        Array.isArray(jobSource) ? jobSource : [jobSource]
+      ).map((source) => {
+        // Map each string value to its corresponding JobSource enum value
+        switch (source.toLowerCase()) {
+          case 'intellitalent':
+            return JobSource.IntelliTalent;
+          case 'linkedin':
+            return JobSource.LinkedIn;
+          case 'wuzzuf':
+            return JobSource.Wuzzuf;
+          default:
+            throw new BadRequestException(`Unknown job source: ${source}`);
+        }
+      });
+
+      queryBuilder.andWhere('job.source IN (:...jobSources)', {
+        jobSources,
       });
     }
 
@@ -667,6 +693,7 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
       currentStage: job.currentStage,
+      source: job.jobSource,
     }));
 
     return {
@@ -698,6 +725,7 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
       currentStage: job.currentStage,
+      source: job.jobSource,
     }));
 
     return { jobs: responseJobs };
