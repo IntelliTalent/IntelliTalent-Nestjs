@@ -1,5 +1,6 @@
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
+  BadRequestException,
   Controller,
   Post,
   UploadedFile,
@@ -26,7 +27,8 @@ export class ApiUploaderController {
   @Public()
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: any): Promise<UploadResponseDto> {
+  async upload(@UploadedFile() file?: any): Promise<UploadResponseDto> {
+    if (!file) throw new BadRequestException('No file provided');
     return await this.uploaderService.uploadFile(file);
   }
 }
