@@ -4,11 +4,13 @@ export const quizzesPattern = {
   getUsersScores: 'getUsersScores', // Get all users scores for a job
   getUserQuizzes: 'getUserQuizzes', // Get all quizzes for a user
   getQuizSlugs: 'getQuizSlugs', // Get all quiz slugs for a job
+  getQuizzesStats: 'getQuizzesStats', // Get all quizzes stats
 };
 
 export const quizzesEvents = {
   createQuiz: 'createQuiz', // Create a quiz for a user and job
   submitQuiz: 'submitQuiz', // Correct a quiz for a job
+  activateQuiz: 'activateQuiz', // Activate a quiz for a job
 };
 
 export const quizzesGeneratorPattern = {

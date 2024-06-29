@@ -12,7 +12,7 @@ import {
 } from '@app/services_communications';
 import { Constants, ServiceName, User } from '@app/shared';
 import getConfigVariables from '@app/shared/config/configVariables.config';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -116,12 +116,16 @@ export class AuthService {
   }
 
   async forgetPassword(email: string) {
-    const user = await firstValueFrom(
+    const user: User = await firstValueFrom(
       this.userService.send(
         { cmd: userServicePatterns.findUserByEmail },
         email,
       ),
     );
+
+    if(!user.isVerified) {
+      throw new BadRequestException('Please verify your email first, check your email for the verification link')
+    }
 
     const payload: TokenPayload = {
       email: user.email,

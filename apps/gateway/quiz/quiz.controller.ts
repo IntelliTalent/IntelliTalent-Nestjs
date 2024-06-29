@@ -12,7 +12,9 @@ import {
   ResponseQuizWithoutAnswersDto,
   ResponseSubmitQuiz,
   SubmitQuizDto,
+  UserQuizzesStatisticsDto,
 } from '@app/services_communications';
+import { ResponseQuizStatisticsDto } from '@app/services_communications/quizzes/dtos/response-quiz-statistics.dto';
 import { ApiPaginatedResponse, CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import {
@@ -30,6 +32,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiResponseProperty,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -59,6 +62,32 @@ export class QuizController {
       payload,
     );
   }
+
+
+  @Get('/my-quizzes-statistics')
+  @ApiBearerAuth(AUTH_HEADER)
+  @ApiOperation({ summary: 'get user quizzes statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'User quizzes statistics',
+    type: ResponseQuizStatisticsDto,
+  })
+  @Roles([UserType.jobSeeker])
+  async getUserQuizzesStatistics(
+    @CurrentUser() user: User,
+  ) {
+    const payload: UserQuizzesStatisticsDto = {
+      userId: user.id,
+    };
+
+    return this.quizzesService.send(
+      { cmd: quizzesPattern.getQuizzesStats },
+      payload,
+    );
+  }
+
+
+
 
   @Get('/:identifier')
   @ApiBearerAuth(AUTH_HEADER)

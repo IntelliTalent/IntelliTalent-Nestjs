@@ -24,6 +24,7 @@ import { ApiUserModule } from '../user/user.module';
   imports: [
     SharedModule.registerRmq(ServiceName.AUTH_SERVICE),
     SharedModule.registerRmq(ServiceName.USER_SERVICE),
+    SharedModule.registerRmq(ServiceName.USER_SERVICE),
     SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerRmq(ServiceName.COVER_LETTER_GENERATOR_SERVICE),

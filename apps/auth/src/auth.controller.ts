@@ -39,8 +39,8 @@ export class AuthController {
   }
 
   @MessagePattern({ cmd: authServicePattern.forgetPassword })
-  async forgetPassword(@Payload() forgetPassowrdDto: ForgetPasswordDto) {
-    return this.authService.forgetPassword(forgetPassowrdDto.email);
+  async forgetPassword(@Payload() forgetPasswordDto: ForgetPasswordDto) {
+    return this.authService.forgetPassword(forgetPasswordDto.email);
   }
 
   @MessagePattern({ cmd: authServicePattern.resetPassword })

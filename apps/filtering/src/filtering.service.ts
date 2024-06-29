@@ -5,7 +5,7 @@ import {
 import { MatchProfileAndJobData } from '@app/services_communications/ats-service/interfaces/match.interface';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
-import { jobsServicePatterns } from '@app/services_communications/jobs-service';
+import { IJobs, jobsServicePatterns } from '@app/services_communications/jobs-service';
 import { ServiceName, StructuredJob, User } from '@app/shared';
 import {
   Filteration,
@@ -625,7 +625,7 @@ export class FilteringService {
     // Step 3: get the job details for each matched job
     const jobsDetails = await Promise.all(
       matchedJobs.map(async (job) => {
-        const jobDetails: StructuredJob = await firstValueFrom(
+        const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
               cmd: jobsServicePatterns.getJobById,
@@ -705,7 +705,7 @@ export class FilteringService {
     // Step 3: get the job details for each applied job
     const jobsDetails = await Promise.all(
       appliedJobs.map(async (job) => {
-        const jobDetails: StructuredJob = await firstValueFrom(
+        const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
               cmd: jobsServicePatterns.getJobById,
