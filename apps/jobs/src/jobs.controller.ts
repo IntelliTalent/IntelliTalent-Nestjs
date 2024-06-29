@@ -9,6 +9,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RpcExceptionsFilter } from '@app/shared';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
+import { GetUserJobsDto } from '@app/services_communications/jobs-service/dtos/get-user-jobs.dto';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -51,8 +52,8 @@ export class JobsController {
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getUserJobs })
-  getUserJobs(userId: string) {
-    return this.jobsService.getUserJobs(userId);
+  getUserJobs(@Payload() getUserJobsDto: GetUserJobsDto) {
+    return this.jobsService.getUserJobs(getUserJobsDto);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.deactivateJob })

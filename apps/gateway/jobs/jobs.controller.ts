@@ -6,6 +6,7 @@ import {
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
+import { GetUserJobsDto } from '@app/services_communications/jobs-service/dtos/get-user-jobs.dto';
 import {
   CurrentUser,
   Roles,
@@ -14,6 +15,7 @@ import {
   User,
   UserType,
 } from '@app/shared';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
 import {
   Controller,
@@ -73,10 +75,18 @@ export class JobsController {
     description: 'List of jobs returned successfully.',
   })
   @ApiBearerAuth(AUTH_HEADER)
-  async getUserJobs(@CurrentUser() user: User) {
+  async getUserJobs(
+    @CurrentUser() user: User,
+    @Query() pageOptionsDto: PageOptionsDto,
+  ) {
+    const getUserJobs: GetUserJobsDto = {
+      userId: user.id,
+      pageOptionsDto,
+    };
+
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getUserJobs },
-      user.id,
+      getUserJobs,
     );
   }
 

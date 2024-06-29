@@ -35,6 +35,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { isDefined } from 'class-validator';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
+import { GetUserJobsDto } from '@app/services_communications/jobs-service/dtos/get-user-jobs.dto';
 
 @Injectable()
 export class JobsService {
@@ -703,10 +704,24 @@ export class JobsService {
     };
   }
 
-  async getUserJobs(userId: string) {
-    const jobs = await this.structuredJobRepository.find({
-      where: { userId },
-    });
+  async getUserJobs(getUserJobsDto: GetUserJobsDto) {
+    const queryBuilder = this.structuredJobRepository
+      .createQueryBuilder('job')
+      .where('job.userId = :userId', { userId: getUserJobsDto.userId });
+
+    const { page, take } = getUserJobsDto.pageOptionsDto;
+
+    // Calculate skip
+    let skip = undefined;
+    if (page && take) {
+      skip = (page - 1) * take;
+    }
+
+    // Apply pagination
+    queryBuilder.skip(skip).take(take);
+
+    // Execute query and map the results to IJobs format
+    const [jobs, count] = await queryBuilder.getManyAndCount();
 
     const responseJobs: IJobs[] = jobs.map((job) => ({
       id: job.id,
@@ -728,7 +743,11 @@ export class JobsService {
       source: job.jobSource,
     }));
 
-    return { jobs: responseJobs };
+    return {
+      jobs: responseJobs,
+      totalRecords: count,
+      totalPages: Math.ceil(count / (take || 10)),
+    };
   }
 
   async checkActiveJobs() {
