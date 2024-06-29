@@ -1,4 +1,5 @@
 import { EmailTemplates } from '../constants/templates';
+import { AcceptanceEmailTemplateData } from './acceptance-email-template.dto';
 import { AtsEmailTemplateData } from './ats-email.template.dto';
 import { ForgetPasswordTemplateData } from './forget-password-template-data';
 import { InterviewTemplateData } from './interview-email.dto';
@@ -16,7 +17,8 @@ export class TemplateData {
     | InterviewTemplateData
     | QuizEmailTemplateData
     | AtsEmailTemplateData
-    | RejectionEmailTemplateData;
+    | RejectionEmailTemplateData
+    | AcceptanceEmailTemplateData;
 }
 
 export class SendEmailsDto {

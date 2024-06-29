@@ -2,16 +2,16 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import { IEmail } from './templates';
+import { handleTemplate, IEmail } from './templates';
 import { recentEmailsExpire, recentEmailsKey } from '@app/shared';
 import { Cron } from '@nestjs/schedule';
-
 @Injectable()
 export class NotifierService {
   constructor(
     @InjectRedis() private readonly redis: Redis,
     private readonly mailService: MailerService,
-  ) {}
+  ) {
+  }
 
   sendEmails(emails: IEmail[]) {
     const now = Date.now();
@@ -33,6 +33,7 @@ export class NotifierService {
 
   async sendMail(email: IEmail) {
     console.log('sending email', email);
+
 
     await this.mailService.sendMail({
       to: email.to,
