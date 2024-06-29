@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ServiceName } from '@app/shared';
 import { ClientProxy } from '@nestjs/microservices';
 import {
@@ -18,6 +18,7 @@ import {
   PaginatedJobQuizzesIdentifierDto,
   QuizIdentifierDto,
   quizzesGeneratorPattern,
+  RemoveProfileQuizzesDto,
   SubmitQuizDto,
   UserQuizzesStatisticsDto,
 } from '@app/services_communications';
@@ -321,4 +322,18 @@ export class QuizzesService {
 
     return quizSlugs;
   }
+
+
+  async removeProfileQuizzes(dto: RemoveProfileQuizzesDto) {
+    const { userId, jobsIds } = dto;
+
+    const jobsIdsArray = jobsIds.split(',');
+
+    await this.quizRepository.delete({
+      userId: userId,
+      jobId: In(jobsIdsArray),
+    });
+  }
+
+
 }

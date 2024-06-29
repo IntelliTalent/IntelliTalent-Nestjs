@@ -31,6 +31,7 @@ import { MongoDBName } from '@app/shared/config/mongodb.config';
     SharedModule.registerRedis(RedisDBName.profiles_DB),
     SharedModule.registerMongoDB(MongoDBName.FormFieldsDB),
     SharedModule.registerRmq(ServiceName.AUTOFILL_SERVICE),
+    SharedModule.registerRmq(ServiceName.FILTERATION_SERVICE),
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([
       Profile,

@@ -23,6 +23,7 @@ export class ProfileService {
     @InjectRepository(Profile)
     private profileRepository: Repository<Profile>,
     @Inject(ServiceName.AUTOFILL_SERVICE) private autoFillService: ClientProxy,
+    @Inject(ServiceName.FILTERATION_SERVICE) private filtrationService: ClientProxy
   ) {}
 
   async create(createProfileDto: CreateProfileDto): Promise<Profile> {
@@ -95,6 +96,10 @@ export class ProfileService {
     }
 
     this.profileRepository.softDelete(DeleteProfileDto.profileId);
+
+
+    // TODO: should uncomment this line after implementing the filtration service
+    // this.filtrationService.emit('deleteProfile', DeleteProfileDto.profileId);
 
     return 'Profile Deleted Successfully';
   }

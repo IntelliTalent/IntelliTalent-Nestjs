@@ -17,6 +17,7 @@ import {
   QuizIdentifierDto,
   quizzesEvents,
   quizzesPattern,
+  RemoveProfileQuizzesDto,
   SubmitQuizDto,
   UserQuizzesStatisticsDto,
 } from '@app/services_communications/quizzes';
@@ -83,4 +84,11 @@ export class QuizzesController {
   async createQuiz(@Payload() createQuizDto: CreateQuizDto) {
     return this.quizzesService.createQuiz(createQuizDto);
   }
+
+  @EventPattern({ cmd: quizzesEvents.removeProfileQuizzes })
+  removeProfileQuizzes(@Payload() removeProfileQuizzesDto: RemoveProfileQuizzesDto) {
+     this.quizzesService.removeProfileQuizzes(removeProfileQuizzesDto);
+  }
+
+
 }
