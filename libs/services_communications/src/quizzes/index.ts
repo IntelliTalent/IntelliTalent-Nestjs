@@ -13,4 +13,4 @@ export * from './dtos/respose-submit-quiz.dto';
 export * from './dtos/response-job-quizzes-score.dto';
 export * from './dtos/get-quiz-slugs.dto';
 export * from './dtos/pagainated-job-quiz-identifier.dto';
-
+export * from './dtos/activate-quiz.dto';

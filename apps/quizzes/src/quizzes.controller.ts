@@ -8,6 +8,7 @@ import {
 import { QuizzesService } from './quizzes.service';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  ActivateQuizDto,
   CreateQuizDto,
   GetQuizSlugsDto,
   GetUserQuizzesDto,
@@ -24,7 +25,11 @@ import { RpcExceptionsFilter } from '@app/shared';
 @UseFilters(RpcExceptionsFilter)
 @UseInterceptors(ClassSerializerInterceptor)
 export class QuizzesController {
-  constructor(private readonly quizzesService: QuizzesService) {}
+  constructor(private readonly quizzesService: QuizzesService) {
+    // this.quizzesService.activateQuiz({
+    //   jobId: 'b66f211a-8f97-4b34-a0cf-1f843d4826d0'
+    // })
+  }
 
   @MessagePattern({ cmd: quizzesPattern.getQuizSlugs })
   @SerializeOptions({
@@ -43,6 +48,11 @@ export class QuizzesController {
   @MessagePattern({ cmd: quizzesPattern.getQuiz })
   async getQuiz(@Payload() getQuiz: QuizIdentifierDto) {
     return this.quizzesService.getQuiz(getQuiz);
+  }
+
+  @MessagePattern({ cmd: quizzesEvents.activateQuiz })
+  async activateQuiz(@Payload() activateQuiz: ActivateQuizDto) {
+     this.quizzesService.activateQuiz(activateQuiz);
   }
 
   @MessagePattern({ cmd: quizzesEvents.submitQuiz })

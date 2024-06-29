@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { ServiceName } from '@app/shared';
 import { ClientProxy } from '@nestjs/microservices';
 import {
+  ActivateQuizDto,
   CreateQuizDto,
   GetQuizSlugsDto,
   GetUserQuizzesDto,
@@ -42,18 +43,19 @@ export class QuizzesService {
     // for (let i = 0; i < 30; i++) {
     //   // create array from 1 to 8708dsdssd
     //   const usersDetails: UserQuizDetailsDto[] = Array.from(
-    //     { length: 30 },
+    //     { length: 1 },
     //     (_, i) => {
     //       return {
-    //         userId: i.toString(),
+    //         userId: '0183de39-2c51-4708-a683-dcb95425a42d',
     //         email: 'test' + i + '@test.com',
     //       };
     //     },
     //   );
     //   const deadline = new Date();
     //   deadline.setDate(deadline.getDate() + 2);
+    //   console.log()
     //   this.createQuiz({
-    //     jobId: jobUUID,
+    //     jobId: uuidv4(),
     //     skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
     //     numberOfQuestions: 5,
     //     recruiterId: '1',
@@ -115,6 +117,7 @@ export class QuizzesService {
           questionsAnswers: quiz.questions.map((question) => question.answer),
           randomSlug: Math.random().toString(36).substring(2, 15),
           ...createQuizDto,
+          deletedAt: new Date(),
         }),
       );
     }
@@ -230,6 +233,12 @@ export class QuizzesService {
       throw new BadRequestException('You have not taken this quiz yet.');
 
     return quiz;
+  }
+
+  async activateQuiz(jobQuizzesIdentifier: ActivateQuizDto) {
+    const { jobId } = jobQuizzesIdentifier;
+
+    await this.quizRepository.restore({ jobId: jobId });
   }
 
   async getUsersScores(correctQuiz: PaginatedJobQuizzesIdentifierDto) {

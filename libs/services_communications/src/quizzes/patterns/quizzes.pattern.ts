@@ -9,6 +9,7 @@ export const quizzesPattern = {
 export const quizzesEvents = {
   createQuiz: 'createQuiz', // Create a quiz for a user and job
   submitQuiz: 'submitQuiz', // Correct a quiz for a job
+  activateQuiz: 'activateQuiz', // Activate a quiz for a job
 };
 
 export const quizzesGeneratorPattern = {
