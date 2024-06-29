@@ -14,6 +14,8 @@ import { GetInterviewAnswersDto } from '@app/services_communications/filteration
 import { RpcExceptionsFilter } from '@app/shared';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { AuthApplyJobRequestDto } from '@app/services_communications/filteration-service/dtos/requests/auth-appy-job-request.dto';
+import { GetUserInterviewsDto } from '@app/services_communications/filteration-service/dtos/requests/get-user-interviews.dto';
+import { GetUserInterviewsStatsDto } from '@app/services_communications/filteration-service/dtos/requests/get-user-interviews-stats.dto';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -89,6 +91,16 @@ export class FilteringController {
   @MessagePattern({cmd: FilterationServicePattern.getInterviewAnswers})
   getInterviewAnswers(@Payload() data: GetInterviewAnswersDto){
     return this.filteringService.getInterviewAnswers(data.userId, data.jobId, data.profileId);
+  }
+
+  @MessagePattern({cmd: FilterationServicePattern.getUserInterviews})
+  getUserInterviews(@Payload() data: GetUserInterviewsDto){
+    return this.filteringService.getUserInterviews(data.userId, data.pageOptionsDto);
+  }
+
+  @MessagePattern({cmd: FilterationServicePattern.getUserInterviewStats})
+  getUserInterviewStats(@Payload() data: GetUserInterviewsStatsDto){
+    return this.filteringService.getUserInterviewStats(data.userId);
   }
 
   @MessagePattern({cmd: FilterationServicePattern.getInterviewedApplicants})
