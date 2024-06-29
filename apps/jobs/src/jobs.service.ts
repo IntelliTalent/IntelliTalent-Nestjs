@@ -501,9 +501,21 @@ export class JobsService {
           );
         }
 
-        existingJob.stages.interview.endDate = interview.endDate;
-        existingJob.stages.interview.interviewQuestions =
-          interview.interviewQuestions;
+        // Check if there was an old interview remove it
+        if (existingJob.stages.interview) {
+          await this.interviewRepository.delete({
+            id: existingJob.stages.interview.id,
+          });
+        }
+
+        const newInterview = this.interviewRepository.create({
+          interviewQuestions: interview.interviewQuestions,
+          endDate: interview.endDate,
+        });
+
+        await this.interviewRepository.save(newInterview);
+
+        existingJob.stages.interview = newInterview;
         this.scheduleInterviewEnd(existingJob);
       }
 
