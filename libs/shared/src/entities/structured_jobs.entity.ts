@@ -5,10 +5,12 @@ import {
   JoinColumn,
   OneToOne,
   Index,
+  BeforeInsert,
 } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 import { CustomJobsStages } from './custom_jobs_stages.entity';
+import { Expose } from 'class-transformer';
 
 export enum StageType {
   Active = 'Active',
@@ -17,8 +19,21 @@ export enum StageType {
   Final = 'Final',
 }
 
-@Entity()
+export enum JobSource {
+  IntelliTalent = 0,
+  LinkedIn = 1,
+  Wuzzuf = 2,
+}
+
+
+
+export const struttedJobTableName = 'structured_jobs';
+
+@Entity({
+  name: struttedJobTableName,
+})
 @Index(['title', 'company', 'publishedAt'], { unique: true })
+@Index('sourceIndex', ['source', 'jobId'], )
 export class StructuredJob extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -28,6 +43,9 @@ export class StructuredJob extends AbstractEntity {
 
   @Column({ nullable: true })
   userId: string; // id for the recruiter
+
+  @Column({ type: 'enum', enum: JobSource, default: JobSource.IntelliTalent })
+  source: JobSource;
 
   @Column({})
   title: string;
@@ -80,4 +98,28 @@ export class StructuredJob extends AbstractEntity {
   @OneToOne(() => CustomJobsStages, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn()
   stages: CustomJobsStages;
+
+  @BeforeInsert()
+  setSource() {
+    this.source = StructuredJob.getJobSource(this.url);
+  }
+
+  @Expose()
+  get jobSource(): string {
+    const key = Object.keys(JobSource).find(
+      (key) => JobSource[key] === this.source,
+    );
+    return key;
+  }
+
+  static getJobSource(url: string): JobSource {
+    switch (true) {
+      case url.includes('linkedin'):
+        return JobSource.LinkedIn;
+      case url.includes('wuzzuf'):
+        return JobSource.Wuzzuf;
+      default:
+        return JobSource.IntelliTalent;
+    }
+  }
 }

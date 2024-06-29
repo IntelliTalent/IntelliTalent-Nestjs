@@ -3,9 +3,11 @@ import { UserType } from '../enums/user-type.enum';
 import { AbstractEntity } from './abstract.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
+import { Factory } from 'nestjs-seeder';
 
 @Entity()
 export class User extends AbstractEntity {
+
   @ApiProperty({
     description: 'Id of the user',
     example: 'd2b9f3a6-3e9f-4e3d-9f3a-63e9f4e3d9f3',
@@ -18,8 +20,10 @@ export class User extends AbstractEntity {
     example: 'waer@waer.com',
   })
   @Column({ unique: true, type: 'varchar', nullable: false })
+  @Factory(faker => faker.internet.email())
   email: string;
 
+  @Factory(faker => "$2a$12$ssnHJiRax4kp.TgXbx8RNu2T9OC.hzSgwReoD1l5SPLIY7R66on7K")
   @Column({ select: false })
   password: string;
 
@@ -27,6 +31,7 @@ export class User extends AbstractEntity {
     description: 'firstName of the user',
     example: 'waer',
   })
+  @Factory(faker => faker.person.firstName())
   @Column({})
   firstName: string;
 
@@ -35,6 +40,7 @@ export class User extends AbstractEntity {
     example: 'alwaer',
   })
   @Column({})
+  @Factory(faker => faker.person.lastName())
   lastName: string;
 
   @ApiProperty({
@@ -44,6 +50,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'text',
   })
+  @Factory(faker => faker.phone.number())
   phoneNumber: string;
 
   @ApiProperty({
@@ -53,6 +60,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'text',
   })
+  @Factory(faker => faker.location.country())
   country: string;
 
   @ApiProperty({
@@ -62,6 +70,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'text',
   })
+  @Factory(faker => faker.location.city())
   city: string;
 
   @ApiProperty({
@@ -72,6 +81,7 @@ export class User extends AbstractEntity {
     type: 'text',
     nullable: true,
   })
+  @Factory(faker => faker.location.streetAddress())
   address: string;
 
   @ApiProperty({
@@ -81,6 +91,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'date',
   })
+  @Factory(faker => faker.date.past())
   dateOfBirth: Date;
 
   @ApiProperty({
@@ -91,6 +102,7 @@ export class User extends AbstractEntity {
     type: 'text',
     nullable: true,
   })
+  @Factory(faker => faker.image.avatar())
   photo: string;
 
   @ApiProperty({
@@ -99,6 +111,7 @@ export class User extends AbstractEntity {
     example: UserType.jobSeeker,
   })
   @Column({ type: 'enum', enum: UserType, default: UserType.jobSeeker })
+  @Factory(faker => faker.helpers.enumValue(UserType))
   type: UserType;
 
   @Column({
@@ -106,6 +119,7 @@ export class User extends AbstractEntity {
     default: false,
   })
   @Exclude()
+  @Factory(faker => faker.helpers.arrayElement([true, false]))
   isVerified: boolean;
 
   @ApiProperty({

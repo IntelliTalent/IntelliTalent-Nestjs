@@ -6,14 +6,24 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  ClientProxy,
+  EventPattern,
+  MessagePattern,
+  Payload,
+} from '@nestjs/microservices';
 import {
   changePasswordDto,
   CreateUserDto,
   HealthCheckPatterns,
   userServicePatterns,
 } from '@app/services_communications';
-import { RpcExceptionsFilter, ServiceName, User } from '@app/shared';
+import {
+  RpcExceptionsFilter,
+  SeederEvent,
+  ServiceName,
+  User,
+} from '@app/shared';
 import { UpdateUserDto } from '@app/services_communications/userService/dtos/updateUser.dto';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
@@ -23,13 +33,16 @@ import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/
 @UseFilters(RpcExceptionsFilter)
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @MessagePattern({ cmd: HealthCheckPatterns })
   getHello() {
     return this.userService.getHello();
+  }
+
+  @MessagePattern({ cmd: SeederEvent })
+  seeder(count: number) {
+    return this.userService.seeder(count);
   }
 
   @MessagePattern({ cmd: userServicePatterns.createUser })
@@ -115,7 +128,6 @@ export class UserController {
     return this.userService.getUsersByIds(dto.usersIds);
   }
 
-
   @MessagePattern({ cmd: userServicePatterns.findVerifiedUser })
   findVerifiedUser(@Payload() id: string): Promise<User> {
     return this.userService.findUser({
@@ -125,5 +137,4 @@ export class UserController {
       },
     });
   }
-
 }

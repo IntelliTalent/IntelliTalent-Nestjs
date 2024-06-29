@@ -10,16 +10,16 @@ import { Repository } from 'typeorm';
 import { ServiceName } from '@app/shared';
 import { ClientProxy } from '@nestjs/microservices';
 import {
+  ActivateQuizDto,
   CreateQuizDto,
   GetQuizSlugsDto,
   GetUserQuizzesDto,
   IQuizzesGeneratorDto,
-  JobQuizzesIdentifierDto,
   PaginatedJobQuizzesIdentifierDto,
   QuizIdentifierDto,
   quizzesGeneratorPattern,
   SubmitQuizDto,
-  UserQuizDetailsDto,
+  UserQuizzesStatisticsDto,
 } from '@app/services_communications';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -29,6 +29,7 @@ import {
 import { Quiz } from '@app/shared/entities/quiz.entity';
 import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
 import { v4 as uuidv4 } from 'uuid';
+import { ResponseQuizStatisticsDto } from '@app/services_communications/quizzes/dtos/response-quiz-statistics.dto';
 
 @Injectable()
 export class QuizzesService {
@@ -42,18 +43,19 @@ export class QuizzesService {
     // for (let i = 0; i < 30; i++) {
     //   // create array from 1 to 8708dsdssd
     //   const usersDetails: UserQuizDetailsDto[] = Array.from(
-    //     { length: 30 },
+    //     { length: 1 },
     //     (_, i) => {
     //       return {
-    //         userId: i.toString(),
+    //         userId: '0183de39-2c51-4708-a683-dcb95425a42d',
     //         email: 'test' + i + '@test.com',
     //       };
     //     },
     //   );
     //   const deadline = new Date();
     //   deadline.setDate(deadline.getDate() + 2);
+    //   console.log()
     //   this.createQuiz({
-    //     jobId: jobUUID,
+    //     jobId: uuidv4(),
     //     skills: ['mysql', 'nodejs', 'reactjs', 'typescript', 'mongodb'],
     //     numberOfQuestions: 5,
     //     recruiterId: '1',
@@ -115,11 +117,31 @@ export class QuizzesService {
           questionsAnswers: quiz.questions.map((question) => question.answer),
           randomSlug: Math.random().toString(36).substring(2, 15),
           ...createQuizDto,
+          deletedAt: new Date(),
         }),
       );
     }
 
     return this.quizRepository.save(quizzesEntities);
+  }
+
+
+  async getQuizzesStats(quizStatisticsDto: UserQuizzesStatisticsDto): Promise<ResponseQuizStatisticsDto> {
+    const { userId } = quizStatisticsDto;
+    const result = await this.quizRepository.createQueryBuilder('quiz')
+    .select('quiz.isTaken', 'isTaken')
+    .addSelect('COUNT(*)', 'count')
+    .where('quiz.userId = :userId', { userId })
+    .groupBy('quiz.isTaken')
+    .getRawMany();
+
+    const statistics = {
+      notTaken: Number(result.find((r) => r.isTaken === false).count) || 0,
+      taken: Number(result.find((r) => r.isTaken === true).count) || 0,
+      total: result.reduce((acc, r) => acc + Number(r.count), 0),
+    }
+
+    return statistics;
   }
 
   async submitQuiz(submitQuiz: SubmitQuizDto): Promise<{ percentage: number }> {
@@ -154,6 +176,7 @@ export class QuizzesService {
 
     quiz.userAnswers = submitQuiz.userAnswers;
     quiz.score = score;
+    quiz.isTaken = true;
     await this.quizRepository.save(quiz);
     return {
       percentage: (score / questionsAnswers.length) * 100,
@@ -192,6 +215,12 @@ export class QuizzesService {
       );
 
     } else {
+
+      await this.quizRepository.update(
+        { userId: userId, jobId: jobId },
+        { isTaken: true },
+      );
+
       throw new BadRequestException(
         'You have reached the maximum number of visits for this quiz.',
       );
@@ -225,9 +254,14 @@ export class QuizzesService {
     return quiz;
   }
 
+  async activateQuiz(jobQuizzesIdentifier: ActivateQuizDto) {
+    const { jobId } = jobQuizzesIdentifier;
+
+    await this.quizRepository.restore({ jobId: jobId });
+  }
+
   async getUsersScores(correctQuiz: PaginatedJobQuizzesIdentifierDto) {
     const { page, take } = correctQuiz.pageOptionsDto;
-    console.log('correctQuiz', correctQuiz);
     const jobQuizzesScores = this.quizRepository
       .createQueryBuilder('quiz')
       .where('quiz.jobId = :jobId', { jobId: correctQuiz.jobId })

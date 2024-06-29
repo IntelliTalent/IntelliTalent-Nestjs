@@ -9,3 +9,4 @@ export * from './dtos/interview-email.dto';
 export * from './dtos/quiz.-emaildto';
 export * from './dtos/ats-email.template.dto';
 export * from './dtos/rejection-email-template.dto';
+export * from './dtos/acceptance-email-template.dto';

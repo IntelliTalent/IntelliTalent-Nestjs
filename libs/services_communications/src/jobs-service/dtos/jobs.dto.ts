@@ -49,4 +49,7 @@ export class IJobs {
 
   @ApiProperty()
   currentStage: string;
+
+  @ApiProperty()
+  source: string;
 }

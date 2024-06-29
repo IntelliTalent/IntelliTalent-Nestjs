@@ -27,6 +27,7 @@ import {
   AutofillServicePattern,
 } from '@app/services_communications/autofill';
 import { firstValueFrom } from 'rxjs';
+import { DataFactory } from 'nestjs-seeder';
 
 @Injectable()
 export class UserService {
@@ -37,7 +38,13 @@ export class UserService {
     private readonly notifierService: ClientProxy,
     @Inject(ServiceName.AUTOFILL_SERVICE)
     private readonly formFieldsService: ClientProxy,
-  ) {}
+  ) {
+  }
+
+  seeder(count: number) {
+    const users = DataFactory.createForClass(User).generate(count);
+    return this.userRepository.save(users);
+  }
 
   getHello(): string {
     return 'Hello World From User Service!';
@@ -239,7 +246,12 @@ export class UserService {
       },
     });
 
-    await this.validateUser(user.email, currentPassword);
+    try {
+      await this.validateUser(user.email, currentPassword);
+    } catch (error) {
+      console.log(error);
+      throw new UnauthorizedException('Invalid current password');
+    }
 
     const salt: number = +(await getConfigVariables(Constants.JWT.salt));
     const hashedPassword = await bcrypt.hash(newPassword, salt);

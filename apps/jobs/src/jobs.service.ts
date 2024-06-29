@@ -10,13 +10,15 @@ import {
   Constants,
   CustomJobsStages,
   Interview,
+  JobSource,
   ServiceName,
   StageType,
   StructuredJob,
+  struttedJobTableName,
   UnstructuredJobs,
 } from '@app/shared';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import {
   CreateJobDto,
   EditJobDto,
@@ -25,7 +27,7 @@ import {
 } from '@app/services_communications/jobs-service';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Redis } from 'ioredis';
@@ -34,6 +36,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { isDefined } from 'class-validator';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
+import { GetUserJobsDto } from '@app/services_communications/jobs-service/dtos/get-user-jobs.dto';
 
 @Injectable()
 export class JobsService {
@@ -41,7 +44,7 @@ export class JobsService {
     @InjectRedis()
     private readonly redis: Redis,
     @InjectRepository(StructuredJob)
-    private readonly structuredJobRepository: Repository<StructuredJob>,
+    readonly structuredJobRepository: Repository<StructuredJob>,
     @InjectRepository(CustomJobsStages)
     private readonly customJobsStagesRepository: Repository<CustomJobsStages>,
     @InjectRepository(Interview)
@@ -57,7 +60,12 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-  ) {}
+    @InjectEntityManager()
+    private entityManager: EntityManager,
+  ) {
+  }
+
+
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
@@ -271,13 +279,17 @@ export class JobsService {
   }
 
   async createJob(newJob: CreateJobDto) {
-    try {
       // Check that dates are valid
+
+
+      // check if job endDate is after now
+      if (newJob.jobEndDate && new Date(newJob.jobEndDate) < new Date()) {
+        throw new BadRequestException('Job end date must be after now');
+      }
+
       // Check that interview end date is after quiz end date
       if (newJob.quizEndDate && newJob.interview?.endDate) {
         if (newJob.interview?.endDate < newJob.quizEndDate) {
-          console.log('Interview end date must be after quiz end date');
-
           throw new BadRequestException(
             'Interview end date must be after quiz end date',
           );
@@ -287,8 +299,6 @@ export class JobsService {
       // Check that interview end date is after job end date
       if (newJob.jobEndDate && newJob.interview?.endDate) {
         if (newJob.jobEndDate > newJob.interview?.endDate) {
-          console.log('Interview end date must be after job end date');
-
           throw new BadRequestException(
             'Interview end date must be after job end date',
           );
@@ -374,13 +384,9 @@ export class JobsService {
       }
 
       return savedJob;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
   }
 
   async editJob(editJob: EditJobDto) {
-    try {
       const {
         jobId,
         userId,
@@ -499,9 +505,21 @@ export class JobsService {
           );
         }
 
-        existingJob.stages.interview.endDate = interview.endDate;
-        existingJob.stages.interview.interviewQuestions =
-          interview.interviewQuestions;
+        // Check if there was an old interview remove it
+        if (existingJob.stages.interview) {
+          await this.interviewRepository.delete({
+            id: existingJob.stages.interview.id,
+          });
+        }
+
+        const newInterview = this.interviewRepository.create({
+          interviewQuestions: interview.interviewQuestions,
+          endDate: interview.endDate,
+        });
+
+        await this.interviewRepository.save(newInterview);
+
+        existingJob.stages.interview = newInterview;
         this.scheduleInterviewEnd(existingJob);
       }
 
@@ -509,12 +527,9 @@ export class JobsService {
       await this.structuredJobRepository.save(existingJob);
 
       return existingJob;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
   }
 
-  async getJobById(jobId) {
+  async getJobById(jobId: string) {
     const job = await this.structuredJobRepository.findOne({
       where: { id: jobId },
     });
@@ -541,6 +556,7 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
       currentStage: job.currentStage,
+      source: job.jobSource,
     };
     return responseJob;
   }
@@ -552,6 +568,10 @@ export class JobsService {
       relations: ['stages', 'stages.interview'],
     });
 
+    if(!job) {
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
+
     return job;
   }
 
@@ -562,6 +582,7 @@ export class JobsService {
       publishDate,
       jobType,
       jobPlace,
+      jobSource,
       csRequired,
       take,
       page,
@@ -609,6 +630,29 @@ export class JobsService {
       const jobPlaces = Array.isArray(jobPlace) ? jobPlace : [jobPlace];
       queryBuilder.andWhere('job.jobPlace IN (:...jobPlaces)', {
         jobPlaces,
+      });
+    }
+
+    // Apply jobSource if provided
+    if (jobSource) {
+      const jobSources = (
+        Array.isArray(jobSource) ? jobSource : [jobSource]
+      ).map((source) => {
+        // Map each string value to its corresponding JobSource enum value
+        switch (source.toLowerCase()) {
+          case 'intellitalent':
+            return JobSource.IntelliTalent;
+          case 'linkedin':
+            return JobSource.LinkedIn;
+          case 'wuzzuf':
+            return JobSource.Wuzzuf;
+          default:
+            throw new BadRequestException(`Unknown job source: ${source}`);
+        }
+      });
+
+      queryBuilder.andWhere('job.source IN (:...jobSources)', {
+        jobSources,
       });
     }
 
@@ -667,6 +711,7 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
       currentStage: job.currentStage,
+      source: job.jobSource,
     }));
 
     return {
@@ -676,10 +721,24 @@ export class JobsService {
     };
   }
 
-  async getUserJobs(userId: string) {
-    const jobs = await this.structuredJobRepository.find({
-      where: { userId },
-    });
+  async getUserJobs(getUserJobsDto: GetUserJobsDto) {
+    const queryBuilder = this.structuredJobRepository
+      .createQueryBuilder('job')
+      .where('job.userId = :userId', { userId: getUserJobsDto.userId });
+
+    const { page, take } = getUserJobsDto.pageOptionsDto;
+
+    // Calculate skip
+    let skip = undefined;
+    if (page && take) {
+      skip = (page - 1) * take;
+    }
+
+    // Apply pagination
+    queryBuilder.skip(skip).take(take);
+
+    // Execute query and map the results to IJobs format
+    const [jobs, count] = await queryBuilder.getManyAndCount();
 
     const responseJobs: IJobs[] = jobs.map((job) => ({
       id: job.id,
@@ -698,9 +757,14 @@ export class JobsService {
       csRequired: job.csRequired,
       isActive: job.isActive,
       currentStage: job.currentStage,
+      source: job.jobSource,
     }));
 
-    return { jobs: responseJobs };
+    return {
+      jobs: responseJobs,
+      totalRecords: count,
+      totalPages: Math.ceil(count / (take || 10)),
+    };
   }
 
   async checkActiveJobs() {
@@ -715,6 +779,7 @@ export class JobsService {
       jobId: job.jobId,
       url: job.url,
     }));
+
 
     // Call scrapper service to check the jobs and return list of ids and isActive
     const updatedJobs = JSON.parse(
@@ -771,10 +836,17 @@ export class JobsService {
         await this.structuredJobRepository.save(job as any);
         addedJobs.push(job);
       } catch (error) {
+        console.error(`Error saving job: ${error.message}`);
         return;
       }
     });
     await Promise.all(bulkInsertPromises);
+
+
+    // if the number of jobs is less than 1, return that mean dont call the ats or the redis
+    if(addedJobs.length < 1){
+      return;
+    }
 
     // Insert the new jobs to redis
     await this.insertScrappedJobsToRedis(addedJobs);
@@ -849,4 +921,7 @@ export class JobsService {
       message: 'Job moved to next stage successfully.',
     };
   }
+
+
+
 }
