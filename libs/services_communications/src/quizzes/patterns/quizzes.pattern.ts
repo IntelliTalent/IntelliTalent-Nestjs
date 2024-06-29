@@ -4,6 +4,7 @@ export const quizzesPattern = {
   getUsersScores: 'getUsersScores', // Get all users scores for a job
   getUserQuizzes: 'getUserQuizzes', // Get all quizzes for a user
   getQuizSlugs: 'getQuizSlugs', // Get all quiz slugs for a job
+  getQuizzesStats: 'getQuizzesStats', // Get all quizzes stats
 };
 
 export const quizzesEvents = {

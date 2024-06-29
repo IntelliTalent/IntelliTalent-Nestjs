@@ -15,12 +15,11 @@ import {
   GetQuizSlugsDto,
   GetUserQuizzesDto,
   IQuizzesGeneratorDto,
-  JobQuizzesIdentifierDto,
   PaginatedJobQuizzesIdentifierDto,
   QuizIdentifierDto,
   quizzesGeneratorPattern,
   SubmitQuizDto,
-  UserQuizDetailsDto,
+  UserQuizzesStatisticsDto,
 } from '@app/services_communications';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -30,6 +29,7 @@ import {
 import { Quiz } from '@app/shared/entities/quiz.entity';
 import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
 import { v4 as uuidv4 } from 'uuid';
+import { ResponseQuizStatisticsDto } from '@app/services_communications/quizzes/dtos/response-quiz-statistics.dto';
 
 @Injectable()
 export class QuizzesService {
@@ -123,6 +123,25 @@ export class QuizzesService {
     }
 
     return this.quizRepository.save(quizzesEntities);
+  }
+
+
+  async getQuizzesStats(quizStatisticsDto: UserQuizzesStatisticsDto): Promise<ResponseQuizStatisticsDto> {
+    const { userId } = quizStatisticsDto;
+    const result = await this.quizRepository.createQueryBuilder('quiz')
+    .select('quiz.isTaken', 'isTaken')
+    .addSelect('COUNT(*)', 'count')
+    .where('quiz.userId = :userId', { userId })
+    .groupBy('quiz.isTaken')
+    .getRawMany();
+
+    const statistics = {
+      notTaken: Number(result.find((r) => r.isTaken === false).count) || 0,
+      taken: Number(result.find((r) => r.isTaken === true).count) || 0,
+      total: result.reduce((acc, r) => acc + Number(r.count), 0),
+    }
+
+    return statistics;
   }
 
   async submitQuiz(submitQuiz: SubmitQuizDto): Promise<{ percentage: number }> {

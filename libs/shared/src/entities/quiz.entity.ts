@@ -1,6 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import { parse, stringify } from 'querystring';
-import { AfterLoad, Column, Entity, PrimaryColumn } from 'typeorm';
+import { AfterLoad, Column, Entity,PrimaryColumn } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 
 export interface Question {
@@ -47,6 +47,7 @@ export class Quiz extends AbstractEntity {
   deadline: Date;
 
   @Column({ type: 'boolean', default: false })
+  @PrimaryColumn()
   isTaken: boolean;
 
   @Column({ type: "int", default: 0 })

@@ -18,6 +18,7 @@ import {
   quizzesEvents,
   quizzesPattern,
   SubmitQuizDto,
+  UserQuizzesStatisticsDto,
 } from '@app/services_communications/quizzes';
 import { RpcExceptionsFilter } from '@app/shared';
 
@@ -28,6 +29,9 @@ export class QuizzesController {
   constructor(private readonly quizzesService: QuizzesService) {
     // this.quizzesService.activateQuiz({
     //   jobId: 'b66f211a-8f97-4b34-a0cf-1f843d4826d0'
+    // })
+    // this.getQuizzesStats({
+    //   userId: '0183de39-2c51-4708-a683-dcb95425a42d'
     // })
   }
 
@@ -43,6 +47,11 @@ export class QuizzesController {
   @MessagePattern({ cmd: quizzesPattern.getUserQuizzes })
   async getUserQuizzes(@Payload() getUserQuizDto: GetUserQuizzesDto) {
     return this.quizzesService.getUserQuizzes(getUserQuizDto);
+  }
+
+  @MessagePattern({ cmd: quizzesPattern.getQuizzesStats })
+  async getQuizzesStats(@Payload() quizStatisticsDto: UserQuizzesStatisticsDto) {
+    return this.quizzesService.getQuizzesStats(quizStatisticsDto);
   }
 
   @MessagePattern({ cmd: quizzesPattern.getQuiz })
