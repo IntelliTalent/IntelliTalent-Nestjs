@@ -38,8 +38,7 @@ export class UserService {
     private readonly notifierService: ClientProxy,
     @Inject(ServiceName.AUTOFILL_SERVICE)
     private readonly formFieldsService: ClientProxy,
-  ) {
-  }
+  ) {}
 
   seeder(count: number) {
     const users = DataFactory.createForClass(User).generate(count);

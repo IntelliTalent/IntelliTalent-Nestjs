@@ -14,4 +14,6 @@ export const FilterationServicePattern = {
     getJobApplicants: 'getJobApplicants',
     getInterviewAnswers: 'getInterviewAnswers',
     getInterviewedApplicants: 'getInterviewedApplicants',
+    getUserInterviews: 'getUserInterviews',
+    getUserInterviewStats: 'getUserInterviewStats',
 };

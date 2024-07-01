@@ -15,3 +15,5 @@ export * from './dtos/get-quiz-slugs.dto';
 export * from './dtos/pagainated-job-quiz-identifier.dto';
 export * from './dtos/activate-quiz.dto';
 export * from './dtos/user-quiz-statistics.dto'
+export * from './dtos/response-quiz-statistics.dto';
+export * from './dtos/remove-profile-quizzes.dto';
