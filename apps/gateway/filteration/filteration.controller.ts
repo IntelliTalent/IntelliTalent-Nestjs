@@ -5,6 +5,8 @@ import { AuthQuizDto } from '@app/services_communications/filteration-service/dt
 import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
 import { GetInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-answers.dto';
 import { GetInterviewQuestionsDto } from '@app/services_communications/filteration-service/dtos/requests/get-interview-questions.dto';
+import { GetUserInterviewsStatsDto } from '@app/services_communications/filteration-service/dtos/requests/get-user-interviews-stats.dto';
+import { GetUserInterviewsDto } from '@app/services_communications/filteration-service/dtos/requests/get-user-interviews.dto';
 import { InterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/interview-answers.dto';
 import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
 import { PaginatedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-job.dto';
@@ -17,6 +19,8 @@ import { GetDetailedAppliedUsersDto } from '@app/services_communications/filtera
 import { GetInterviewAnswersResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-answers-response.dto';
 import { GetInterviewQuestionsResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-questions.dto';
 import { GetMatchedJobsDto } from '@app/services_communications/filteration-service/dtos/responses/get-matched-jobs.dto';
+import { GetUserInterviewStatsResDto } from '@app/services_communications/filteration-service/dtos/responses/get-user-interview-stats-res.dto';
+import { GetUserInterviewsResDto } from '@app/services_communications/filteration-service/dtos/responses/get-user-interviews-res.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
@@ -32,6 +36,50 @@ export class ApiFilterationController {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private filterationService: ClientProxy,
   ) { }
+
+  @ApiOperation({ summary: 'Get all interviews of the user' })
+  @Get('user-interviews')
+  @ApiOkResponse({
+    type: GetUserInterviewsResDto,
+    description: 'the interviews of the user',
+  })
+  async getUserInterviews(
+    @CurrentUser() user: User,
+    @Query('page') page: number,
+    @Query('take') take: number,
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getUserInterviews,
+      },
+      {
+        user,
+        pageOptionsDto:{
+          page,
+          take
+        }
+      } as GetUserInterviewsDto,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get statistics of the user interviews' })
+  @Get('user-interviews-stats')
+  @ApiOkResponse({
+    type: GetUserInterviewStatsResDto,
+    description: 'the interviews of the user',
+  })
+  async getUserInterviewsStats(
+    @CurrentUser() user: User,
+  ) {
+    return this.filterationService.send(
+      {
+        cmd: FilterationServicePattern.getUserInterviewStats,
+      },
+      {
+        userId: user.id,
+      } as GetUserInterviewsStatsDto,
+    );
+  }
 
   @ApiOperation({ summary: 'Filter certain job to the users' })
   @Post()
@@ -260,6 +308,8 @@ export class ApiFilterationController {
       } as PaginatedJobDto,
     );
   }
+
+
 
   @ApiOperation({ summary: 'Get the stage of a certain user in a certain job' })
   @Get(':jobId/:profileId')
