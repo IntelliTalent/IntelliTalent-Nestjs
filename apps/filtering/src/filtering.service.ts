@@ -221,7 +221,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         jobId,
       ),
