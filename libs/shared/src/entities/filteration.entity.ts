@@ -12,6 +12,7 @@ export interface InterviewData {
   recordedAnswers: string[];
   grade?: number;
   interviewDate: Date;
+  jobTitle: string;
   deadline: Date;
 }
 
