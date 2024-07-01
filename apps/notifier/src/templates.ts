@@ -23,8 +23,6 @@ export interface IEmail {
 }
 
 export function handleTemplate(data: SendEmailsDto): IEmail[] {
-  console.log('data', data);
-
   switch (data.template) {
     case EmailTemplates.ATSMATCHED:
       return data.templateData.map((mailData) => {

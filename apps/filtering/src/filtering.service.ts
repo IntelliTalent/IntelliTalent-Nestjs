@@ -227,6 +227,7 @@ export class FilteringService {
       ),
     );
 
+
     // check if the job exists and is open
     if (!job) {
       throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
@@ -1051,15 +1052,13 @@ export class FilteringService {
       ),
     );
 
-    await firstValueFrom(
-      this.quizService.send(
-        {
-          cmd: quizzesEvents.activateQuiz,
-        },
-        {
-          jobId: job.id,
-        } as ActivateQuizDto,
-      ),
+    this.quizService.emit(
+      {
+        cmd: quizzesEvents.activateQuiz,
+      },
+      {
+        jobId: job.id,
+      } as ActivateQuizDto,
     );
 
     const usersIds = quizzes.map((quiz) => quiz.userId);
@@ -1227,7 +1226,7 @@ export class FilteringService {
         } as InterviewData;
         await this.filterationRepository.save(filteration);
         interviewTemplateData.push({
-          to: user.profileId,
+          to: user.email,
           data: {
             firstName: userDetails.firstName,
             lastName: userDetails.lastName,
@@ -1242,7 +1241,7 @@ export class FilteringService {
         filteration.isQualified = false;
         await this.filterationRepository.save(filteration);
         rejectionTemplateData.push({
-          to: user.profileId,
+          to: user.email,
           data: {
             firstName: userDetails.firstName,
             lastName: userDetails.lastName,
@@ -1358,7 +1357,7 @@ export class FilteringService {
         filteration.isQualified = false;
         await this.filterationRepository.save(filteration);
         rejectionTemplateData.push({
-          to: user.profileId,
+          to: user.email,
           data: {
             firstName: userDetails.firstName,
             lastName: userDetails.lastName,

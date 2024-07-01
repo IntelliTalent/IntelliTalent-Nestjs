@@ -43,7 +43,7 @@ export class AppController {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private filterationService: ClientProxy,
   ) {
-    this.seeder();
+     this.seeder();
   }
 
   private tempProfile: CreateProfileDto = {
@@ -200,11 +200,19 @@ export class AppController {
           usedSkillsArrays.add(JSON.stringify(skillsArray));
           usedJobTitles.add(jobTitle);
 
-          const payload = {
+          const projects = this.tempProfile.projects.map((project) => {
+            return {
+              ...project,
+              skills: skillsArray,
+            };
+          });
+
+          const payload: CreateProfileDto = {
             ...this.tempProfile,
             userId: jobSeeker.id,
             skills: skillsArray,
             jobTitle: jobTitle,
+            projects,
           };
 
           return firstValueFrom(
@@ -245,38 +253,52 @@ export class AppController {
     // make the first 3 jobs quiz end Date after 5 mins and jobEnd Date after 2 mins /// interview
     const now = new Date();
     const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-    const twoMinutesFromNow = new Date(now.getTime() + 2 * 60 * 1000);
+    const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const sixDaysFromNow = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
+    const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
-    const jobsPayloadsWithQuizEndDate = jobsPayloads
+    const jobsPayloadsWithInterview: CreateJobDto[] = jobsPayloads
       .slice(0, 3)
       .map((payload) => {
         return {
           ...payload,
-          quizEndDate: fiveMinutesFromNow,
-          jobEndDate: twoMinutesFromNow,
-          interview: null,
+          quizEndDate: null,
+          jobEndDate: fiveMinutesFromNow,
+          interview:{
+             endDate: threeDaysFromNow,
+             interviewQuestions: payload.interview.interviewQuestions
+          }
         };
       });
 
     // make the next 3 jobs quiz end date after 3 days and the job end date after 5 mins
-    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-    const jobsPayloadsWithJobEndDate = jobsPayloads
+    const jobsPayloadsWithQuiz = jobsPayloads
       .slice(3, 6)
       .map((payload) => {
         return {
           ...payload,
           quizEndDate: threeDaysFromNow,
-          jobEndDate: fiveMinutesFromNow,
+          jobEndDate: tenMinutesFromNow,
+          interview: null
         };
       });
 
-    // make the remaing jobs the have end data after 5 days and interview after 6 days and the job end date after 2 days
-    const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
-    const sixDaysFromNow = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
-    const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
+
+      const jobsWithoutInterviewOrQuiz = jobsPayloads.slice(6, 9).map((payload) => {
+        return {
+          ...payload,
+          quizEndDate: null,
+          jobEndDate: fiveMinutesFromNow,
+          interview: null
+        };
+      })
+
+    // make the remaing jobs the have end data after 5 days and interview after 6 days and the job end date after 2 days
     const jobsPayloadsWithDefaultEndDate = jobsPayloads
-      .slice(6)
+      .slice(9)
       .map((payload) => {
         return {
           ...payload,
@@ -291,8 +313,9 @@ export class AppController {
 
     // merge all the jobs
     const allJobsPayloads = [
-      ...jobsPayloadsWithQuizEndDate,
-      ...jobsPayloadsWithJobEndDate,
+      ...jobsPayloadsWithInterview,
+      ...jobsPayloadsWithQuiz,
+      ...jobsWithoutInterviewOrQuiz,
       ...jobsPayloadsWithDefaultEndDate,
     ];
 

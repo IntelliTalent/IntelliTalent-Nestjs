@@ -247,7 +247,11 @@ export class UserService {
   }
 
   async changePassword(dto: changePasswordDto): Promise<{ message: string }> {
-    const { currentPassword, newPassword, userId } = dto;
+    const { currentPassword, newPassword, userId, confirmPassword } = dto;
+
+    if(newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('new password and confirm password do not match');
+    }
 
     const user = await this.findUser({
       where: {
