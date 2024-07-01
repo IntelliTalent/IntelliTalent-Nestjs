@@ -1026,7 +1026,7 @@ export class FilteringService {
       .getMany();
 
     const takenCnt = result.filter(
-      (filteration) => filteration.interviewData != null,
+      (filteration) => filteration.interviewData.answers?.length > 0,
     ).length;
 
     const statistics: GetUserInterviewStatsResDto = {
