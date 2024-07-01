@@ -534,7 +534,7 @@ export class FilteringService {
   }
 
   async getUserInterviews(
-    userId: string,
+    user: User,
     paginationOptions: PageOptionsDto,
   ): Promise<GetUserInterviewsResDto> {
     let { page, take: limit } = paginationOptions;
@@ -544,20 +544,10 @@ export class FilteringService {
     limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
     limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
 
-    // get the user details
-    const user: User = await firstValueFrom(
-      this.userService.send(
-        {
-          cmd: userServicePatterns.findUserById,
-        },
-        userId,
-      ),
-    );
-
     // get the filteration details
     const filterations = await this.filterationRepository
       .createQueryBuilder('filteration')
-      .where('filteration.userId = :userId', { userId })
+      .where('filteration.userId = :userId', { userId: user.id })
       .andWhere('filteration.currentStage IN (:...stages)', {
         stages: [StageType.interview, StageType.failed, StageType.candidate, StageType.selected],
       })
@@ -572,7 +562,7 @@ export class FilteringService {
 
     const results = filterations.map((filteration) => {
       return {
-        userId,
+        userId: user.id,
         profileId: filteration.profileId,
         jobId: filteration.jobId,
         score: filteration.interviewData?.grade,

@@ -95,7 +95,7 @@ export class FilteringController {
 
   @MessagePattern({cmd: FilterationServicePattern.getUserInterviews})
   getUserInterviews(@Payload() data: GetUserInterviewsDto){
-    return this.filteringService.getUserInterviews(data.userId, data.pageOptionsDto);
+    return this.filteringService.getUserInterviews(data.user, data.pageOptionsDto);
   }
 
   @MessagePattern({cmd: FilterationServicePattern.getUserInterviewStats})

@@ -53,7 +53,7 @@ export class ApiFilterationController {
         cmd: FilterationServicePattern.getUserInterviews,
       },
       {
-        userId: user.id,
+        user,
         pageOptionsDto:{
           page,
           take
