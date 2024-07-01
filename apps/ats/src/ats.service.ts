@@ -232,7 +232,7 @@ export class AtsService {
     const jobs = await this._getJobs();
 
     if (jobs.length === 0) {
-      throw new NotFoundException(ATS_CONSTANTS.ATS_NO_JOBS_ERROR);
+      return;
     }
 
     await this._deleteJobs();

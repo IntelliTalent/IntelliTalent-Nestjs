@@ -493,10 +493,10 @@ export class FilteringService {
     }
 
     filteration.interviewData = {
+      ...filteration.interviewData,
       answers: interview.answers,
       recordedAnswers: interview.recordedAnswers,
       interviewDate: new Date(),
-      deadline: filteration.interviewData.deadline,
     };
     await this.filterationRepository.save(filteration);
     return {
@@ -590,7 +590,7 @@ export class FilteringService {
         jobId: filteration.jobId,
         score: filteration.interviewData?.grade || 0,
         isTaken: filteration.interviewData.answers?.length > 0,
-        name: user.firstName + ' ' + user.lastName,
+        name: filteration.interviewData?.jobTitle,
         email: user.email,
         deadline: filteration.interviewData?.deadline,
       } as UserInterview;
@@ -1027,7 +1027,7 @@ export class FilteringService {
       .getMany();
 
     const takenCnt = result.filter(
-      (filteration) => filteration.interviewData != null,
+      (filteration) => filteration.interviewData.answers?.length > 0,
     ).length;
 
     const statistics: GetUserInterviewStatsResDto = {
@@ -1223,6 +1223,7 @@ export class FilteringService {
         filteration.interviewData = {
           interviewDate: new Date(),
           deadline: new Date(job.stages.interview.endDate),
+          jobTitle: job.title,
         } as InterviewData;
         await this.filterationRepository.save(filteration);
         interviewTemplateData.push({
