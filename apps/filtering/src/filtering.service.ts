@@ -41,6 +41,7 @@ import {
   PaginatedJobQuizzesIdentifierDto,
   QuizEmailTemplateData,
   RejectionEmailTemplateData,
+  RemoveProfileQuizzesDto,
   SendEmailsDto,
   TemplateData,
   profileServicePattern,
@@ -77,7 +78,7 @@ export class FilteringService {
     @Inject(ServiceName.USER_SERVICE) private readonly userService: ClientProxy,
     @InjectRepository(Filteration)
     private readonly filterationRepository: Repository<Filteration>,
-  ) {}
+  ) { }
 
   async _getFilteration(
     profileId: string,
@@ -1215,7 +1216,7 @@ export class FilteringService {
       if (
         (previousStage === JobStageType.Quiz &&
           quizScoresMap.get(user.userId) >
-            FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) ||
+          FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) ||
         (previousStage === JobStageType.Active && user.isQualified)
       ) {
         const filteration = filterationsMap.get(user.userId);
@@ -1343,11 +1344,11 @@ export class FilteringService {
       if (
         (previousStage === JobStageType.Quiz &&
           quizScoresMap.get(user.userId) >
-            FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) ||
+          FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) ||
         (previousStage === JobStageType.Active && user.isQualified) ||
         (previousStage === JobStageType.Interview &&
           user.interviewData.grade >
-            FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD)
+          FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD)
       ) {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.candidate;
@@ -1387,5 +1388,29 @@ export class FilteringService {
       message: FILTERATION_CONSTANTS.STAGE_STARTED,
       stage: job.currentStage,
     };
+  }
+
+  async deleteProfile(profileId: string) {
+    const filterations = await this.filterationRepository.findBy({ profileId });
+    if (filterations.length === 0) {
+      return;
+    }
+
+    const jobsIds = [];
+    for (const filteration of filterations) {
+      jobsIds.push(filteration.jobId);
+    }
+
+    this.quizService.emit(
+      {
+        cmd: quizzesEvents.removeProfileQuizzes
+      },
+      {
+        userId: filterations[0].userId,
+        jobsIds
+      } as RemoveProfileQuizzesDto
+    );
+
+    await this.filterationRepository.delete({ profileId });
   }
 }

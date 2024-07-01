@@ -43,7 +43,7 @@ export class AppController {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private filterationService: ClientProxy,
   ) {
-     this.seeder();
+    //  this.seeder();
   }
 
   private tempProfile: CreateProfileDto = {
