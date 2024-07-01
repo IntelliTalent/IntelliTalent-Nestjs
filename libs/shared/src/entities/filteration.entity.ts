@@ -12,6 +12,7 @@ export interface InterviewData {
   recordedAnswers: string[];
   grade?: number;
   interviewDate: Date;
+  deadline: Date;
 }
 
 export interface MatchData {
@@ -25,18 +26,21 @@ export interface AppliedData {
   appliedAt: Date;
 }
 
-export interface SelectionData { 
+export interface SelectionData {
   selectedAt: Date;
 }
 
 // Union type for all possible stage data
-export type StageData = QuizData | InterviewData | MatchData | AppliedData | SelectionData;
-
+export type StageData =
+  | QuizData
+  | InterviewData
+  | MatchData
+  | AppliedData
+  | SelectionData;
 
 @Entity()
 @Unique(['jobId', 'profileId'])
 export class Filteration extends AbstractEntity {
-
   @Index()
   @PrimaryColumn({ type: 'uuid', nullable: false })
   jobId: string;
@@ -59,10 +63,10 @@ export class Filteration extends AbstractEntity {
 
   @Column({ type: 'json', nullable: true })
   quizData: QuizData;
-  
+
   @Column({ type: 'json', nullable: true })
   interviewData: InterviewData;
-  
+
   @Column({ type: 'json', nullable: true })
   appliedData: AppliedData;
 
@@ -75,4 +79,3 @@ export class Filteration extends AbstractEntity {
   @Column({ type: 'boolean', nullable: false, default: false })
   isClosed: boolean;
 }
-
