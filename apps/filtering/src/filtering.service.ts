@@ -5,7 +5,10 @@ import {
 import { MatchProfileAndJobData } from '@app/services_communications/ats-service/interfaces/match.interface';
 import { GetAppliedUsersResponseDto } from '@app/services_communications/filteration-service/dtos/responses/get-applied-users-response.dto';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
-import { IJobs, jobsServicePatterns } from '@app/services_communications/jobs-service';
+import {
+  IJobs,
+  jobsServicePatterns,
+} from '@app/services_communications/jobs-service';
 import { ServiceName, StructuredJob, User } from '@app/shared';
 import {
   Filteration,
@@ -29,6 +32,7 @@ import { InterviewAnswersDto } from '@app/services_communications/filteration-se
 import { ReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/review-answers.dto';
 import * as FILTERATION_CONSTANTS from '@app/services_communications/filteration-service/constants/constants';
 import {
+  ActivateQuizDto,
   CreateQuizDto,
   EmailTemplates,
   GetQuizSlugsDto,
@@ -55,22 +59,33 @@ import { GetDetailedAppliedUsersDto } from '@app/services_communications/filtera
 import { GetInterviewAnswersResponse } from '@app/services_communications/filteration-service/dtos/responses/get-interview-answers-response.dto';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { PageMetaDto } from '@app/shared/api-features/dtos/page-meta.dto';
+import {
+  GetUserInterviewsResDto,
+  UserInterview,
+} from '@app/services_communications/filteration-service/dtos/responses/get-user-interviews-res.dto';
+import { GetUserInterviewStatsResDto } from '@app/services_communications/filteration-service/dtos/responses/get-user-interview-stats-res.dto';
 @Injectable()
 export class FilteringService {
   constructor(
     @Inject(ServiceName.ATS_SERVICE) private readonly atsService: ClientProxy,
     @Inject(ServiceName.JOB_SERVICE) private readonly jobService: ClientProxy,
-    @Inject(ServiceName.NOTIFIER_SERVICE) private readonly notifierService: ClientProxy,
+    @Inject(ServiceName.NOTIFIER_SERVICE)
+    private readonly notifierService: ClientProxy,
     @Inject(ServiceName.QUIZ_SERVICE) private readonly quizService: ClientProxy,
-    @Inject(ServiceName.PROFILE_SERVICE) private readonly profileService: ClientProxy,
+    @Inject(ServiceName.PROFILE_SERVICE)
+    private readonly profileService: ClientProxy,
     @Inject(ServiceName.USER_SERVICE) private readonly userService: ClientProxy,
-    @InjectRepository(Filteration) private readonly filterationRepository: Repository<Filteration>,
-  ) { }
+    @InjectRepository(Filteration)
+    private readonly filterationRepository: Repository<Filteration>,
+  ) {}
 
-  async _getFilteration(profileId: string, jobId: string): Promise<Filteration> {
+  async _getFilteration(
+    profileId: string,
+    jobId: string,
+  ): Promise<Filteration> {
     return await this.filterationRepository.findOneBy({
       jobId,
-      profileId
+      profileId,
     });
   }
 
@@ -129,6 +144,7 @@ export class FilteringService {
           } as ProfileAndJobDto,
         ),
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { status, ...matchData } = matchingResult;
 
       const newFilteration = this.filterationRepository.create({
@@ -138,7 +154,8 @@ export class FilteringService {
         email,
         currentStage: StageType.applied,
         matchData,
-        isQualified: matchData.isValid && matchData.matchScore > MATCHING_THRESHOLD,
+        isQualified:
+          matchData.isValid && matchData.matchScore > MATCHING_THRESHOLD,
         appliedData: {
           appliedAt: new Date(),
         },
@@ -196,7 +213,10 @@ export class FilteringService {
     };
   }
 
-  async beginCurrentStage(jobId: string, previousStage: JobStageType): Promise<StageResponseDto> {
+  async beginCurrentStage(
+    jobId: string,
+    previousStage: JobStageType,
+  ): Promise<StageResponseDto> {
     // get the job details from the job service
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -206,7 +226,6 @@ export class FilteringService {
         jobId,
       ),
     );
-
 
     // check if the job exists and is open
     if (!job) {
@@ -476,6 +495,7 @@ export class FilteringService {
       answers: interview.answers,
       recordedAnswers: interview.recordedAnswers,
       interviewDate: new Date(),
+      deadline: filteration.interviewData.deadline,
     };
     await this.filterationRepository.save(filteration);
     return {
@@ -527,6 +547,63 @@ export class FilteringService {
       message: FILTERATION_CONSTANTS.RECRUITER_REVIEWED_INTERVIEW,
       stage: filteration.currentStage,
       stageData: filteration.interviewData,
+    };
+  }
+
+  async getUserInterviews(
+    user: User,
+    paginationOptions: PageOptionsDto,
+  ): Promise<GetUserInterviewsResDto> {
+    let { page, take: limit } = paginationOptions;
+    page = page || FILTERATION_CONSTANTS.DEFAULT_PAGE;
+    limit = limit || FILTERATION_CONSTANTS.DEFAULT_LIMIT;
+    page = Math.max(page, FILTERATION_CONSTANTS.MIN_PAGE);
+    limit = Math.max(limit, FILTERATION_CONSTANTS.MIN_LIMIT);
+    limit = Math.min(limit, FILTERATION_CONSTANTS.MAX_LIMIT);
+
+    // get the filteration details
+    const filterations = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.userId = :userId', { userId: user.id })
+      .andWhere('filteration.currentStage IN (:...stages)', {
+        stages: [
+          StageType.interview,
+          StageType.failed,
+          StageType.candidate,
+          StageType.selected,
+        ],
+      })
+      .skip((page - 1) * limit)
+      .take(limit)
+      .select([
+        'filteration.jobId',
+        'filteration.profileId',
+        'filteration.interviewData',
+      ])
+      .getMany();
+
+    const results = filterations.map((filteration) => {
+      return {
+        userId: user.id,
+        profileId: filteration.profileId,
+        jobId: filteration.jobId,
+        score: filteration.interviewData?.grade || 0,
+        isTaken: filteration.interviewData.answers?.length > 0,
+        name: user.firstName + ' ' + user.lastName,
+        email: user.email,
+        deadline: filteration.interviewData?.deadline,
+      } as UserInterview;
+    });
+
+    return {
+      metadata: new PageMetaDto({
+        pageOptionsDto: {
+          page,
+          take: limit,
+        },
+        itemCount: results.length,
+      }),
+      userInterviews: results,
     };
   }
 
@@ -937,6 +1014,30 @@ export class FilteringService {
     };
   }
 
+  async getUserInterviewStats(
+    userId: string,
+  ): Promise<GetUserInterviewStatsResDto> {
+    const result = await this.filterationRepository
+      .createQueryBuilder('filteration')
+      .where('filteration.userId = :userId', { userId })
+      .andWhere('filteration.currentStage = :currentStage', {
+        currentStage: StageType.interview,
+      })
+      .getMany();
+
+    const takenCnt = result.filter(
+      (filteration) => filteration.interviewData != null,
+    ).length;
+
+    const statistics: GetUserInterviewStatsResDto = {
+      total: result.length,
+      taken: takenCnt,
+      notTaken: result.length - takenCnt,
+    };
+
+    return statistics;
+  }
+
   private async beginQuizStage(job: StructuredJob): Promise<StageResponseDto> {
     // call the quiz service to get the quiz slugs
     const quizzes: Quiz[] = await firstValueFrom(
@@ -947,6 +1048,17 @@ export class FilteringService {
         {
           jobId: job.id,
         } as GetQuizSlugsDto,
+      ),
+    );
+
+    await firstValueFrom(
+      this.quizService.send(
+        {
+          cmd: quizzesEvents.activateQuiz,
+        },
+        {
+          jobId: job.id,
+        } as ActivateQuizDto,
       ),
     );
 
@@ -972,7 +1084,7 @@ export class FilteringService {
       where: {
         jobId: job.id,
         currentStage: StageType.applied,
-      }
+      },
     });
     const filterationsMap = new Map<string, Filteration>();
     filterationsDetails.forEach((filteration) => {
@@ -982,7 +1094,7 @@ export class FilteringService {
     const rejectionTemplateData: TemplateData[] = [];
 
     // quizzes.map(async (quiz: Quiz) => {
-    for(const quiz of quizzes){
+    for (const quiz of quizzes) {
       const userDetails = usersMap.get(quiz.userId);
       const filteration = filterationsMap.get(quiz.userId);
       if (filteration.isQualified) {
@@ -1046,28 +1158,37 @@ export class FilteringService {
     };
   }
 
-  private async beginInterviewStage(job: StructuredJob, previousStage: JobStageType): Promise<StageResponseDto> {
+  private async beginInterviewStage(
+    job: StructuredJob,
+    previousStage: JobStageType,
+  ): Promise<StageResponseDto> {
     // call the mail service to send the mails to the users to start the interview
     const appliedUsers = await this.filterationRepository.findBy({
       jobId: job.id,
-      currentStage: previousStage === JobStageType.Active ? StageType.applied : StageType.quiz
+      currentStage:
+        previousStage === JobStageType.Active
+          ? StageType.applied
+          : StageType.quiz,
     });
     let usersScores = null;
     let quizScoresMap = new Map<string, number>();
     if (previousStage === JobStageType.Quiz) {
       // get the quiz score for each user from quiz service
-      usersScores = await firstValueFrom(this.quizService.send({
-        cmd: quizzesPattern.getUsersScores,
-      },
-        {
-          jobId: job.id,
-          recruiterId: job.userId,
-          pageOptionsDto: {
-            page: 1,
-            take: appliedUsers.length
-          }
-        } as PaginatedJobQuizzesIdentifierDto
-      ));
+      usersScores = await firstValueFrom(
+        this.quizService.send(
+          {
+            cmd: quizzesPattern.getUsersScores,
+          },
+          {
+            jobId: job.id,
+            recruiterId: job.userId,
+            pageOptionsDto: {
+              page: 1,
+              take: appliedUsers.length,
+            },
+          } as PaginatedJobQuizzesIdentifierDto,
+        ),
+      );
       quizScoresMap = new Map<string, number>();
       usersScores.data.forEach((userScore) => {
         quizScoresMap.set(userScore.userId, userScore.percentage);
@@ -1082,7 +1203,7 @@ export class FilteringService {
     const interviewTemplateData: TemplateData[] = [];
     const rejectionTemplateData: TemplateData[] = [];
 
-    for (const user of appliedUsers){
+    for (const user of appliedUsers) {
       // get the user details from the user service
       const userDetails: User = await firstValueFrom(
         this.userService.send(
@@ -1093,13 +1214,16 @@ export class FilteringService {
         ),
       );
       if (
-        (previousStage === JobStageType.Quiz && quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD)
-        ||
-        (previousStage === JobStageType.Active && user.isQualified )) {
+        (previousStage === JobStageType.Quiz &&
+          quizScoresMap.get(user.userId) >
+            FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) ||
+        (previousStage === JobStageType.Active && user.isQualified)
+      ) {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.interview;
         filteration.interviewData = {
           interviewDate: new Date(),
+          deadline: new Date(job.stages.interview.endDate),
         } as InterviewData;
         await this.filterationRepository.save(filteration);
         interviewTemplateData.push({
@@ -1112,7 +1236,6 @@ export class FilteringService {
             profileId: user.profileId,
           } as InterviewTemplateData,
         });
-
       } else {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.failed;
@@ -1126,7 +1249,7 @@ export class FilteringService {
             jobTitle: job.title,
             jobCompany: job.company,
             stage: previousStage,
-          } as RejectionEmailTemplateData
+          } as RejectionEmailTemplateData,
         });
       }
     }
@@ -1158,31 +1281,41 @@ export class FilteringService {
       message: FILTERATION_CONSTANTS.STAGE_STARTED,
       stage: job.currentStage,
     };
-
   }
 
-  private async beginFinalStage(job: StructuredJob, previousStage: JobStageType): Promise<StageResponseDto> {
+  private async beginFinalStage(
+    job: StructuredJob,
+    previousStage: JobStageType,
+  ): Promise<StageResponseDto> {
     // call the mail service to send the mails to the users to start the interview
     const appliedUsers = await this.filterationRepository.findBy({
       jobId: job.id,
-      currentStage: previousStage === JobStageType.Active ? StageType.applied : (previousStage === JobStageType.Quiz ? StageType.quiz : StageType.interview)
+      currentStage:
+        previousStage === JobStageType.Active
+          ? StageType.applied
+          : previousStage === JobStageType.Quiz
+            ? StageType.quiz
+            : StageType.interview,
     });
     let usersScores = null;
     let quizScoresMap = new Map<string, number>();
     if (previousStage === JobStageType.Quiz) {
       // get the quiz score for each user from quiz service
-      usersScores = await firstValueFrom(this.quizService.send({
-        cmd: quizzesPattern.getUsersScores,
-      },
-        {
-          jobId: job.id,
-          recruiterId: job.userId,
-          pageOptionsDto: {
-            page: 1,
-            take: appliedUsers.length
-          }
-        } as PaginatedJobQuizzesIdentifierDto
-      ));
+      usersScores = await firstValueFrom(
+        this.quizService.send(
+          {
+            cmd: quizzesPattern.getUsersScores,
+          },
+          {
+            jobId: job.id,
+            recruiterId: job.userId,
+            pageOptionsDto: {
+              page: 1,
+              take: appliedUsers.length,
+            },
+          } as PaginatedJobQuizzesIdentifierDto,
+        ),
+      );
       quizScoresMap = new Map<string, number>();
       usersScores.data.forEach((userScore) => {
         quizScoresMap.set(userScore.userId, userScore.percentage);
@@ -1197,7 +1330,7 @@ export class FilteringService {
     const rejectionTemplateData: TemplateData[] = [];
 
     // appliedUsers.map(async (user) => {
-    for(const user of appliedUsers){
+    for (const user of appliedUsers) {
       // get the user details from the user service
       const userDetails: User = await firstValueFrom(
         this.userService.send(
@@ -1208,11 +1341,13 @@ export class FilteringService {
         ),
       );
       if (
-        (previousStage === JobStageType.Quiz && quizScoresMap.get(user.userId) > FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD )
-        ||
-        (previousStage === JobStageType.Active && user.isQualified )
-        ||
-        (previousStage === JobStageType.Interview && user.interviewData.grade > FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD )
+        (previousStage === JobStageType.Quiz &&
+          quizScoresMap.get(user.userId) >
+            FILTERATION_CONSTANTS.QUIZ_PASS_THRESHOLD) ||
+        (previousStage === JobStageType.Active && user.isQualified) ||
+        (previousStage === JobStageType.Interview &&
+          user.interviewData.grade >
+            FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD)
       ) {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.candidate;
@@ -1230,7 +1365,7 @@ export class FilteringService {
             jobTitle: job.title,
             jobCompany: job.company,
             stage: previousStage,
-          } as RejectionEmailTemplateData
+          } as RejectionEmailTemplateData,
         });
       }
     }
