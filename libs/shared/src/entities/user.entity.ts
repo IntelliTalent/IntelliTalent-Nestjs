@@ -129,6 +129,11 @@ export class User extends AbstractEntity {
   })
   @Expose()
   get joinedAt(): string {
+    try{
     return this.createdAt.toISOString() || new Date().toISOString();
+    } catch (error) {
+      console.log('error', error);
+      return new Date().toISOString();
+    }
   }
 }
