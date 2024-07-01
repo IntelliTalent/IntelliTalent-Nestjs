@@ -42,6 +42,16 @@ export class UserService {
 
   seeder(count: number) {
     const users = DataFactory.createForClass(User).generate(count);
+
+    // make at least 2 of the users to be recruiters
+    for (let i = 0; i < users.length; i++) {
+      if (i < 2) {
+      users[i].type = UserType.recruiter;
+      } else {
+      users[i].type = UserType.jobSeeker;
+      }
+    }
+
     return this.userRepository.save(users);
   }
 

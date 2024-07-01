@@ -28,6 +28,11 @@ export const getRabbitMQOptions = async (
       queueOptions: {
         durable: true,
       },
+      socketOptions :{
+        reconnectTimeInSeconds: 5,
+        heartbeatIntervalInSeconds: 30,
+      },
+      noAck: true,
     },
   };
 };

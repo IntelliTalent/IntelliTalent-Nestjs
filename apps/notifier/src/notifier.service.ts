@@ -35,11 +35,11 @@ export class NotifierService {
     console.log('sending email', email);
 
 
-    await this.mailService.sendMail({
-      to: email.to,
-      from: email.from,
-      subject: email.subject,
-      html: email.html,
-    });
+    // await this.mailService.sendMail({
+    //   to: email.to,
+    //   from: email.from,
+    //   subject: email.subject,
+    //   html: email.html,
+    // });
   }
 }

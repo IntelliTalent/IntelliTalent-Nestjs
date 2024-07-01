@@ -28,6 +28,7 @@ import { ApiUserModule } from '../user/user.module';
     SharedModule.registerRmq(ServiceName.PROFILE_SERVICE),
     SharedModule.registerRmq(ServiceName.ATS_SERVICE),
     SharedModule.registerRmq(ServiceName.COVER_LETTER_GENERATOR_SERVICE),
+    SharedModule.registerRmq(ServiceName.FILTERATION_SERVICE),
     SharedModule.registerRmq(ServiceName.CV_GENERATOR_SERVICE),
     SharedModule.registerRmq(ServiceName.CV_EXTRACTOR_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_SERVICE),

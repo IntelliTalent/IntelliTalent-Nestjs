@@ -4,6 +4,7 @@ import { AbstractEntity } from './abstract.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import { Factory } from 'nestjs-seeder';
+import { AllowedUserTypes } from '@app/services_communications';
 
 @Entity()
 export class User extends AbstractEntity {
@@ -111,7 +112,7 @@ export class User extends AbstractEntity {
     example: UserType.jobSeeker,
   })
   @Column({ type: 'enum', enum: UserType, default: UserType.jobSeeker })
-  @Factory(faker => faker.helpers.enumValue(UserType))
+  @Factory(faker => faker.helpers.enumValue(AllowedUserTypes))
   type: UserType;
 
   @Column({
@@ -119,7 +120,7 @@ export class User extends AbstractEntity {
     default: false,
   })
   @Exclude()
-  @Factory(faker => faker.helpers.arrayElement([true, false]))
+  @Factory(faker => faker.helpers.arrayElement([true, true]))
   isVerified: boolean;
 
   @ApiProperty({
@@ -128,6 +129,6 @@ export class User extends AbstractEntity {
   })
   @Expose()
   get joinedAt(): string {
-    return this.createdAt.toISOString();
+    return this.createdAt.toISOString() || new Date().toISOString();
   }
 }
