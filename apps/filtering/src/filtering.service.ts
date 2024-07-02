@@ -227,7 +227,6 @@ export class FilteringService {
       ),
     );
 
-
     // check if the job exists and is open
     if (!job) {
       throw new BadRequestException(FILTERATION_CONSTANTS.JOB_NOT_FOUND);
@@ -566,13 +565,8 @@ export class FilteringService {
     const filterations = await this.filterationRepository
       .createQueryBuilder('filteration')
       .where('filteration.userId = :userId', { userId: user.id })
-      .andWhere('filteration.currentStage IN (:...stages)', {
-        stages: [
-          StageType.interview,
-          StageType.failed,
-          StageType.candidate,
-          StageType.selected,
-        ],
+      .andWhere('filteration.currentStage = :stage', {
+        stage: StageType.interview,
       })
       .skip((page - 1) * limit)
       .take(limit)
