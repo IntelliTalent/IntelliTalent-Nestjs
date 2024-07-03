@@ -3,6 +3,7 @@ import getConfigVariables from './configVariables.config';
 export const Constants = {
   //basic app info
   APPPORT: 'NODE_PORT',
+  NODE_ENV: 'NODE_ENV',
   BASEURL: 'APP_BASE_URL',
   FRONT_END_URL: 'FRONT_END_URL',
   //database values

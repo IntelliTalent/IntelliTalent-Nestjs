@@ -1,10 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 
 export const PROD_ENVIRONMENT = 'production';
-const STAGING_ENVIRONMENT = 'staging';
-const LOCAL_ENVIRONMENT = 'local';
-const TEST_ENVIRONMENT = 'test';
-const ENV_CONSTANT = 'environment';
+export const LOCAL_ENVIRONMENT = 'local';
+export const TEST_ENVIRONMENT = 'testing';
+export const ENV_CONSTANT = 'environment';
 
 export const currentEnvironment = () => {
   const configService: ConfigService = new ConfigService();
@@ -16,7 +15,6 @@ const getConfigVariables = (variableName: string) => {
 
   switch (environment) {
     case PROD_ENVIRONMENT:
-    case STAGING_ENVIRONMENT:
     case LOCAL_ENVIRONMENT:
     case TEST_ENVIRONMENT:
     default:

@@ -1,6 +1,7 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Constants, ServiceName } from './environment.constants';
 import getConfigVariables from './configVariables.config';
+import { testingMode } from '../utils/constant';
 
 export const getServiceDatabse = async (
   serviceName: ServiceName,
@@ -67,9 +68,14 @@ export const getServiceDatabse = async (
       });
       break;
 
-
     default:
       throw new Error('Service not found');
+  }
+
+  if (testingMode()) {
+    Object.assign(configObject, {
+      database: await getConfigVariables(Constants.DB.dbName.TESTINGDB),
+    });
   }
 
   return configObject;

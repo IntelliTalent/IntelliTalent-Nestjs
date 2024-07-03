@@ -8,7 +8,7 @@ import {
   UpdateUserDto,
   changePasswordDto,
 } from '@app/services_communications';
-import { Constants, ServiceName, User, UserType } from '@app/shared';
+import { Constants, ServiceName, testingMode, User, UserType } from '@app/shared';
 import {
   BadRequestException,
   Inject,
@@ -42,6 +42,16 @@ export class UserService {
 
   seeder(count: number) {
     const users = DataFactory.createForClass(User).generate(count);
+
+    // make at least 2 of the users to be recruiters
+    for (let i = 0; i < users.length; i++) {
+      if (i < 2) {
+      users[i].type = UserType.recruiter;
+      } else {
+      users[i].type = UserType.jobSeeker;
+      }
+    }
+
     return this.userRepository.save(users);
   }
 
@@ -78,6 +88,7 @@ export class UserService {
     const createdUser = this.userRepository.create({
       ...createUser,
       type: databaseUserType,
+      isVerified: testingMode()
     });
 
     const savedUser = await this.userRepository.save(createdUser);
@@ -237,7 +248,11 @@ export class UserService {
   }
 
   async changePassword(dto: changePasswordDto): Promise<{ message: string }> {
-    const { currentPassword, newPassword, userId } = dto;
+    const { currentPassword, newPassword, userId, confirmPassword } = dto;
+
+    if(newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('new password and confirm password do not match');
+    }
 
     const user = await this.findUser({
       where: {

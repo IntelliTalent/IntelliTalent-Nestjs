@@ -14,7 +14,6 @@ import {
   ServiceName,
   StageType,
   StructuredJob,
-  struttedJobTableName,
   UnstructuredJobs,
 } from '@app/shared';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';

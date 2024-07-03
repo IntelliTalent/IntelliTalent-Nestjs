@@ -1,4 +1,3 @@
-import { IsMatch } from '@app/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
 
@@ -18,7 +17,6 @@ export class changePasswordDto {
   @IsNotEmpty()
   @IsString()
   @IsStrongPassword()
-  @IsMatch('confirmPassword')
   newPassword: string;
 
   @ApiProperty({
@@ -28,7 +26,6 @@ export class changePasswordDto {
   @IsNotEmpty()
   @IsString()
   @IsStrongPassword()
-  @IsMatch('newPassword')
   confirmPassword: string;
 
   userId: string;

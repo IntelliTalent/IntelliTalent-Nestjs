@@ -137,8 +137,8 @@ export class QuizzesService {
     .getRawMany();
 
     const statistics = {
-      notTaken: Number(result.find((r) => r.isTaken === false).count) || 0,
-      taken: Number(result.find((r) => r.isTaken === true).count) || 0,
+      notTaken: Number(result.find((r) => r.isTaken === false)?.count) || 0,
+      taken: Number(result.find((r) => r.isTaken === true)?.count) || 0,
       total: result.reduce((acc, r) => acc + Number(r.count), 0),
     }
 
@@ -198,10 +198,16 @@ export class QuizzesService {
         userId: userId,
         jobId: jobId,
       },
-      select: ['questions', 'visitCount'],
+      select: ['questions', 'visitCount', 'isTaken', 'deadline'],
     });
 
+
     if (!quiz) throw new NotFoundException('Quiz not found');
+
+
+    if(quiz.isTaken) {
+      throw new BadRequestException('You have already taken this quiz.');
+    }
 
     if (quiz.deadline < new Date())
       throw new BadRequestException(
@@ -318,6 +324,7 @@ export class QuizzesService {
         jobId: getQuiz.jobId,
       },
       select: ['randomSlug', 'userId', 'email', 'jobId'],
+      withDeleted: true,
     });
 
     return quizSlugs;
@@ -327,11 +334,9 @@ export class QuizzesService {
   async removeProfileQuizzes(dto: RemoveProfileQuizzesDto) {
     const { userId, jobsIds } = dto;
 
-    const jobsIdsArray = jobsIds.split(',');
-
     await this.quizRepository.delete({
       userId: userId,
-      jobId: In(jobsIdsArray),
+      jobId: In(jobsIds),
     });
   }
 
