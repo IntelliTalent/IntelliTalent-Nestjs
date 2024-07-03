@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SharedModule } from '@app/shared';
+import { CustomJobsStages, Education, Experience, Filteration, Interview, Profile, Project, SharedModule, StructuredJob, Token, User } from '@app/shared';
 import { ServiceName } from '@app/shared/config/environment.constants';
 import { ApiAuthModule } from '../auth/auth.module';
 import { ApiATSModule } from '../ats/ats.module';
@@ -19,6 +19,8 @@ import { ApiAutofillModule } from '../autofill/autofill.module';
 import { ApiCustomJobModule } from '../custom-job/custom-job.module';
 import { ApiFilterationModule } from '../filteration/filteration.module';
 import { ApiUserModule } from '../user/user.module';
+import { Quiz } from '@app/shared/entities/quiz.entity';
+import { Certificate } from 'crypto';
 
 @Module({
   imports: [
@@ -32,6 +34,15 @@ import { ApiUserModule } from '../user/user.module';
     SharedModule.registerRmq(ServiceName.CV_GENERATOR_SERVICE),
     SharedModule.registerRmq(ServiceName.CV_EXTRACTOR_SERVICE),
     SharedModule.registerRmq(ServiceName.JOB_SERVICE),
+    SharedModule.registerPostgres(ServiceName.TESTING_DATABASE, [
+      Interview,
+      Filteration,
+      CustomJobsStages,
+      User,
+      Token,
+      StructuredJob,
+      Quiz,
+    ]),
     ApiAuthModule,
     ApiATSModule,
     ApiCoverLetterGeneratorModule,
