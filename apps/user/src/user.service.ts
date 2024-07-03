@@ -8,7 +8,7 @@ import {
   UpdateUserDto,
   changePasswordDto,
 } from '@app/services_communications';
-import { Constants, ServiceName, User, UserType } from '@app/shared';
+import { Constants, ServiceName, testingMode, User, UserType } from '@app/shared';
 import {
   BadRequestException,
   Inject,
@@ -88,6 +88,7 @@ export class UserService {
     const createdUser = this.userRepository.create({
       ...createUser,
       type: databaseUserType,
+      isVerified: testingMode()
     });
 
     const savedUser = await this.userRepository.save(createdUser);

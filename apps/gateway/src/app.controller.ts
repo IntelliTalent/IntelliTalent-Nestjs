@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Module, Post } from '@nestjs/common';
+import { BadGatewayException, Controller, Get, Inject, Module, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClientProxy } from '@nestjs/microservices';
@@ -11,6 +11,7 @@ import {
   SeederEvent,
   ServiceName,
   StructuredJob,
+  testingMode,
   User,
   UserType,
 } from '@app/shared';
@@ -44,6 +45,17 @@ export class AppController {
     private filterationService: ClientProxy,
   ) {
     //  this.seeder();
+  }
+
+
+  @Public()
+  @Post('clearData')
+  async clearData() {
+    if(!testingMode()){
+      throw new BadGatewayException("This endpoint is only available in testing mode")
+    }
+
+    await this.appService.clearDatabase();
   }
 
   private tempProfile: CreateProfileDto = {
