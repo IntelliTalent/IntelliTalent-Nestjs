@@ -240,7 +240,7 @@ export class CreateProjectDto {
   @IsOptional()
   @ApiProperty({ required: false, example: 'https://example.com/project' })
   @IsUrl()
-  url: string;
+  url?: string;
 }
 
 export class CreateCertificateDto {
