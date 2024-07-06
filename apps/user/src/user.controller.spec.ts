@@ -12,6 +12,7 @@ import {
 } from '@app/services_communications';
 import { ResetPasswordDto } from '@app/services_communications/userService/dtos/reset-password.dto';
 import { GetUsersByIdsDto } from '@app/services_communications/userService/dtos/get-users.dto';
+import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 
 describe('UserController', () => {
   let userController: UserController;
@@ -152,7 +153,7 @@ describe('UserController', () => {
   });
 
   it('Should call userService.getAllJobSeekers', async () => {
-    const pageOptions = { page: 1, limit: 10 };
+    const pageOptions: PageOptionsDto = { page: 1, take: 10};
     userController.getAllJobSeekers(pageOptions);
     expect(mockUserService.getAllJobSeekers).toHaveBeenCalledWith(pageOptions);
   });

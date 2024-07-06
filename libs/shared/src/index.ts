@@ -3,14 +3,18 @@ export * from './shared.service';
 
 // entities
 export * from './entities/profile.entity';
-
-// export * from './entities/book.entity';
 export * from './entities/user.entity';
 export * from './entities/interview.entity';
 export * from './entities/custom_jobs_stages.entity';
 export * from './entities/structured_jobs.entity';
 export * from './entities/filteration.entity';
 export * from './entities/token.entity';
+export * from './entities/certification.entity'
+export * from './entities/education.enity'
+export * from './entities/experiance.entity'
+export * from './entities/profile.entity'
+export * from './entities/project.entity'
+
 
 export * from './entities/unstructerd_jobs.schema';
 export * from './entities/form_fields.schema';

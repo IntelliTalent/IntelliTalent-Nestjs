@@ -14,7 +14,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : exceptionAny.error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
+        : exceptionAny.error?.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
 
     const httpResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
