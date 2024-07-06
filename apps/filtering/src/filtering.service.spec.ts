@@ -844,6 +844,8 @@ describe('Filtering service test', () => {
       answers: ['answer1', 'answer2'],
       recordedAnswers: ['recording1', 'recording2'],
       interviewDate: new Date(),
+      jobTitle: 'Software Engineer',
+      deadline: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 7),
     };
 
     const filterationRepository = filteringService['filterationRepository'];
@@ -961,6 +963,8 @@ describe('Filtering service test', () => {
       answers: ['answer1', 'answer2'], // Two answers expected
       recordedAnswers: ['recording1', 'recording2'],
       interviewDate: new Date(),
+      jobTitle: 'Software Engineer',
+      deadline: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 7),
     };
 
     const filterationRepository = filteringService['filterationRepository'];
@@ -1669,6 +1673,8 @@ describe('Filtering service test', () => {
       answers: ['John Doe', 'Because I am passionate about this field'],
       recordedAnswers: ['recording1', 'recording2'],
       interviewDate: new Date(),
+      jobTitle: 'Software Engineer',
+      deadline: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 7),
     };
 
     const filterationRepository = filteringService['filterationRepository'];
@@ -1787,6 +1793,8 @@ describe('Filtering service test', () => {
         interviewDate: new Date(),
         answers: [`Answer ${i}`],
         recordedAnswers: [`Recording ${i}`],
+        jobTitle: 'Software Engineer',
+        deadline: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 7),
       };
       return filteration;
     });
@@ -1862,6 +1870,8 @@ describe('Filtering service test', () => {
         interviewDate: new Date(),
         answers: [`Answer ${i}`],
         recordedAnswers: [`Recording ${i}`],
+        jobTitle: 'Software Engineer',
+        deadline: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 7),
       };
       return filteration;
     });
@@ -1947,6 +1957,11 @@ describe('Filtering service test', () => {
       currentStage: JobStageType.Interview,
       userId: uuidv4(),
       title: 'Software Engineer',
+      stages: {
+        interview: {
+          interviewQuestions: ['What is your name?', 'Why do you want this job?'],
+        },
+      },
     } as StructuredJob;
 
     const filterations = Array.from({ length: 5 }, (_, i) => ({
@@ -2191,6 +2206,11 @@ describe('Filtering service test', () => {
       currentStage: JobStageType.Interview,
       userId: uuidv4(),
       title: 'Software Engineer',
+      stages: {
+        interview: {
+          interviewQuestions: ['What is your name?', 'Why do you want this job?'],
+        },
+      }
     } as StructuredJob;
 
     const filterations = Array.from({ length: 5 }, (_, i) => ({
