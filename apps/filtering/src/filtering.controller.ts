@@ -1,6 +1,6 @@
 import { Controller, UseFilters } from '@nestjs/common';
 import { FilteringService } from './filtering.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
@@ -106,6 +106,11 @@ export class FilteringController {
   @MessagePattern({cmd: FilterationServicePattern.getInterviewedApplicants})
   getInterviewedApplicants(@Payload() data: PaginatedJobDto){
     return this.filteringService.getInterviewedApplicants(data.userId, data.jobId, data.paginationOptions);
+  }
+
+  @EventPattern({cmd: FilterationServicePattern.deleteProfile})
+  deleteProfile(@Payload() profileId: string ){
+    return this.filteringService.deleteProfile(profileId);
   }
 
 }

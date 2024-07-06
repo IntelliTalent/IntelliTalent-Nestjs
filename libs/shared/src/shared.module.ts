@@ -57,6 +57,26 @@ export class SharedModule {
           return {
             options: {
               db: redisDbName,
+              autoResubscribe: true,
+              autoResendUnfulfilledCommands: true,
+              enableReadyCheck: true,
+              keepAlive: 1000,
+              maxRetriesPerRequest: 40,
+              reconnectOnError: (error: Error) => {
+                console.log('error', error);
+                const targetError = 'READONLY';
+                if (error.message.includes(targetError)) {
+                  return 2;
+                }
+                return false;
+              },
+              retryStrategy: (times: number) => {
+                if (times > 20) {
+                  return undefined;
+                }
+                return Math.min(times * 50, 2000);
+              },
+              connectTimeout: 10000,
             },
             type: 'single',
             url: url,

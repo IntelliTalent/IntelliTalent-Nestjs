@@ -3,7 +3,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { handleTemplate, IEmail } from './templates';
-import { recentEmailsExpire, recentEmailsKey } from '@app/shared';
+import { recentEmailsExpire, recentEmailsKey, testingMode } from '@app/shared';
 import { Cron } from '@nestjs/schedule';
 @Injectable()
 export class NotifierService {
@@ -34,12 +34,13 @@ export class NotifierService {
   async sendMail(email: IEmail) {
     // console.log('sending email', email);
 
+    if(testingMode()) return; // Don't send emails in testing mode
 
-    // await this.mailService.sendMail({
-    //   to: email.to,
-    //   from: email.from,
-    //   subject: email.subject,
-    //   html: email.html,
-    // });
+    await this.mailService.sendMail({
+      to: email.to,
+      from: email.from,
+      subject: email.subject,
+      html: email.html,
+    });
   }
 }
