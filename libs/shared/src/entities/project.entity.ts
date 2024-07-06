@@ -6,9 +6,8 @@ import {
     ManyToOne,
     Index,
   } from 'typeorm';
-  import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+  import { ApiProperty } from '@nestjs/swagger';
   import { AbstractEntity } from './abstract.entity';
-  import { Experience } from './experiance.entity';
 import { Profile } from './profile.entity';
 
 
@@ -36,5 +35,9 @@ export class Project extends AbstractEntity {
   @Column()
   @ApiProperty()
   size: number;
+
+  @Column({ type:'varchar', nullable: true })
+  @ApiProperty()
+  url: string;
 }
 
