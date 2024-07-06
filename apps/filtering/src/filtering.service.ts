@@ -1240,6 +1240,9 @@ export class FilteringService {
       } else {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.failed;
+        if(previousStage === JobStageType.Quiz) {
+          filteration.quizData.grade = quizScoresMap.get(user.userId);
+        }
         filteration.isQualified = false;
         await this.filterationRepository.save(filteration);
         rejectionTemplateData.push({
@@ -1356,6 +1359,9 @@ export class FilteringService {
       } else {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.failed;
+        if(previousStage === JobStageType.Quiz) {
+          filteration.quizData.grade = quizScoresMap.get(user.userId);
+        }
         filteration.isQualified = false;
         await this.filterationRepository.save(filteration);
         rejectionTemplateData.push({
@@ -1411,6 +1417,6 @@ export class FilteringService {
       } as RemoveProfileQuizzesDto
     );
 
-    await this.filterationRepository.delete({ profileId });
+    await this.filterationRepository.softDelete({ profileId });
   }
 }
