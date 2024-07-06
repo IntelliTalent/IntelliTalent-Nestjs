@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 import { AtsService } from './ats.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  CustomFilters,
   Experience,
   Filteration,
   Profile,
@@ -158,15 +159,32 @@ describe('AtsService', () => {
 
     it('should return false for unmatched city', () => {
       const jobFilters = { city: 'New York' };
-      const profile = { city: 'San Francisco' };
+      const profile = { languages: [], city: 'San Francisco' };
       const result = atsService['_validateCustomFilters'](jobFilters, profile);
       expect(result).toBe(false);
     });
+  });
 
-    it('should return false for insufficient experience', () => {
-      const jobFilters = { yearsOfExperience: 5 };
-      const profile = { yearsOfExperience: 3 };
-      const result = atsService['_validateCustomFilters'](jobFilters, profile);
+  describe('_validateJobInfo', () => {
+    it('should validate job info correctly', () => {
+      const job = {
+        neededExperience: 3,
+        csRequired: true,
+      };
+
+      const profile = {
+        yearsOfExperience: 5,
+        graduatedFromCS: true,
+      };
+
+      const result = atsService['_validateJobInfo'](job, profile);
+      expect(result).toBe(true);
+    });
+
+    it('should return false for unmatched job neededExperience', () => {
+      const job = { neededExperience: 3 };
+      const profile = { yearsOfExperience: 2 };
+      const result = atsService['_validateJobInfo'](job, profile);
       expect(result).toBe(false);
     });
   });
