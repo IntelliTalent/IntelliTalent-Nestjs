@@ -1,3 +1,4 @@
+import { AUTH_HEADER } from '@app/services_communications';
 import { ApplyJobRequest } from '@app/services_communications/filteration-service/dtos/requests/apply-job-request.dto';
 import { AuthApplyJobRequestDto } from '@app/services_communications/filteration-service/dtos/requests/auth-appy-job-request.dto';
 import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
@@ -26,7 +27,7 @@ import { FilterationServicePattern } from '@app/services_communications/filterat
 import { CurrentUser, Roles, ServiceName, User, UserType } from '@app/shared';
 import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 @ApiSecurity('bearer')
 @ApiTags('Filteration Service')
@@ -88,6 +89,7 @@ export class ApiFilterationController {
     description: 'filteration of the job under processing ...',
     type: StageResponseDto
   })
+  @ApiBearerAuth(AUTH_HEADER)
   async filterJob(
     @Body() filterJob: ApplyJobRequest,
     @CurrentUser() user: User,
@@ -136,7 +138,6 @@ export class ApiFilterationController {
     @Query('page') page: number,
     @Query('take') take: number,
   ) {
-    console.log('getMatchedJobs', profileId);
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.getMatchedJobs,
@@ -158,13 +159,13 @@ export class ApiFilterationController {
     description: 'The applied jobs of the profile',
     type: GetAppliedJobsDto
   })
+  @ApiBearerAuth(AUTH_HEADER)
   async getAppliedJobs(
     @CurrentUser() user: User,
     @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Query('page') page: number,
     @Query('take') take: number,
   ) {
-    console.log('getMatchedJobs', profileId);
     return this.filterationService.send(
       {
         cmd: FilterationServicePattern.getAppliedJobs,
@@ -240,7 +241,7 @@ export class ApiFilterationController {
     @CurrentUser() user: User,
     @Param('jobId', new ParseUUIDPipe()) jobId: string,
     @Param('profileId', new ParseUUIDPipe()) profileId: string,
-    
+
   ) {
     return this.filterationService.send(
       {

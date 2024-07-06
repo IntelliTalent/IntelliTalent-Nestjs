@@ -1,15 +1,17 @@
 import { Controller, UseFilters } from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateJobDto,
   EditJobDto,
+  jobsServiceEvents,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RpcExceptionsFilter } from '@app/shared';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
 import { GetUserJobsDto } from '@app/services_communications/jobs-service/dtos/get-user-jobs.dto';
+import { ApplyJobDto } from '@app/services_communications';
 
 @Controller()
 @UseFilters(RpcExceptionsFilter)
@@ -37,13 +39,13 @@ export class JobsController {
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobById })
-  getJobById(jobId: string) {
-    return this.jobsService.getJobById(jobId);
+  getJobById({ jobId, userId = null }: { jobId: string; userId: string }) {
+    return this.jobsService.getJobById(jobId, userId);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobDetailsById })
-  getJobDetailsById(jobId: string) {
-    return this.jobsService.getJobDetailsById(jobId);
+  getJobDetailsById({ jobId, userId = null }: { jobId: string; userId: string }) {
+    return this.jobsService.getJobDetailsById(jobId, userId);
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobs })
@@ -64,5 +66,10 @@ export class JobsController {
   @MessagePattern({ cmd: jobsServicePatterns.moveToNextStage })
   moveToNextStage({ jobId, userId }: { jobId: string; userId: string }) {
     return this.jobsService.moveToNextStage(jobId, userId);
+  }
+
+  @EventPattern({ cmd: jobsServiceEvents.userApply })
+  userApply(applyDro: ApplyJobDto) {
+    this.jobsService.userApply(applyDro);
   }
 }
