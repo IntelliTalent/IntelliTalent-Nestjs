@@ -127,7 +127,6 @@ export class StructuredJob extends AbstractEntity {
 
   static getJobSourceFromEnum(source: JobSource): string {
     return Object.keys(JobSource).find((key) => {
-      console.log(JobSource[key], source);
       return JobSource[key] == source
     });
   }
