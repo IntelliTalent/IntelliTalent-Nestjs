@@ -7,6 +7,7 @@ import {
   AuthFormFieldsDto,
   AutofillServicePattern,
 } from '@app/services_communications/autofill';
+import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { PaginatedProfilesDto } from '@app/services_communications/profile/dtos/paginated-profiles.deo';
 import { Profile, ServiceName } from '@app/shared';
 import { applyQueryOptions } from '@app/shared/api-features/apply_query_options';
@@ -97,9 +98,7 @@ export class ProfileService {
 
     this.profileRepository.softDelete(DeleteProfileDto.profileId);
 
-
-    // TODO: should uncomment this line after implementing the filtration service
-    // this.filtrationService.emit('deleteProfile', DeleteProfileDto.profileId);
+    this.filtrationService.emit({cmd: FilterationServicePattern.deleteProfile}, DeleteProfileDto.profileId);
 
     return 'Profile Deleted Successfully';
   }
