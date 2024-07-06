@@ -8,8 +8,9 @@ import {
   ValidateNested,
   IsDateString,
   IsNumber,
+  IsUrl,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateProfileDto {
   userId: string;
@@ -54,11 +55,17 @@ export class CreateProfileDto {
   @IsOptional()
   @ApiPropertyOptional({ example: 'https://linkedin.com/your-profile' })
   @IsString()
+  @Transform(({value}) => {
+    return value?.startsWith('https://') ? value : `https://www.linkedin.com/in/${value}`;;
+  })
   linkedIn?: string;
 
   @IsOptional()
   @ApiPropertyOptional({ example: 'https://github.com/your-profile' })
   @IsString()
+  @Transform(({value}) => {
+    return value?.startsWith('https://') ? value : `https://www.github.com/${value}`;;
+  })
   gitHub?: string;
 
   @ApiProperty({

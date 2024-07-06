@@ -8,10 +8,7 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AbstractEntity } from './abstract.entity';
-import { Experience } from './experiance.entity';
-import { Education } from './education.enity';
-import { Project } from './project.entity';
-import { Certificate } from './certification.entity';
+import { Certificate, Project, Education, Experience} from '@app/shared';
 
 @Entity()
 export class Profile extends AbstractEntity {
