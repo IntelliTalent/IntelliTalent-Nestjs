@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Module, Post } from '@nestjs/common';
+import { BadGatewayException, Controller, Get, Inject, Module, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClientProxy } from '@nestjs/microservices';
@@ -11,6 +11,7 @@ import {
   SeederEvent,
   ServiceName,
   StructuredJob,
+  testingMode,
   User,
   UserType,
 } from '@app/shared';
@@ -46,11 +47,22 @@ export class AppController {
     //  this.seeder();
   }
 
+
+  @Public()
+  @Post('clearData')
+  async clearData() {
+    if(!testingMode()){
+      throw new BadGatewayException("This endpoint is only available in testing mode")
+    }
+
+    await this.appService.clearDatabase();
+  }
+
   private tempProfile: CreateProfileDto = {
     userId: '',
     jobTitle: 'Software Engineer',
     skills: ['JavaScript', 'Node.js'],
-    yearsOfExperience: 3,
+    yearsOfExperience: faker.number.int({ min: 5, max: 10 }),
     graduatedFromCS: true,
     languages: ['English', 'Spanish'],
     summary: 'Experienced software engineer with expertise in web development.',
@@ -252,7 +264,7 @@ export class AppController {
 
     // make the first 3 jobs quiz end Date after 5 mins and jobEnd Date after 2 mins /// interview
     const now = new Date();
-    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+    const twoMinutesFromNow = new Date(now.getTime() + 2 * 60 * 1000);
     const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
@@ -265,7 +277,7 @@ export class AppController {
         return {
           ...payload,
           quizEndDate: null,
-          jobEndDate: fiveMinutesFromNow,
+          jobEndDate: twoMinutesFromNow,
           interview:{
              endDate: threeDaysFromNow,
              interviewQuestions: payload.interview.interviewQuestions
@@ -286,12 +298,11 @@ export class AppController {
       });
 
 
-
       const jobsWithoutInterviewOrQuiz = jobsPayloads.slice(6, 9).map((payload) => {
         return {
           ...payload,
           quizEndDate: null,
-          jobEndDate: fiveMinutesFromNow,
+          jobEndDate: twoMinutesFromNow,
           interview: null
         };
       })

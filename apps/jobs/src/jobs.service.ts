@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -14,11 +13,10 @@ import {
   ServiceName,
   StageType,
   StructuredJob,
-  struttedJobTableName,
   UnstructuredJobs,
 } from '@app/shared';
-import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   CreateJobDto,
   EditJobDto,
@@ -27,7 +25,7 @@ import {
 } from '@app/services_communications/jobs-service';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Redis } from 'ioredis';
@@ -60,12 +58,7 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-    @InjectEntityManager()
-    private entityManager: EntityManager,
-  ) {
-  }
-
-
+  ) {}
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
@@ -279,254 +272,253 @@ export class JobsService {
   }
 
   async createJob(newJob: CreateJobDto) {
-      // Check that dates are valid
+    // Check that dates are valid
 
+    // check if job endDate is after now
+    if (newJob.jobEndDate && new Date(newJob.jobEndDate) < new Date()) {
+      throw new BadRequestException('Job end date must be after now');
+    }
 
-      // check if job endDate is after now
-      if (newJob.jobEndDate && new Date(newJob.jobEndDate) < new Date()) {
-        throw new BadRequestException('Job end date must be after now');
+    // Check that interview end date is after quiz end date
+    if (newJob.quizEndDate && newJob.interview?.endDate) {
+      if (newJob.interview?.endDate < newJob.quizEndDate) {
+        throw new BadRequestException(
+          'Interview end date must be after quiz end date',
+        );
       }
+    }
 
-      // Check that interview end date is after quiz end date
-      if (newJob.quizEndDate && newJob.interview?.endDate) {
-        if (newJob.interview?.endDate < newJob.quizEndDate) {
-          throw new BadRequestException(
-            'Interview end date must be after quiz end date',
-          );
-        }
+    // Check that interview end date is after job end date
+    if (newJob.jobEndDate && newJob.interview?.endDate) {
+      if (newJob.jobEndDate > newJob.interview?.endDate) {
+        throw new BadRequestException(
+          'Interview end date must be after job end date',
+        );
       }
+    }
 
-      // Check that interview end date is after job end date
-      if (newJob.jobEndDate && newJob.interview?.endDate) {
-        if (newJob.jobEndDate > newJob.interview?.endDate) {
-          throw new BadRequestException(
-            'Interview end date must be after job end date',
-          );
-        }
+    // Check that the quiz end date is after the quiz end date
+    if (newJob.quizEndDate && newJob.jobEndDate) {
+      if (newJob.jobEndDate > newJob.quizEndDate) {
+        throw new BadRequestException(
+          'Quiz end date must be after job end date',
+        );
       }
+    }
 
-      // Check that the quiz end date is after the quiz end date
-      if (newJob.quizEndDate && newJob.jobEndDate) {
-        if (newJob.jobEndDate > newJob.quizEndDate) {
-          throw new BadRequestException(
-            'Quiz end date must be after job end date',
-          );
-        }
-      }
-
-      // Check if there is an interview in the new job
-      let interview: Interview | null = null;
-      if (newJob.interview) {
-        interview = this.interviewRepository.create({
-          interviewQuestions: newJob.interview.interviewQuestions,
-          endDate: newJob.interview.endDate,
-        });
-
-        await this.interviewRepository.save(interview);
-      }
-
-      // Create a custom job stage entity
-      const customJobStage = this.customJobsStagesRepository.create({
-        interview: interview,
-        quizEndDate: newJob.quizEndDate,
-        customFilters: newJob.customFilters,
-      });
-      await this.customJobsStagesRepository.save(customJobStage);
-
-      // Create the structured job entity
-      const structuredJob = this.structuredJobRepository.create({
-        userId: newJob.userId,
-        title: newJob.title,
-        company: newJob.company,
-        jobLocation: newJob.jobLocation,
-        type: newJob.type,
-        skills: newJob.skills,
-        description: newJob.description,
-        jobPlace: newJob.jobPlace,
-        neededExperience: newJob.neededExperience,
-        education: newJob.education,
-        csRequired: newJob.csRequired,
-        jobEndDate: newJob.jobEndDate,
-        stages: customJobStage,
+    // Check if there is an interview in the new job
+    let interview: Interview | null = null;
+    if (newJob.interview) {
+      interview = this.interviewRepository.create({
+        interviewQuestions: newJob.interview.interviewQuestions,
+        endDate: newJob.interview.endDate,
       });
 
-      // Set additional fields
-      structuredJob.url = '';
-      structuredJob.publishedAt = new Date();
-      structuredJob.isActive = true;
-      structuredJob.isScrapped = false;
+      await this.interviewRepository.save(interview);
+    }
 
-      // Save the structured job entity to get the generated id
-      const savedJob = await this.structuredJobRepository.save(structuredJob);
+    // Create a custom job stage entity
+    const customJobStage = this.customJobsStagesRepository.create({
+      interview: interview,
+      quizEndDate: newJob.quizEndDate,
+      customFilters: newJob.customFilters,
+    });
+    await this.customJobsStagesRepository.save(customJobStage);
 
-      // Set the url with the generated id
-      const frontEndUrl = await getConfigVariables(Constants.FRONT_END_URL);
-      savedJob.url = `${frontEndUrl}/jobs/${savedJob.id}`;
+    // Create the structured job entity
+    const structuredJob = this.structuredJobRepository.create({
+      userId: newJob.userId,
+      title: newJob.title,
+      company: newJob.company,
+      jobLocation: newJob.jobLocation,
+      type: newJob.type,
+      skills: newJob.skills,
+      description: newJob.description,
+      jobPlace: newJob.jobPlace,
+      neededExperience: newJob.neededExperience,
+      education: newJob.education,
+      csRequired: newJob.csRequired,
+      jobEndDate: newJob.jobEndDate,
+      stages: customJobStage,
+    });
 
-      // Update the saved job with the constructed URL
-      await this.structuredJobRepository.save(savedJob);
+    // Set additional fields
+    structuredJob.url = '';
+    structuredJob.publishedAt = new Date();
+    structuredJob.isActive = true;
+    structuredJob.isScrapped = false;
 
-      // Save the structured job to Redis
-      await this.insertCreatedJobsToRedis(savedJob);
+    // Save the structured job entity to get the generated id
+    const savedJob = await this.structuredJobRepository.save(structuredJob);
 
-      // Fire the matching event to the ATS service
-      await this.callATSService();
+    // Set the url with the generated id
+    const frontEndUrl = await getConfigVariables(Constants.FRONT_END_URL);
+    savedJob.url = `${frontEndUrl}/jobs/${savedJob.id}`;
 
-      // Schedule the end dates
-      if (newJob.jobEndDate) {
-        this.scheduleJobEnd(savedJob);
-      }
-      if (newJob.quizEndDate) {
-        this.scheduleQuizEnd(savedJob);
-      }
-      if (newJob.interview) {
-        this.scheduleInterviewEnd(savedJob);
-      }
+    // Update the saved job with the constructed URL
+    await this.structuredJobRepository.save(savedJob);
 
-      return savedJob;
+    // Save the structured job to Redis
+    this.insertCreatedJobsToRedis(savedJob);
+
+    // Fire the matching event to the ATS service
+    this.callATSService();
+
+    // Schedule the end dates
+    if (newJob.jobEndDate) {
+      this.scheduleJobEnd(savedJob);
+    }
+    if (newJob.quizEndDate) {
+      this.scheduleQuizEnd(savedJob);
+    }
+    if (newJob.interview) {
+      this.scheduleInterviewEnd(savedJob);
+    }
+
+    return savedJob;
   }
 
   async editJob(editJob: EditJobDto) {
-      const {
-        jobId,
-        userId,
-        customFilters,
-        interview,
-        jobEndDate,
-        quizEndDate,
-        ...rest
-      } = editJob;
+    const {
+      jobId,
+      userId,
+      customFilters,
+      interview,
+      jobEndDate,
+      quizEndDate,
+      ...rest
+    } = editJob;
 
-      // Check if the job exists
-      const existingJob = await this.structuredJobRepository.findOne({
-        where: { id: jobId },
-        relations: ['stages', 'stages.interview'],
-      });
-      if (!existingJob) {
-        throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    // Check if the job exists
+    const existingJob = await this.structuredJobRepository.findOne({
+      where: { id: jobId },
+      relations: ['stages', 'stages.interview'],
+    });
+    if (!existingJob) {
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
+
+    // Check if the user is the owner of the job
+    if (existingJob.userId !== userId) {
+      throw new ForbiddenException('Can not edit a job of another user');
+    }
+
+    for (const [key, value] of Object.entries(rest)) {
+      if (isDefined(value)) {
+        existingJob[key] = value;
       }
+    }
 
-      // Check if the user is the owner of the job
-      if (existingJob.userId !== userId) {
-        throw new ForbiddenException('Can not edit a job of another user');
-      }
-
-      for (const [key, value] of Object.entries(rest)) {
+    if (customFilters) {
+      for (const [key, value] of Object.entries(customFilters)) {
         if (isDefined(value)) {
-          existingJob[key] = value;
+          existingJob.stages.customFilters[key] = value;
         }
       }
+    }
 
-      if (customFilters) {
-        for (const [key, value] of Object.entries(customFilters)) {
-          if (isDefined(value)) {
-            existingJob.stages.customFilters[key] = value;
-          }
-        }
+    if (jobEndDate) {
+      // Check that the job end date is before the quiz end date and before the interview end date
+      if (
+        (quizEndDate && quizEndDate < jobEndDate) ||
+        (!quizEndDate &&
+          existingJob.stages.quizEndDate &&
+          existingJob.stages.quizEndDate < jobEndDate)
+      ) {
+        throw new BadRequestException(
+          'Job end date must be before quiz end date',
+        );
       }
 
-      if (jobEndDate) {
-        // Check that the job end date is before the quiz end date and before the interview end date
-        if (
-          (quizEndDate && quizEndDate < jobEndDate) ||
-          (!quizEndDate &&
-            existingJob.stages.quizEndDate &&
-            existingJob.stages.quizEndDate < jobEndDate)
-        ) {
-          throw new BadRequestException(
-            'Job end date must be before quiz end date',
-          );
-        }
-
-        if (
-          (interview && interview.endDate < jobEndDate) ||
-          (!interview &&
-            existingJob.stages.interview &&
-            existingJob.stages.interview.endDate < jobEndDate)
-        ) {
-          throw new BadRequestException(
-            'Job end date must be before interview end date',
-          );
-        }
-
-        existingJob.jobEndDate = jobEndDate;
-        this.scheduleJobEnd(existingJob);
+      if (
+        (interview && interview.endDate < jobEndDate) ||
+        (!interview &&
+          existingJob.stages.interview &&
+          existingJob.stages.interview.endDate < jobEndDate)
+      ) {
+        throw new BadRequestException(
+          'Job end date must be before interview end date',
+        );
       }
 
-      if (quizEndDate) {
-        // Check that the quiz end date is after the job end date and before the interview end date
-        if (
-          (jobEndDate && jobEndDate > quizEndDate) ||
-          (!jobEndDate &&
-            existingJob.jobEndDate &&
-            existingJob.jobEndDate > quizEndDate)
-        ) {
-          throw new BadRequestException(
-            'Quiz end date must be after job end date',
-          );
-        }
+      existingJob.jobEndDate = jobEndDate;
+      this.scheduleJobEnd(existingJob);
+    }
 
-        if (
-          (interview && interview.endDate < quizEndDate) ||
-          (!interview &&
-            existingJob.stages.interview &&
-            existingJob.stages.interview.endDate < quizEndDate)
-        ) {
-          throw new BadRequestException(
-            'Quiz end date must be before interview end date',
-          );
-        }
-
-        existingJob.stages.quizEndDate = quizEndDate;
-        this.scheduleQuizEnd(existingJob);
+    if (quizEndDate) {
+      // Check that the quiz end date is after the job end date and before the interview end date
+      if (
+        (jobEndDate && jobEndDate > quizEndDate) ||
+        (!jobEndDate &&
+          existingJob.jobEndDate &&
+          existingJob.jobEndDate > quizEndDate)
+      ) {
+        throw new BadRequestException(
+          'Quiz end date must be after job end date',
+        );
       }
 
-      if (interview) {
-        // Check that the interview end date is after the job end date and after the quiz end date
-        if (
-          (jobEndDate && jobEndDate > interview.endDate) ||
-          (!jobEndDate &&
-            existingJob.jobEndDate &&
-            existingJob.jobEndDate > interview.endDate)
-        ) {
-          throw new BadRequestException(
-            'Interview end date must be after job end date',
-          );
-        }
+      if (
+        (interview && interview.endDate < quizEndDate) ||
+        (!interview &&
+          existingJob.stages.interview &&
+          existingJob.stages.interview.endDate < quizEndDate)
+      ) {
+        throw new BadRequestException(
+          'Quiz end date must be before interview end date',
+        );
+      }
 
-        if (
-          (quizEndDate && quizEndDate > interview.endDate) ||
-          (!quizEndDate &&
-            existingJob.stages.quizEndDate &&
-            existingJob.stages.quizEndDate > interview.endDate)
-        ) {
-          throw new BadRequestException(
-            'Interview end date must be after quiz end date',
-          );
-        }
+      existingJob.stages.quizEndDate = quizEndDate;
+      this.scheduleQuizEnd(existingJob);
+    }
 
-        // Check if there was an old interview remove it
-        if (existingJob.stages.interview) {
-          await this.interviewRepository.delete({
-            id: existingJob.stages.interview.id,
-          });
-        }
+    if (interview) {
+      // Check that the interview end date is after the job end date and after the quiz end date
+      if (
+        (jobEndDate && jobEndDate > interview.endDate) ||
+        (!jobEndDate &&
+          existingJob.jobEndDate &&
+          existingJob.jobEndDate > interview.endDate)
+      ) {
+        throw new BadRequestException(
+          'Interview end date must be after job end date',
+        );
+      }
 
-        const newInterview = this.interviewRepository.create({
-          interviewQuestions: interview.interviewQuestions,
-          endDate: interview.endDate,
+      if (
+        (quizEndDate && quizEndDate > interview.endDate) ||
+        (!quizEndDate &&
+          existingJob.stages.quizEndDate &&
+          existingJob.stages.quizEndDate > interview.endDate)
+      ) {
+        throw new BadRequestException(
+          'Interview end date must be after quiz end date',
+        );
+      }
+
+      // Check if there was an old interview remove it
+      if (existingJob.stages.interview) {
+        await this.interviewRepository.delete({
+          id: existingJob.stages.interview.id,
         });
-
-        await this.interviewRepository.save(newInterview);
-
-        existingJob.stages.interview = newInterview;
-        this.scheduleInterviewEnd(existingJob);
       }
 
-      // Save the updated job entity
-      await this.structuredJobRepository.save(existingJob);
+      const newInterview = this.interviewRepository.create({
+        interviewQuestions: interview.interviewQuestions,
+        endDate: interview.endDate,
+      });
 
-      return existingJob;
+      await this.interviewRepository.save(newInterview);
+
+      existingJob.stages.interview = newInterview;
+      this.scheduleInterviewEnd(existingJob);
+    }
+
+    // Save the updated job entity
+    await this.structuredJobRepository.save(existingJob);
+
+    return existingJob;
   }
 
   async getJobById(jobId: string) {
@@ -568,7 +560,7 @@ export class JobsService {
       relations: ['stages', 'stages.interview'],
     });
 
-    if(!job) {
+    if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
     }
 
@@ -780,7 +772,6 @@ export class JobsService {
       url: job.url,
     }));
 
-
     // Call scrapper service to check the jobs and return list of ids and isActive
     const updatedJobs = JSON.parse(
       await firstValueFrom(
@@ -842,9 +833,8 @@ export class JobsService {
     });
     await Promise.all(bulkInsertPromises);
 
-
     // if the number of jobs is less than 1, return that mean dont call the ats or the redis
-    if(addedJobs.length < 1){
+    if (addedJobs.length < 1) {
       return;
     }
 
@@ -921,7 +911,4 @@ export class JobsService {
       message: 'Job moved to next stage successfully.',
     };
   }
-
-
-
 }

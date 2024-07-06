@@ -8,7 +8,6 @@ import { AllowedUserTypes } from '@app/services_communications';
 
 @Entity()
 export class User extends AbstractEntity {
-
   @ApiProperty({
     description: 'Id of the user',
     example: 'd2b9f3a6-3e9f-4e3d-9f3a-63e9f4e3d9f3',
@@ -21,10 +20,12 @@ export class User extends AbstractEntity {
     example: 'waer@waer.com',
   })
   @Column({ unique: true, type: 'varchar', nullable: false })
-  @Factory(faker => faker.internet.email())
+  @Factory((faker) => faker.internet.email())
   email: string;
 
-  @Factory(faker => "$2a$12$ssnHJiRax4kp.TgXbx8RNu2T9OC.hzSgwReoD1l5SPLIY7R66on7K")
+  @Factory(
+    (faker) => '$2a$12$ssnHJiRax4kp.TgXbx8RNu2T9OC.hzSgwReoD1l5SPLIY7R66on7K',
+  )
   @Column({ select: false })
   password: string;
 
@@ -32,7 +33,7 @@ export class User extends AbstractEntity {
     description: 'firstName of the user',
     example: 'waer',
   })
-  @Factory(faker => faker.person.firstName())
+  @Factory((faker) => faker.person.firstName())
   @Column({})
   firstName: string;
 
@@ -41,7 +42,7 @@ export class User extends AbstractEntity {
     example: 'alwaer',
   })
   @Column({})
-  @Factory(faker => faker.person.lastName())
+  @Factory((faker) => faker.person.lastName())
   lastName: string;
 
   @ApiProperty({
@@ -51,7 +52,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'text',
   })
-  @Factory(faker => faker.phone.number())
+  @Factory((faker) => faker.phone.number())
   phoneNumber: string;
 
   @ApiProperty({
@@ -61,7 +62,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'text',
   })
-  @Factory(faker => faker.location.country())
+  @Factory((faker) => faker.location.country())
   country: string;
 
   @ApiProperty({
@@ -71,7 +72,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'text',
   })
-  @Factory(faker => faker.location.city())
+  @Factory((faker) => faker.location.city())
   city: string;
 
   @ApiProperty({
@@ -82,7 +83,7 @@ export class User extends AbstractEntity {
     type: 'text',
     nullable: true,
   })
-  @Factory(faker => faker.location.streetAddress())
+  @Factory((faker) => faker.location.streetAddress())
   address: string;
 
   @ApiProperty({
@@ -92,7 +93,7 @@ export class User extends AbstractEntity {
   @Column({
     type: 'date',
   })
-  @Factory(faker => faker.date.past())
+  @Factory((faker) => faker.date.past())
   dateOfBirth: Date;
 
   @ApiProperty({
@@ -103,7 +104,7 @@ export class User extends AbstractEntity {
     type: 'text',
     nullable: true,
   })
-  @Factory(faker => faker.image.avatar())
+  @Factory((faker) => faker.image.avatar())
   photo: string;
 
   @ApiProperty({
@@ -112,7 +113,7 @@ export class User extends AbstractEntity {
     example: UserType.jobSeeker,
   })
   @Column({ type: 'enum', enum: UserType, default: UserType.jobSeeker })
-  @Factory(faker => faker.helpers.enumValue(AllowedUserTypes))
+  @Factory((faker) => faker.helpers.enumValue(AllowedUserTypes))
   type: UserType;
 
   @Column({
@@ -120,7 +121,7 @@ export class User extends AbstractEntity {
     default: false,
   })
   @Exclude()
-  @Factory(faker => faker.helpers.arrayElement([true, true]))
+  @Factory((faker) => faker.helpers.arrayElement([true, true]))
   isVerified: boolean;
 
   @ApiProperty({
@@ -129,6 +130,11 @@ export class User extends AbstractEntity {
   })
   @Expose()
   get joinedAt(): string {
-    return this.createdAt.toISOString() || new Date().toISOString();
+    try {
+      return this.createdAt?.toISOString() || new Date().toISOString();
+    } catch (error) {
+      console.log('error', error);
+      return new Date().toISOString();
+    }
   }
 }

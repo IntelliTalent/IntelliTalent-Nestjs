@@ -137,8 +137,8 @@ export class QuizzesService {
     .getRawMany();
 
     const statistics = {
-      notTaken: Number(result.find((r) => r.isTaken === false).count) || 0,
-      taken: Number(result.find((r) => r.isTaken === true).count) || 0,
+      notTaken: Number(result.find((r) => r.isTaken === false)?.count) || 0,
+      taken: Number(result.find((r) => r.isTaken === true)?.count) || 0,
       total: result.reduce((acc, r) => acc + Number(r.count), 0),
     }
 
