@@ -159,7 +159,7 @@ describe('AtsService', () => {
 
     it('should return false for unmatched city', () => {
       const jobFilters = { city: 'New York' };
-      const profile = { city: 'San Francisco' };
+      const profile = { languages: [], city: 'San Francisco' };
       const result = atsService['_validateCustomFilters'](jobFilters, profile);
       expect(result).toBe(false);
     });

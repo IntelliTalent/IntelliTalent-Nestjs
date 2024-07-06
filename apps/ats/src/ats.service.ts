@@ -370,6 +370,7 @@ export class AtsService {
               jobId: job.id,
               profileId: profile.id,
               userId: profile.userId,
+              email: profile.email,
               matchData: {
                 matchScore,
                 isValid: true,
