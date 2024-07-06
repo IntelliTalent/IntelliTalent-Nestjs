@@ -16,4 +16,5 @@ export const FilterationServicePattern = {
     getInterviewedApplicants: 'getInterviewedApplicants',
     getUserInterviews: 'getUserInterviews',
     getUserInterviewStats: 'getUserInterviewStats',
+    deleteProfile: 'deleteProfile',
 };
