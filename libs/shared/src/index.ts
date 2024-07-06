@@ -10,8 +10,8 @@ export * from './entities/structured_jobs.entity';
 export * from './entities/filteration.entity';
 export * from './entities/token.entity';
 export * from './entities/certification.entity'
-export * from './entities/education.enity'
-export * from './entities/experiance.entity'
+export * from './entities/education.entity'
+export * from './entities/experience'
 export * from './entities/profile.entity'
 export * from './entities/project.entity'
 

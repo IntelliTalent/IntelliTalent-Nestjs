@@ -236,6 +236,11 @@ export class CreateProjectDto {
   @ApiProperty({ example: 5 })
   @IsNumber()
   size: number;
+
+  @IsOptional()
+  @ApiProperty({ required: false, example: 'https://example.com/project' })
+  @IsUrl()
+  url?: string;
 }
 
 export class CreateCertificateDto {
