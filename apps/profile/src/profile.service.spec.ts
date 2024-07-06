@@ -21,6 +21,7 @@ import e from 'express';
 describe('ProfileService', () => {
   let profileService: ProfileService;
   let mockAutofillService: any;
+  let mockFilterationService: any;
 
   const profileTemp: CreateProfileDto = {
     userId: uuidv4(),
@@ -119,6 +120,14 @@ describe('ProfileService', () => {
       subscribe: jest.fn(() => Promise.resolve()),
     };
 
+    mockFilterationService = {
+      send: jest.fn().mockImplementation(() => of({})),
+      emit: jest.fn(),
+      connect: jest.fn(() => Promise.resolve()),
+      close: jest.fn(() => Promise.resolve()),
+      subscribe: jest.fn(() => Promise.resolve()),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         SharedModule.registerPostgres(
@@ -140,6 +149,10 @@ describe('ProfileService', () => {
           provide: ServiceName.AUTOFILL_SERVICE,
           useValue: mockAutofillService,
         },
+        {
+          provide: ServiceName.FILTERATION_SERVICE,
+          useValue: mockFilterationService,
+        }
       ],
     }).compile();
 

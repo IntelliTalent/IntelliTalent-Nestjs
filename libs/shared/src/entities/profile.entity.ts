@@ -4,9 +4,14 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   ManyToOne,
+  Index,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AbstractEntity } from './abstract.entity';
+import { Experience } from './experiance.entity';
+import { Education } from './education.enity';
+import { Project } from './project.entity';
+import { Certificate } from './certification.entity';
 
 @Entity()
 export class Profile extends AbstractEntity {
@@ -16,6 +21,7 @@ export class Profile extends AbstractEntity {
 
   @Column({ type: 'uuid' })
   @ApiProperty()
+  @Index()
   userId: string;
 
   @Column()
@@ -80,118 +86,3 @@ export class Profile extends AbstractEntity {
   certificates: Certificate[];
 }
 
-@Entity()
-export class Experience extends AbstractEntity {
-  @PrimaryGeneratedColumn()
-  @ApiProperty()
-  id: number;
-
-  @Column()
-  @ApiProperty()
-  jobTitle: string;
-
-  @Column()
-  @ApiProperty()
-  companyName: string;
-
-  @Column({ type: 'date' })
-  @ApiProperty()
-  startDate: Date;
-
-  @Column({ type: 'date', nullable: true })
-  @ApiPropertyOptional()
-  endDate: Date;
-
-  @Column()
-  @ApiProperty()
-  description: string;
-
-  @ManyToOne(() => Profile, (profile) => profile.experiences)
-  profile: Profile;
-}
-
-@Entity()
-export class Education extends AbstractEntity {
-  @PrimaryGeneratedColumn()
-  @ApiProperty()
-  id: number;
-
-  @Column()
-  @ApiProperty()
-  degree: string;
-
-  @Column()
-  @ApiProperty()
-  schoolName: string;
-
-  @Column({ type: 'date' })
-  @ApiProperty()
-  startDate: Date;
-
-  @Column({ type: 'date', nullable: true })
-  @ApiPropertyOptional()
-  endDate: Date;
-
-  @Column()
-  @ApiProperty()
-  description: string;
-
-  @ManyToOne(() => Profile, (profile) => profile.educations)
-  profile: Profile;
-}
-
-@Entity()
-export class Project extends AbstractEntity {
-  @PrimaryGeneratedColumn()
-  @ApiProperty()
-  id: number;
-
-  @Column()
-  @ApiProperty()
-  name: string;
-
-  @Column()
-  @ApiProperty()
-  description: string;
-
-  @Column({ type: 'varchar', array: true, default: [] })
-  @ApiProperty({ type: [String], example: ['JavaScript', 'Node.js'] })
-  skills: string[];
-
-  @ManyToOne(() => Profile, (profile) => profile.projects)
-  profile: Profile;
-
-  @Column()
-  @ApiProperty()
-  size: number;
-}
-
-@Entity()
-export class Certificate extends AbstractEntity {
-  @PrimaryGeneratedColumn()
-  @ApiProperty()
-  id: number;
-
-  @Column()
-  @ApiProperty()
-  title: string;
-
-  @Column()
-  @ApiProperty()
-  authority: string;
-
-  @Column({ type: 'date' })
-  @ApiProperty()
-  issuedAt: Date;
-
-  @Column({ type: 'date', nullable: true })
-  @ApiPropertyOptional()
-  validUntil: Date;
-
-  @Column()
-  @ApiProperty()
-  url: string;
-
-  @ManyToOne(() => Profile, (profile) => profile.certificates)
-  profile: Profile;
-}

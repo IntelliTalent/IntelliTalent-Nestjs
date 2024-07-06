@@ -866,7 +866,13 @@ describe('JobsService', () => {
       const job2 = await service.createJob(createJobDto({ userId }));
       const job3 = await service.createJob(createJobDto({ userId: faker.string.uuid() }));
 
-      const result = await service.getUserJobs(userId);
+      const result = await service.getUserJobs({
+        userId,
+        pageOptionsDto:{
+          page: 1,
+          take: 10,
+        }
+      });
 
       expect(result).toBeDefined();
       expect(result.jobs).toHaveLength(2);
@@ -877,7 +883,13 @@ describe('JobsService', () => {
     it('should return an empty array if no jobs found for a user', async () => {
       const userId = faker.string.uuid();
 
-      const result = await service.getUserJobs(userId);
+      const result = await service.getUserJobs({
+        userId,
+        pageOptionsDto:{
+          page: 1,
+          take: 10,
+        }
+      });
 
       expect(result).toBeDefined();
       expect(result.jobs).toHaveLength(0);
