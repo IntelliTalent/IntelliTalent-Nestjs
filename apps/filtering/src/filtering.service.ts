@@ -7,6 +7,7 @@ import { GetAppliedUsersResponseDto } from '@app/services_communications/filtera
 import { StageResponseDto } from '@app/services_communications/filteration-service/dtos/responses/stage-response.dto';
 import {
   IJobs,
+  jobsServiceEvents,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { ServiceName, StructuredJob, User } from '@app/shared';
@@ -33,6 +34,7 @@ import { ReviewAnswersDto } from '@app/services_communications/filteration-servi
 import * as FILTERATION_CONSTANTS from '@app/services_communications/filteration-service/constants/constants';
 import {
   ActivateQuizDto,
+  ApplyJobDto,
   CreateQuizDto,
   EmailTemplates,
   GetQuizSlugsDto,
@@ -108,6 +110,7 @@ export class FilteringService {
     if (!profile) {
       throw new NotFoundException(FILTERATION_CONSTANTS.PROFILE_NOT_FOUND);
     }
+
     if (profile.userId !== userId) {
       throw new UnauthorizedException(
         FILTERATION_CONSTANTS.USER_NOT_PROFILE_OWNER,
@@ -119,7 +122,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        jobId,
+        {jobId},
       ),
     );
     // check if the job exists and is open
@@ -145,6 +148,9 @@ export class FilteringService {
           } as ProfileAndJobDto,
         ),
       );
+
+
+
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { status, ...matchData } = matchingResult;
 
@@ -175,6 +181,17 @@ export class FilteringService {
     } else {
       throw new BadRequestException(FILTERATION_CONSTANTS.USER_ALREADY_APPLIED);
     }
+
+    // here the user apply for the job for the first time
+    this.jobService.emit({
+      cmd: jobsServiceEvents.userApply,
+    },
+    {
+      jobId: jobId,
+      userId: userId,
+    } as ApplyJobDto
+  )
+
 
     if (filteration.isQualified) {
       const userDetails: User = await firstValueFrom(
@@ -224,7 +241,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        jobId,
+        {jobId},
       ),
     );
 
@@ -260,7 +277,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job || job.userId !== userId) {
@@ -375,7 +392,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job || job.userId !== userId) {
@@ -423,7 +440,8 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById,
         },
-        jobId,
+        {jobId},
+
       ),
     );
     if (!job || job.userId !== userId) {
@@ -516,7 +534,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById,
         },
-        reviewAnswers.jobId,
+        {jobId: reviewAnswers.jobId},
       ),
     );
     if (!job || job.userId !== userId) {
@@ -614,7 +632,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job || job.userId !== userId) {
@@ -703,7 +721,9 @@ export class FilteringService {
             {
               cmd: jobsServicePatterns.getJobById,
             },
-            job.jobId,
+            {
+              jobId: job.jobId,
+            },
           ),
         );
         return {
@@ -783,7 +803,9 @@ export class FilteringService {
             {
               cmd: jobsServicePatterns.getJobById,
             },
-            job.jobId,
+            {
+              jobId: job.jobId,
+            },
           ),
         );
         return {
@@ -816,7 +838,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job.currentStage || job.currentStage !== JobStageType.Interview) {
@@ -854,7 +876,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job || job.userId !== userId) {
@@ -928,7 +950,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job || job.userId !== userId) {
@@ -964,7 +986,7 @@ export class FilteringService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        jobId,
+        {jobId},
       ),
     );
     if (!job || job.userId !== userId) {

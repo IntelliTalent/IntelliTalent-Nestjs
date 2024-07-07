@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  AppliedUsers,
   CustomJobsStages,
   Interview,
   JobPlace,
@@ -129,10 +130,10 @@ describe('JobsService', () => {
         // mocking the database postgres
         SharedModule.registerPostgres(
           ServiceName.TESTING_DATABASE,
-          [StructuredJob, CustomJobsStages, Interview],
+          [StructuredJob, AppliedUsers, CustomJobsStages, Interview],
           true,
         ),
-        TypeOrmModule.forFeature([StructuredJob, CustomJobsStages, Interview]),
+        TypeOrmModule.forFeature([StructuredJob, AppliedUsers, CustomJobsStages, Interview]),
 
         // mocking mongo
         SharedModule.registerMongoDB(MongoDBName.ScrappedJobsDB),
@@ -503,6 +504,7 @@ describe('JobsService', () => {
     };
 
     const result = await service.getJobs(pageOptions);
+    console.log(result);
 
     expect(result).toBeDefined();
     expect(result.jobs).toHaveLength(1);
@@ -999,4 +1001,63 @@ describe('JobsService', () => {
     expect(result).toBeDefined();
     expect(result.message).toBe('Job moved to next stage successfully.');
   });
+
+
+  it('should apply for a job', async () => {
+    const userId = faker.string.uuid();
+    const job = await service.createJob(createJobDto({ userId }));
+
+    const result = await service.userApply({
+      jobId: job.id,
+      userId,
+    });
+
+    expect(result).toBeDefined();
+  });
+
+
+  it('should return is applied for a job to be false', async () => {
+    const recruiterId = faker.string.uuid();
+    const CreatedJob = await service.createJob(createJobDto({ userId: recruiterId }));
+
+    const jobSeekerId = faker.string.uuid();
+
+    const job = await service.getJobDetailsById(CreatedJob.id, jobSeekerId);
+
+    expect(job).toBeDefined();
+    expect(job).toHaveProperty('isApplied', false);
+    expect(job).toHaveProperty('id', CreatedJob.id);
+  }, 4000000);
+
+  it('should return is applied for a job to be true', async () => {
+    const recruiterId = faker.string.uuid();
+    const CreatedJob = await service.createJob(createJobDto({ userId: recruiterId }));
+
+    const jobSeekerId = faker.string.uuid();
+
+    await service.userApply({
+      jobId: CreatedJob.id,
+      userId: jobSeekerId,
+    });
+
+    const job = await service.getJobDetailsById(CreatedJob.id, jobSeekerId);
+
+    expect(job).toBeDefined();
+    expect(job).toHaveProperty('isApplied', true);
+    expect(job).toHaveProperty('id', CreatedJob.id);
+  });
+
+
+  it('should return null in the is Applied', async () => {
+    const recruiterId = faker.string.uuid();
+    const CreatedJob = await service.createJob(createJobDto({ userId: recruiterId }));
+
+    const job = await service.getJobDetailsById(CreatedJob.id);
+
+    expect(job).toBeDefined();
+    expect(job).toHaveProperty('isApplied', null);
+    expect(job).toHaveProperty('id', CreatedJob.id);
+  });
+
+
 });

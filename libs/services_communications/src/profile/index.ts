@@ -7,6 +7,7 @@ export * from './dtos/delete-profile.dto';
 export * from './dtos/update-profile.dto';
 export * from './dtos/response-linkedin-profile.dto';
 export * from './dtos/response-profile-cards.dto';
+export * from './dtos/apply-job.dto';
 
 // pattern
 export * from './patterns/preofile.patterns';

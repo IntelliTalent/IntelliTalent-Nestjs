@@ -11,6 +11,7 @@ import {
   StructuredJob,
   CustomJobsStages,
   Interview,
+  AppliedUsers,
 } from '@app/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -30,8 +31,14 @@ import { RedisDBName } from '@app/shared/config/redis.config';
       StructuredJob,
       Interview,
       CustomJobsStages,
+      AppliedUsers,
     ]),
-    TypeOrmModule.forFeature([StructuredJob, Interview, CustomJobsStages]),
+    TypeOrmModule.forFeature([
+      StructuredJob,
+      AppliedUsers,
+      Interview,
+      CustomJobsStages,
+    ]),
     SharedModule.registerRedis(RedisDBName.jobsDB),
     ScheduleModule.forRoot(),
   ],

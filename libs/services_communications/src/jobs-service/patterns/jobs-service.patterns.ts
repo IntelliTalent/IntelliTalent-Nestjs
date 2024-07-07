@@ -14,3 +14,8 @@ export const jobsServicePatterns = {
   checkActiveJobs: 'checkActiveJobs',
   beginCurrentStage: 'beginCurrentStage',
 };
+
+
+export const jobsServiceEvents = {
+  userApply: 'userApply',
+}

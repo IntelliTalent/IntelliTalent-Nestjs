@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CustomJobsStages, Education, Experience, Filteration, Interview, Profile, Project, SharedModule, StructuredJob, Token, User } from '@app/shared';
+import { AppliedUsers, CustomJobsStages, Education, Experience, Filteration, Interview, Profile, Project, SharedModule, StructuredJob, Token, User } from '@app/shared';
 import { ServiceName } from '@app/shared/config/environment.constants';
 import { ApiAuthModule } from '../auth/auth.module';
 import { ApiATSModule } from '../ats/ats.module';
@@ -40,6 +40,7 @@ import { Certificate } from 'crypto';
       CustomJobsStages,
       User,
       Token,
+      AppliedUsers,
       StructuredJob,
       Quiz,
     ]),

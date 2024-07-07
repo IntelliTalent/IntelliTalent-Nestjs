@@ -14,6 +14,7 @@ export * from './entities/education.entity'
 export * from './entities/experience'
 export * from './entities/profile.entity'
 export * from './entities/project.entity'
+export * from './entities/applied-users.entity'
 
 
 export * from './entities/unstructerd_jobs.schema';
