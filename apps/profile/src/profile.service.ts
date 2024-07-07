@@ -74,7 +74,7 @@ export class ProfileService {
     delete updateProfileDto.profileId;
 
     if (!profile) {
-      throw new NotFoundException('You Dont Profile With this Id');
+      throw new NotFoundException('You Don\'t Have Profile With this Id');
     }
 
     Object.assign(profile, updateProfileDto);
