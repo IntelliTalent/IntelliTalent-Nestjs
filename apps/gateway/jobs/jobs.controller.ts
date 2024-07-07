@@ -17,7 +17,7 @@ import {
 } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
-import { OptionalPublic } from '@app/shared/decorators/opttional-public.decorator';
+import { OptionalPublic } from '@app/shared/decorators/optional-public.decorator';
 import {
   Controller,
   Get,
