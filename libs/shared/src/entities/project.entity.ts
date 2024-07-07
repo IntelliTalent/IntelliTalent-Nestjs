@@ -32,7 +32,9 @@ export class Project extends AbstractEntity {
   @ManyToOne(() => Profile, (profile) => profile.projects)
   profile: Profile;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   @ApiProperty()
   size: number;
 

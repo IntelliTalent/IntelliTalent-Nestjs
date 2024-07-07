@@ -234,6 +234,7 @@ export class CreateProjectDto {
   skills: string[];
 
   @ApiProperty({ example: 5 })
+  @IsOptional()
   @IsNumber()
   size: number;
 
