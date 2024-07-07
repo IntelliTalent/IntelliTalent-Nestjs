@@ -161,6 +161,7 @@ export class ProfileController {
   @ApiResponse({
     type: Profile,
   })
+  @Public()
   getProfileById(@Param() dto: IsUUIDDto) {
     return this.profileService.send(
       { cmd: profileServicePattern.getProfileById },
