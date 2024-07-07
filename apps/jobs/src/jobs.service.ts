@@ -396,7 +396,7 @@ export class JobsService {
     // Check if the job exists
     const existingJob = await this.structuredJobRepository.findOne({
       where: { id: jobId },
-      relations: ['stages', 'stages.interview'],
+      relations: ['stages', 'stages.interview' ],
     });
     if (!existingJob) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
