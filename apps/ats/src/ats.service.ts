@@ -420,7 +420,7 @@ export class AtsService {
         {
           cmd: jobsServicePatterns.getJobDetailsById,
         },
-        profileAndJobDto.jobId,
+        {jobId: profileAndJobDto.jobId},
       ),
     );
 

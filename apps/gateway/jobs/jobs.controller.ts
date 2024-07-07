@@ -17,6 +17,7 @@ import {
 } from '@app/shared';
 import { PageOptionsDto } from '@app/shared/api-features/dtos/page-options.dto';
 import { Public } from '@app/shared/decorators/ispublic-decorator.decorator';
+import { OptionalPublic } from '@app/shared/decorators/optional-public.decorator';
 import {
   Controller,
   Get,
@@ -50,7 +51,7 @@ export class JobsController {
   ) {}
 
   @Get()
-  @Public()
+  @OptionalPublic()
   @ApiOperation({ summary: 'Get all jobs' })
   @ApiResponse({
     status: 200,
@@ -58,7 +59,12 @@ export class JobsController {
     isArray: true,
     description: 'List of jobs returned successfully.',
   })
-  async getJobs(@Query() filteration: JobsPageOptionsDto) {
+  @ApiBearerAuth(AUTH_HEADER)
+  async getJobs(@Query() filteration: JobsPageOptionsDto, @CurrentUser() user: User) {
+    if(user) {
+      filteration.userId = user.id;
+    }
+
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobs },
       filteration,
@@ -91,7 +97,7 @@ export class JobsController {
   }
 
   @Get('/:jobId')
-  @Public()
+  @OptionalPublic()
   @ApiOperation({ summary: 'Get job by ID' })
   @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
   @ApiResponse({
@@ -100,15 +106,19 @@ export class JobsController {
     description: 'Job details returned successfully.',
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
-  async getJobById(@Param('jobId', new ParseUUIDPipe()) jobId: string) {
+  @ApiBearerAuth(AUTH_HEADER)
+  async getJobById(@Param('jobId', new ParseUUIDPipe()) jobId: string, @CurrentUser() user: User) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
-      jobId,
+      {
+        jobId,
+        userId: user ? user.id : null,
+      }
     );
   }
 
   @Get('/:jobId/details')
-  @Public()
+  @OptionalPublic()
   @ApiOperation({ summary: 'Get job details by ID' })
   @ApiParam({ name: 'jobId', type: String, description: 'Job ID' })
   @ApiResponse({
@@ -117,10 +127,14 @@ export class JobsController {
     description: 'Job details returned successfully.',
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
-  async getJobDetailsById(@Param('jobId', new ParseUUIDPipe()) jobId: string) {
+  @ApiBearerAuth(AUTH_HEADER)
+  async getJobDetailsById(@Param('jobId', new ParseUUIDPipe()) jobId: string, @CurrentUser() user: User){
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobDetailsById },
-      jobId,
+      {
+        jobId,
+        userId: user ? user.id : null,
+      }
     );
   }
 

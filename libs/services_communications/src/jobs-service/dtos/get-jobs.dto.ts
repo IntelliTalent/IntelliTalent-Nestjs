@@ -81,4 +81,8 @@ export class JobsPageOptionsDto {
   @Max(200)
   @IsOptional()
   readonly take?: number = 10;
+
+
+  // its nullable so that when any one apply we can just pass the jobId
+  userId?: string;
 }

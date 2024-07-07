@@ -6,11 +6,14 @@ import {
   OneToOne,
   Index,
   BeforeInsert,
+  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
 import { JobPlace, JobType } from './unstructerd_jobs.schema';
 import { CustomJobsStages } from './custom_jobs_stages.entity';
 import { Expose } from 'class-transformer';
+import { AppliedUsers } from './applied-users.entity';
 
 export enum StageType {
   Active = 'Active',
@@ -93,6 +96,11 @@ export class StructuredJob extends AbstractEntity {
   @JoinColumn()
   stages: CustomJobsStages;
 
+  @OneToMany(() => AppliedUsers, (appliedUsers) => appliedUsers.job, {
+    cascade: true,
+  })
+  appliedUsers: AppliedUsers[];
+
   @BeforeInsert()
   setSource() {
     this.source = StructuredJob.getJobSource(this.url);
@@ -116,4 +124,13 @@ export class StructuredJob extends AbstractEntity {
         return JobSource.IntelliTalent;
     }
   }
+
+  static getJobSourceFromEnum(source: JobSource): string {
+    return Object.keys(JobSource).find((key) => {
+      return JobSource[key] == source
+    });
+  }
+
 }
+
+

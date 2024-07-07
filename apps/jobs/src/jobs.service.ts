@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  AppliedUsers,
   Constants,
   CustomJobsStages,
   Interview,
@@ -35,6 +36,7 @@ import { CronJob } from 'cron';
 import { isDefined } from 'class-validator';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
 import { GetUserJobsDto } from '@app/services_communications/jobs-service/dtos/get-user-jobs.dto';
+import { ApplyJobDto } from '@app/services_communications';
 
 @Injectable()
 export class JobsService {
@@ -43,6 +45,8 @@ export class JobsService {
     private readonly redis: Redis,
     @InjectRepository(StructuredJob)
     readonly structuredJobRepository: Repository<StructuredJob>,
+    @InjectRepository(AppliedUsers)
+    private readonly appliedUsersRepository: Repository<AppliedUsers>,
     @InjectRepository(CustomJobsStages)
     private readonly customJobsStagesRepository: Repository<CustomJobsStages>,
     @InjectRepository(Interview)
@@ -521,13 +525,26 @@ export class JobsService {
     return existingJob;
   }
 
-  async getJobById(jobId: string) {
+  async getJobById(jobId: string, userId: string = null) {
     const job = await this.structuredJobRepository.findOne({
       where: { id: jobId },
     });
 
     if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
+
+    let hasApplied = false;
+
+    // Check if the user has applied for the job
+    if (userId) {
+      const application = await this.appliedUsersRepository.findOne({
+        where: {
+          jobId: job.id,
+          userId: userId,
+        },
+      });
+      hasApplied = !!application;
     }
 
     // Map the job entity to IJobs format
@@ -549,11 +566,12 @@ export class JobsService {
       isActive: job.isActive,
       currentStage: job.currentStage,
       source: job.jobSource,
+      isApplied: userId? hasApplied : null,
     };
     return responseJob;
   }
 
-  async getJobDetailsById(jobId: string): Promise<StructuredJob> {
+  async getJobDetailsById(jobId: string, userId: string = null): Promise<StructuredJob> {
     // return the job with left joining CustomJobsStages
     const job = await this.structuredJobRepository.findOne({
       where: { id: jobId },
@@ -563,6 +581,21 @@ export class JobsService {
     if (!job) {
       throw new NotFoundException(`Can not find a job with id: ${jobId}`);
     }
+
+    let hasApplied = false;
+
+    // Check if the user has applied for the job
+    if (userId) {
+      const application = await this.appliedUsersRepository.findOne({
+        where: {
+          jobId: job.id,
+          userId: userId,
+        },
+      });
+      hasApplied = !!application;
+    }
+
+    Object.assign(job, { isApplied: userId ? hasApplied : null });
 
     return job;
   }
@@ -578,6 +611,7 @@ export class JobsService {
       csRequired,
       take,
       page,
+      userId,
     } = pageOptions;
 
     // Calculate skip
@@ -587,6 +621,20 @@ export class JobsService {
     }
 
     const queryBuilder = this.structuredJobRepository.createQueryBuilder('job');
+
+    if (userId) {
+      queryBuilder
+        .leftJoin(
+          'job.appliedUsers',
+          'userJobApplication',
+          'userJobApplication.userId = :userId',
+          { userId },
+        )
+        .addSelect(
+          'CASE WHEN userJobApplication.userId IS NULL THEN false ELSE true END',
+          'job_hasApplied',
+        );
+    }
 
     // Apply jobTitle if provided
     if (jobTitle) {
@@ -684,26 +732,30 @@ export class JobsService {
     queryBuilder.skip(skip).take(take);
 
     // Execute query and map the results to IJobs format
-    const [jobs, count] = await queryBuilder.getManyAndCount();
+    const [jobs, count] = await Promise.all([
+      queryBuilder.getRawMany(),
+      queryBuilder.getCount(),
+    ]);
 
     const responseJobs: IJobs[] = jobs.map((job) => ({
-      id: job.id,
-      userId: job.userId,
-      title: job.title,
-      company: job.company,
-      jobLocation: job.jobLocation,
-      type: job.type,
-      skills: job.skills,
-      url: job.url,
-      description: job.description,
-      publishedAt: job.publishedAt,
-      jobPlace: job.jobPlace,
-      neededExperience: job.neededExperience,
-      education: job.education,
-      csRequired: job.csRequired,
-      isActive: job.isActive,
-      currentStage: job.currentStage,
-      source: job.jobSource,
+      id: job.job_id,
+      userId: job.job_userId,
+      title: job.job_title,
+      company: job.job_company,
+      jobLocation: job.job_jobLocation,
+      type: job.job_type,
+      skills: job.job_skills,
+      url: job.job_url,
+      description: job.job_description,
+      publishedAt: job.job_publishedAt,
+      jobPlace: job.job_jobPlace,
+      neededExperience: job.job_neededExperience,
+      education: job.job_education,
+      csRequired: job.job_csRequired,
+      isActive: job.job_isActive,
+      currentStage: job.job_currentStage,
+      source: StructuredJob.getJobSourceFromEnum(job.job_source),
+      isApplied: userId ? job.job_hasApplied : null,
     }));
 
     return {
@@ -910,5 +962,27 @@ export class JobsService {
     return {
       message: 'Job moved to next stage successfully.',
     };
+  }
+
+  async userApply(applyDro: ApplyJobDto) {
+    const { jobId, userId } = applyDro;
+
+    // check if the job Exist With that User
+    const appliedJob = await this.appliedUsersRepository.findOne({
+      where: { jobId, userId },
+    });
+
+    if (appliedJob) {
+      console.log('You Already Applied For This Job');
+      // throw new BadRequestException('You Already Applied For This Job');
+    }
+
+    // append the user to the job
+    const appliedUser = this.appliedUsersRepository.create({
+      userId,
+      jobId,
+    });
+
+    return await this.appliedUsersRepository.save(appliedUser);
   }
 }

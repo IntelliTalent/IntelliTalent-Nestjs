@@ -52,4 +52,15 @@ export class IJobs {
 
   @ApiProperty()
   source: string;
+
+  @ApiProperty({
+    description:`
+      this filed indicates if the user applied to this job or not
+      if its null then the user didn't login
+      if its false then the user didn't apply
+      if its true then the user applied
+    `
+
+  })
+  isApplied?: boolean;
 }
