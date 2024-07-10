@@ -24,7 +24,8 @@ export class ProfileService {
     @InjectRepository(Profile)
     private profileRepository: Repository<Profile>,
     @Inject(ServiceName.AUTOFILL_SERVICE) private autoFillService: ClientProxy,
-    @Inject(ServiceName.FILTERATION_SERVICE) private filtrationService: ClientProxy
+    @Inject(ServiceName.FILTERATION_SERVICE)
+    private filtrationService: ClientProxy,
   ) {}
 
   async create(createProfileDto: CreateProfileDto): Promise<Profile> {
@@ -74,7 +75,7 @@ export class ProfileService {
     delete updateProfileDto.profileId;
 
     if (!profile) {
-      throw new NotFoundException('You Dont Profile With this Id');
+      throw new NotFoundException("You Don't Have Profile With this Id");
     }
 
     Object.assign(profile, updateProfileDto);
@@ -98,7 +99,10 @@ export class ProfileService {
 
     this.profileRepository.softDelete(DeleteProfileDto.profileId);
 
-    this.filtrationService.emit({cmd: FilterationServicePattern.deleteProfile}, DeleteProfileDto.profileId);
+    this.filtrationService.emit(
+      { cmd: FilterationServicePattern.deleteProfile },
+      DeleteProfileDto.profileId,
+    );
 
     return 'Profile Deleted Successfully';
   }

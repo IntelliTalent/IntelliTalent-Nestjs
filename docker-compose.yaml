@@ -147,4 +147,4 @@ services:
 networks:
   intelli-network:
     driver: bridge
-    # external: true
+    external: true

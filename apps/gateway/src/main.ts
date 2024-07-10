@@ -5,9 +5,19 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AllExceptionsFilter } from '@app/shared/filters/all-exception.filter';
 import getConfigVariables from '@app/shared/config/configVariables.config';
 import { Constants } from '@app/shared';
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+
+
+  const httpsOptions = {
+    key: fs.readFileSync('./privkey.pem'),
+    cert: fs.readFileSync('./fullchain.pem'),
+  };
+
+  const app = await NestFactory.create(AppModule, {
+    // httpsOptions,
+  });
 
   // enable cors
   app.enableCors({

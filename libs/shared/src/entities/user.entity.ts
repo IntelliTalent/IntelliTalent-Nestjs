@@ -120,7 +120,6 @@ export class User extends AbstractEntity {
     type: 'boolean',
     default: false,
   })
-  @Exclude()
   @Factory((faker) => faker.helpers.arrayElement([true, true]))
   isVerified: boolean;
 
