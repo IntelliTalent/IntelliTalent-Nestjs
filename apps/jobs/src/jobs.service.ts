@@ -527,7 +527,7 @@ export class JobsService {
 
   async getJobById(jobId: string, userId: string = null) {
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId },
+      where: { id: jobId, isActive: true },
     });
 
     if (!job) {
@@ -566,15 +566,18 @@ export class JobsService {
       isActive: job.isActive,
       currentStage: job.currentStage,
       source: job.jobSource,
-      isApplied: userId? hasApplied : null,
+      isApplied: userId ? hasApplied : null,
     };
     return responseJob;
   }
 
-  async getJobDetailsById(jobId: string, userId: string = null): Promise<StructuredJob> {
+  async getJobDetailsById(
+    jobId: string,
+    userId: string = null,
+  ): Promise<StructuredJob> {
     // return the job with left joining CustomJobsStages
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId },
+      where: { id: jobId, isActive: true },
       relations: ['stages', 'stages.interview'],
     });
 
@@ -728,6 +731,9 @@ export class JobsService {
       currentStage: StageType.Active,
     });
 
+    // Apply condition for job to be Active
+    queryBuilder.andWhere('job.isActive = :isActive', { isActive: true });
+
     // Apply pagination
     queryBuilder.skip(skip).take(take);
 
@@ -812,6 +818,8 @@ export class JobsService {
   }
 
   async checkActiveJobs() {
+    console.log('Checking active jobs');
+
     // Read all jobs
     const jobs = await this.structuredJobRepository.find({
       where: { isActive: true, isScrapped: true },
@@ -836,6 +844,8 @@ export class JobsService {
       ),
     );
 
+    console.log(updatedJobs);
+
     // Update the jobs using the ids and isActive
     const bulkUpdatePromises = updatedJobs['jobs'].map(({ id, isActive }) =>
       this.structuredJobRepository.update({ id }, { isActive }),
@@ -845,6 +855,8 @@ export class JobsService {
   }
 
   async callJobExtractor() {
+    console.log('Calling job extractor service');
+
     // Get all the scrapped jobs
     const unstructuredJobs = await this.unstructuredJobsModel.find({
       deletedAt: null,
