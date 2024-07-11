@@ -25,12 +25,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { ProfileAndJobDto } from '@app/services_communications/ats-service/dtos/profile-and-job.dto';
 import * as ATS_CONSTANTS from '@app/services_communications/ats-service';
 import { NotFoundException } from '@nestjs/common';
-import {
-  NotifierEvents,
-  SendEmailsDto,
-  profileServicePattern,
-  userServicePatterns,
-} from '@app/services_communications';
 
 describe('AtsService', () => {
   let atsService: AtsService;
@@ -107,6 +101,7 @@ describe('AtsService', () => {
             const redisUrl = await SharedModule.getRedisDBURL(
               RedisDBName.testingDB1,
             );
+
             return new Redis(redisUrl);
           },
         },
@@ -114,7 +109,7 @@ describe('AtsService', () => {
           provide: ATS_MAILING_REDIS_DB_PROVIDER, // provide a token for the mailingRedisDB dependency
           useFactory: async () => {
             const redisUrl = await SharedModule.getRedisDBURL(
-              RedisDBName.testingDB2,
+              RedisDBName.testingDB1,
             );
             return new Redis(redisUrl);
           },

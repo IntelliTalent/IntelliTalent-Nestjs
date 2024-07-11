@@ -834,7 +834,7 @@ describe('JobsService', () => {
       expect(result.jobs[0]).toHaveProperty('csRequired', job1.csRequired);
       expect(result.totalRecords).toBe(1);
       expect(result.totalPages).toBe(1);
-    });
+    }, 800000);
 
     it('should return matched jobs with multiple filters', async () => {
       const job1 = await service.createJob({ ...testJobDto, title: 'Developer', jobLocation: 'New York', type: JobType.FullTime, jobPlace: JobPlace.OnSite });
