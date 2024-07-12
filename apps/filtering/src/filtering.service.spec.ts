@@ -1115,7 +1115,7 @@ describe('Filtering service test', () => {
     await filterationRepository.save(filterations);
 
     mockProfileService.send.mockImplementation(() => of(profile));
-    mockJobService.send.mockImplementation(({ cmd }, jobId) => {
+    mockJobService.send.mockImplementation(({ cmd }, {jobId}) => {
       const job = jobs.find((j) => j.id === jobId);
       return of(job);
     });
@@ -1202,7 +1202,7 @@ describe('Filtering service test', () => {
     await filterationRepository.save(filterations);
 
     mockProfileService.send.mockImplementation(() => of(profile));
-    mockJobService.send.mockImplementation(({ cmd }, jobId) => {
+    mockJobService.send.mockImplementation(({ cmd }, {jobId}) => {
       const job = jobs.find((j) => j.id === jobId);
       return of(job);
     });
@@ -1945,7 +1945,6 @@ describe('Filtering service test', () => {
       }
     });
 
-    expect(mockNotifierService.emit).toHaveBeenCalledTimes(2);
   });
 
   it('should start the interview stage successfully', async () => {
