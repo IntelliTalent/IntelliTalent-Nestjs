@@ -120,9 +120,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     // check if the job exists and is open
@@ -186,11 +186,11 @@ export class FilteringService {
     this.jobService.emit({
       cmd: jobsServiceEvents.userApply,
     },
-    {
-      jobId: jobId,
-      userId: userId,
-    } as ApplyJobDto
-  )
+      {
+        jobId: jobId,
+        userId: userId,
+      } as ApplyJobDto
+    )
 
 
     if (filteration.isQualified) {
@@ -235,15 +235,18 @@ export class FilteringService {
     jobId: string,
     previousStage: JobStageType,
   ): Promise<StageResponseDto> {
+
+    console.log('jobId', jobId);
     // get the job details from the job service
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
+    console.log('job', job);
 
     // check if the job exists and is open
     if (!job) {
@@ -275,9 +278,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job || job.userId !== userId) {
@@ -390,9 +393,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job || job.userId !== userId) {
@@ -438,9 +441,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
 
       ),
     );
@@ -532,9 +535,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId: reviewAnswers.jobId},
+        { jobId: reviewAnswers.jobId },
       ),
     );
     if (!job || job.userId !== userId) {
@@ -630,15 +633,14 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job || job.userId !== userId) {
       throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
     }
-
     const filteration = await this.filterationRepository.findOneBy({
       jobId,
       profileId,
@@ -656,6 +658,36 @@ export class FilteringService {
       selectedAt: new Date(),
     };
     filteration.isClosed = true;
+
+    // get the user
+    const user: User = await firstValueFrom(
+      this.userService.send(
+        {
+          cmd: userServicePatterns.findUserById,
+        },
+        filteration.userId,
+      ),
+    );
+    // send email to the selected candidate
+    const acceptanceTemplateData: TemplateData = {
+      to: user.email,
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        jobTitle: job.title,
+        jobCompany: job.company,
+      }
+    };
+    const sendEmailsDto: SendEmailsDto = {
+      template: EmailTemplates.ACCEPTANCE,
+      templateData: [acceptanceTemplateData],
+    }
+    this.notifierService.emit(
+      {
+        cmd: NotifierEvents.sendEmail,
+      },
+      sendEmailsDto
+    );
 
     await this.filterationRepository.save(filteration);
     return {
@@ -719,7 +751,7 @@ export class FilteringService {
         const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
-              cmd: jobsServicePatterns.getJobById,
+              cmd: jobsServicePatterns.getGeneralJobDetailsById,
             },
             {
               jobId: job.jobId,
@@ -801,7 +833,7 @@ export class FilteringService {
         const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
-              cmd: jobsServicePatterns.getJobById,
+              cmd: jobsServicePatterns.getGeneralJobDetailsById,
             },
             {
               jobId: job.jobId,
@@ -836,9 +868,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job.currentStage || job.currentStage !== JobStageType.Interview) {
@@ -874,9 +906,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job || job.userId !== userId) {
@@ -948,9 +980,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job || job.userId !== userId) {
@@ -984,9 +1016,9 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
-        {jobId},
+        { jobId },
       ),
     );
     if (!job || job.userId !== userId) {
@@ -1186,6 +1218,7 @@ export class FilteringService {
           ? StageType.applied
           : StageType.quiz,
     });
+    console.log('applied users', appliedUsers);
     let usersScores = null;
     let quizScoresMap = new Map<string, number>();
     if (previousStage === JobStageType.Quiz) {
@@ -1236,6 +1269,9 @@ export class FilteringService {
         (previousStage === JobStageType.Active && user.isQualified)
       ) {
         const filteration = filterationsMap.get(user.userId);
+        if(previousStage === JobStageType.Quiz) { 
+          filteration.quizData.grade = quizScoresMap.get(user.userId);
+        }
         filteration.currentStage = StageType.interview;
         filteration.interviewData = {
           interviewDate: new Date(),
@@ -1256,7 +1292,7 @@ export class FilteringService {
       } else {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.failed;
-        if(previousStage === JobStageType.Quiz) {
+        if (previousStage === JobStageType.Quiz) {
           filteration.quizData.grade = quizScoresMap.get(user.userId);
         }
         filteration.isQualified = false;
@@ -1370,12 +1406,15 @@ export class FilteringService {
           FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD)
       ) {
         const filteration = filterationsMap.get(user.userId);
+        if(previousStage === JobStageType.Quiz) { 
+          filteration.quizData.grade = quizScoresMap.get(user.userId);
+        }
         filteration.currentStage = StageType.candidate;
         await this.filterationRepository.save(filteration);
       } else {
         const filteration = filterationsMap.get(user.userId);
         filteration.currentStage = StageType.failed;
-        if(previousStage === JobStageType.Quiz) {
+        if (previousStage === JobStageType.Quiz) {
           filteration.quizData.grade = quizScoresMap.get(user.userId);
         }
         filteration.isQualified = false;
