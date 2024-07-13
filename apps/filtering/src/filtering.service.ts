@@ -120,7 +120,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -235,15 +235,18 @@ export class FilteringService {
     jobId: string,
     previousStage: JobStageType,
   ): Promise<StageResponseDto> {
+
+    console.log('jobId', jobId);
     // get the job details from the job service
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
     );
+    console.log('job', job);
 
     // check if the job exists and is open
     if (!job) {
@@ -275,7 +278,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -390,7 +393,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -438,7 +441,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
 
@@ -532,7 +535,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId: reviewAnswers.jobId },
       ),
@@ -630,7 +633,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -662,7 +665,7 @@ export class FilteringService {
         {
           cmd: userServicePatterns.findUserById,
         },
-        userId,
+        filteration.userId,
       ),
     );
     // send email to the selected candidate
@@ -748,7 +751,7 @@ export class FilteringService {
         const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
-              cmd: jobsServicePatterns.getJobById,
+              cmd: jobsServicePatterns.getGeneralJobDetailsById,
             },
             {
               jobId: job.jobId,
@@ -830,7 +833,7 @@ export class FilteringService {
         const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
-              cmd: jobsServicePatterns.getJobById,
+              cmd: jobsServicePatterns.getGeneralJobDetailsById,
             },
             {
               jobId: job.jobId,
@@ -865,7 +868,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -903,7 +906,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -977,7 +980,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -1013,7 +1016,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getJobDetailsById,
+          cmd: jobsServicePatterns.getGeneralJobDetailsById,
         },
         { jobId },
       ),
@@ -1215,6 +1218,7 @@ export class FilteringService {
           ? StageType.applied
           : StageType.quiz,
     });
+    console.log('applied users', appliedUsers);
     let usersScores = null;
     let quizScoresMap = new Map<string, number>();
     if (previousStage === JobStageType.Quiz) {
@@ -1265,6 +1269,9 @@ export class FilteringService {
         (previousStage === JobStageType.Active && user.isQualified)
       ) {
         const filteration = filterationsMap.get(user.userId);
+        if(previousStage === JobStageType.Quiz) { 
+          filteration.quizData.grade = quizScoresMap.get(user.userId);
+        }
         filteration.currentStage = StageType.interview;
         filteration.interviewData = {
           interviewDate: new Date(),
@@ -1399,6 +1406,9 @@ export class FilteringService {
           FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD)
       ) {
         const filteration = filterationsMap.get(user.userId);
+        if(previousStage === JobStageType.Quiz) { 
+          filteration.quizData.grade = quizScoresMap.get(user.userId);
+        }
         filteration.currentStage = StageType.candidate;
         await this.filterationRepository.save(filteration);
       } else {

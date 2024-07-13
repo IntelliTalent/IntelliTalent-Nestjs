@@ -7,6 +7,7 @@ export const jobsServicePatterns = {
   deactivateJob: 'deactivateJob',
   moveToNextStage: 'moveToNextStage',
   getUserJobs: 'getUserJobs',
+  getGeneralJobDetailsById: 'getGeneralJobDetailsById',
 
   // patterns with other services
   extractInfo: 'extractInfo',
