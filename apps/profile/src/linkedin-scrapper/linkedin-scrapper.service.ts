@@ -7,7 +7,8 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class LinkedinScrapperService {
-  constructor(@InjectRedis() private readonly redis: Redis) {}
+  constructor(@InjectRedis() private readonly redis: Redis) {
+  }
 
   async scrapLinkedinProfile(username: string) {
     // Check if the profile is in Redis
@@ -17,9 +18,12 @@ export class LinkedinScrapperService {
     }
 
     const url = `https://www.linkedin.com/in/${username}`;
-    const rapidApiKey = await getConfigVariables(
+    const rapidApiKeys = await getConfigVariables(
       Constants.SCRAPPER.RAPIDAPI_KEY,
-    );
+    ).split(',');
+
+
+    const rapidApiKey = rapidApiKeys[Math.floor(Math.random() * rapidApiKeys.length)]
 
     const requestOptions = {
       method: 'GET',
@@ -90,7 +94,7 @@ export class LinkedinScrapperService {
         getLinkedinProfileKey(username),
         JSON.stringify(res),
         'EX',
-        7 * 24 * 60 * 6,
+        10 * 24 * 60 * 60,
       );
 
       return res;
