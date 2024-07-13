@@ -62,7 +62,7 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-  ) {}
+  ) { }
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
@@ -168,12 +168,12 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    this.filtrationService.emit(
+    await firstValueFrom(this.filtrationService.send(
       {
         cmd: jobsServicePatterns.beginCurrentStage,
       },
       { jobId: job.id, previousStage: currentStage },
-    );
+    ));
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
@@ -207,12 +207,12 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    this.filtrationService.emit(
+    await firstValueFrom(this.filtrationService.send(
       {
         cmd: jobsServicePatterns.beginCurrentStage,
       },
       { jobId: job.id, previousStage: currentStage },
-    );
+    ));
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
@@ -572,6 +572,38 @@ export class JobsService {
   }
 
   async getJobDetailsById(
+    jobId: string,
+    userId: string = null,
+  ): Promise<StructuredJob> {
+    // return the job with left joining CustomJobsStages
+    const job = await this.structuredJobRepository.findOne({
+      where: { id: jobId },
+      relations: ['stages', 'stages.interview'],
+    });
+
+    if (!job) {
+      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
+    }
+
+    let hasApplied = false;
+
+    // Check if the user has applied for the job
+    if (userId) {
+      const application = await this.appliedUsersRepository.findOne({
+        where: {
+          jobId: job.id,
+          userId: userId,
+        },
+      });
+      hasApplied = !!application;
+    }
+
+    Object.assign(job, { isApplied: userId ? hasApplied : null });
+
+    return job;
+  }
+
+  async getGeneralJobDetailsById(
     jobId: string,
     userId: string = null,
   ): Promise<StructuredJob> {
