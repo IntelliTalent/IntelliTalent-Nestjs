@@ -603,38 +603,6 @@ export class JobsService {
     return job;
   }
 
-  async getGeneralJobDetailsById(
-    jobId: string,
-    userId: string = null,
-  ): Promise<StructuredJob> {
-    // return the job with left joining CustomJobsStages
-    const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId },
-      relations: ['stages', 'stages.interview'],
-    });
-
-    if (!job) {
-      throw new NotFoundException(`Can not find a job with id: ${jobId}`);
-    }
-
-    let hasApplied = false;
-
-    // Check if the user has applied for the job
-    if (userId) {
-      const application = await this.appliedUsersRepository.findOne({
-        where: {
-          jobId: job.id,
-          userId: userId,
-        },
-      });
-      hasApplied = !!application;
-    }
-
-    Object.assign(job, { isApplied: userId ? hasApplied : null });
-
-    return job;
-  }
-
   async getJobs(pageOptions: JobsPageOptionsDto) {
     const {
       jobTitle,
