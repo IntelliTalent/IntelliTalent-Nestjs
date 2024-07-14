@@ -303,6 +303,7 @@ export class FilteringService {
     const appliedUsers = await this.filterationRepository
       .createQueryBuilder('filteration')
       .where('filteration.jobId = :jobId', { jobId })
+      .andWhere('filteration.currentStage = :currentStage', { currentStage: StageType.applied })
       .skip((page - 1) * limit)
       .take(limit)
       .select(['filteration.profileId', 'filteration.currentStage'])
