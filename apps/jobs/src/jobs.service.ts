@@ -770,7 +770,6 @@ export class JobsService {
         })
         .then((appliedJobs) => appliedJobs.map((job) => job.jobId));
 
-
       // update the isApplied field
       responseJobs.forEach((job) => {
         job.isApplied = appliedJobsIds.includes(job.id);
@@ -875,7 +874,7 @@ export class JobsService {
       .find({
         deletedAt: null,
       })
-      .limit(70);
+      .limit(20);
 
     // Call the job extractor service
     const structuredJobs = JSON.parse(

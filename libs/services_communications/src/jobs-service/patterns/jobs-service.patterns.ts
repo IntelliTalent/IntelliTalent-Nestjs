@@ -15,7 +15,7 @@ export const jobsServicePatterns = {
   beginCurrentStage: 'beginCurrentStage',
 };
 
-
 export const jobsServiceEvents = {
   userApply: 'userApply',
-}
+  jobExtractor: 'jobExtractor',
+};
