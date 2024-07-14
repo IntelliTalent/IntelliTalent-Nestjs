@@ -48,6 +48,7 @@ export class JobsController {
     return this.jobsService.getJobDetailsById(jobId, userId);
   }
 
+
   @MessagePattern({ cmd: jobsServicePatterns.getJobs })
   getJobs(pageOptions: JobsPageOptionsDto) {
     return this.jobsService.getJobs(pageOptions);

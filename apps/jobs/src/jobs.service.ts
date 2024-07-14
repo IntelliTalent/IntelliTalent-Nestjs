@@ -62,7 +62,7 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-  ) {}
+  ) { }
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
@@ -168,12 +168,12 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    this.filtrationService.emit(
+    await firstValueFrom(this.filtrationService.send(
       {
         cmd: jobsServicePatterns.beginCurrentStage,
       },
       { jobId: job.id, previousStage: currentStage },
-    );
+    ));
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
@@ -207,12 +207,12 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    this.filtrationService.emit(
+    await firstValueFrom(this.filtrationService.send(
       {
         cmd: jobsServicePatterns.beginCurrentStage,
       },
       { jobId: job.id, previousStage: currentStage },
-    );
+    ));
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
@@ -577,7 +577,7 @@ export class JobsService {
   ): Promise<StructuredJob> {
     // return the job with left joining CustomJobsStages
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId, isActive: true },
+      where: { id: jobId },
       relations: ['stages', 'stages.interview'],
     });
 

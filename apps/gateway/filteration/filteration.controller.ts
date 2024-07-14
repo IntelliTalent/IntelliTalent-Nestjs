@@ -335,48 +335,6 @@ export class ApiFilterationController {
     );
   }
 
-  @ApiOperation({ summary: 'Pass the quiz stage for a certain user in a certain job' })
-  @Post('pass-quiz')
-  @ApiOkResponse({
-    description: 'Updated the stage of the user to Interview',
-    type: StageResponseDto
-  })
-  async passQuiz(
-    @Body() quizDto: QuizDto,
-    @CurrentUser() user: User,
-  ) {
-    return this.filterationService.send(
-      {
-        cmd: FilterationServicePattern.passQuiz,
-      },
-      {
-        ...quizDto,
-        userId: user.id,
-      } as AuthQuizDto
-    );
-  }
-
-  @ApiOperation({ summary: 'Fail the quiz stage for a certain user in a certain job' })
-  @Post('fail-quiz')
-  @ApiOkResponse({
-    description: 'Updated the stage of the user to Applied',
-    type: StageResponseDto
-  })
-  async failQuiz(
-    @Body() quizDto: QuizDto,
-    @CurrentUser() user: User,
-  ) {
-    return this.filterationService.send(
-      {
-        cmd: FilterationServicePattern.failQuiz,
-      },
-      {
-        ...quizDto,
-        userId: user.id,
-      } as AuthQuizDto
-    );
-  }
-
   @ApiOperation({ summary: 'Submit the interview stage for a certain user in a certain job' })
   @Post('submit-interview')
   @ApiOkResponse({
