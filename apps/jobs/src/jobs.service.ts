@@ -603,6 +603,7 @@ export class JobsService {
     }
 
     Object.assign(job, { isApplied: userId ? hasApplied : null });
+    Object.assign(job, { source: job.jobSource });
 
     return job;
   }
