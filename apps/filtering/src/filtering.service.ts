@@ -296,6 +296,7 @@ export class FilteringService {
     const totalCount = await this.filterationRepository
       .createQueryBuilder('filteration')
       .where('filteration.jobId = :jobId', { jobId })
+      .andWhere('filteration.currentStage = :currentStage', { currentStage: StageType.applied })
       .getCount();
 
     // Step 2: Get the applied users with pagination
@@ -382,7 +383,7 @@ export class FilteringService {
       stageData,
     };
   }
-  
+
   async submitInterview(
     userId: string,
     jobId: string,
@@ -1175,7 +1176,7 @@ export class FilteringService {
         (previousStage === JobStageType.Active && user.isQualified)
       ) {
         const filteration = filterationsMap.get(user.userId);
-        if(previousStage === JobStageType.Quiz) { 
+        if (previousStage === JobStageType.Quiz) {
           filteration.quizData.grade = quizScoresMap.get(user.userId);
         }
         filteration.currentStage = StageType.interview;
@@ -1312,7 +1313,7 @@ export class FilteringService {
           FILTERATION_CONSTANTS.INTERVIEW_PASS_THRESHOLD)
       ) {
         const filteration = filterationsMap.get(user.userId);
-        if(previousStage === JobStageType.Quiz) { 
+        if (previousStage === JobStageType.Quiz) {
           filteration.quizData.grade = quizScoresMap.get(user.userId);
         }
         filteration.currentStage = StageType.candidate;
