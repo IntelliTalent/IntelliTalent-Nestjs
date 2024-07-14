@@ -120,7 +120,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -241,7 +241,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -278,7 +278,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -382,101 +382,7 @@ export class FilteringService {
       stageData,
     };
   }
-
-  async passQuiz(
-    userId: string,
-    jobId: string,
-    profileId: string,
-    grade: number,
-  ): Promise<StageResponseDto> {
-    // check if the user is the owner of the job
-    const job: StructuredJob = await firstValueFrom(
-      this.jobService.send(
-        {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
-        },
-        { jobId },
-      ),
-    );
-    if (!job || job.userId !== userId) {
-      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-    }
-
-    const filteration = await this.filterationRepository.findOneBy({
-      jobId,
-      profileId,
-    });
-    if (!filteration) {
-      throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-    }
-    if (filteration.currentStage !== StageType.quiz) {
-      throw new BadRequestException(
-        FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE,
-      );
-    }
-    filteration.quizData = {
-      grade,
-      quizDate: new Date(),
-    } as QuizData;
-    if (job.stages.interview != null) {
-      filteration.currentStage = StageType.interview;
-    } else {
-      filteration.currentStage = StageType.candidate;
-    }
-    await this.filterationRepository.save(filteration);
-    return {
-      message: FILTERATION_CONSTANTS.USER_PASSED_QUIZ,
-      stage: filteration.currentStage,
-      stageData: filteration.quizData,
-    };
-  }
-
-  async failQuiz(
-    userId: string,
-    jobId: string,
-    profileId: string,
-    grade: number,
-  ): Promise<StageResponseDto> {
-    // check if the user is the owner of the job
-    const job: StructuredJob = await firstValueFrom(
-      this.jobService.send(
-        {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
-        },
-        { jobId },
-
-      ),
-    );
-    if (!job || job.userId !== userId) {
-      throw new UnauthorizedException(FILTERATION_CONSTANTS.USER_NOT_JOB_OWNER);
-    }
-
-    const filteration = await this.filterationRepository.findOneBy({
-      jobId,
-      profileId: profileId,
-    });
-    if (!filteration) {
-      throw new BadRequestException(FILTERATION_CONSTANTS.USER_DID_NOT_APPLY);
-    }
-    if (filteration.currentStage !== StageType.quiz) {
-      throw new BadRequestException(
-        FILTERATION_CONSTANTS.USER_IS_NOT_IN_QUIZ_STAGE,
-      );
-    }
-    filteration.quizData = {
-      grade,
-      quizDate: new Date(),
-    } as QuizData;
-    filteration.currentStage = StageType.failed;
-    filteration.isQualified = false;
-    await this.filterationRepository.save(filteration);
-    return {
-      message: FILTERATION_CONSTANTS.USER_FAILED_QUIZ,
-      stage: filteration.currentStage,
-      stageData: filteration.quizData,
-    };
-  }
-
+  
   async submitInterview(
     userId: string,
     jobId: string,
@@ -535,7 +441,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId: reviewAnswers.jobId },
       ),
@@ -633,7 +539,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -751,7 +657,7 @@ export class FilteringService {
         const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
-              cmd: jobsServicePatterns.getGeneralJobDetailsById,
+              cmd: jobsServicePatterns.getJobDetailsById,
             },
             {
               jobId: job.jobId,
@@ -833,7 +739,7 @@ export class FilteringService {
         const jobDetails: IJobs = await firstValueFrom(
           this.jobService.send(
             {
-              cmd: jobsServicePatterns.getGeneralJobDetailsById,
+              cmd: jobsServicePatterns.getJobDetailsById,
             },
             {
               jobId: job.jobId,
@@ -868,7 +774,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -906,7 +812,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -980,7 +886,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
@@ -1016,7 +922,7 @@ export class FilteringService {
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
         {
-          cmd: jobsServicePatterns.getGeneralJobDetailsById,
+          cmd: jobsServicePatterns.getJobDetailsById,
         },
         { jobId },
       ),
