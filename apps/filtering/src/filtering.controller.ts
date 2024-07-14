@@ -5,7 +5,6 @@ import { StageResponseDto } from '@app/services_communications/filteration-servi
 import { FilterationServicePattern } from '@app/services_communications/filteration-service/patterns/filteration-service.pattern';
 import { JobDto } from '@app/services_communications/filteration-service/dtos/requests/job.dto';
 import { PaginatedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-job.dto';
-import { AuthQuizDto } from '@app/services_communications/filteration-service/dtos/requests/auth-quiz.dto';
 import { AuthInterviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-interview-answers.dto';
 import { AuthReviewAnswersDto } from '@app/services_communications/filteration-service/dtos/requests/auth-review-answers.dto';
 import { PaginatedMatchedJobDto } from '@app/services_communications/filteration-service/dtos/requests/paginated-matched-job.dto';
@@ -40,16 +39,6 @@ export class FilteringController {
   @MessagePattern({ cmd: FilterationServicePattern.getUserStage })
   getUserStage(@Payload() data:AuthApplyJobRequestDto) {
     return this.filteringService.getUserStage(data.userId, data.jobId, data.profileId);
-  }
-
-  @MessagePattern({ cmd: FilterationServicePattern.passQuiz })
-  passQuiz(@Payload() data: AuthQuizDto) {
-    return this.filteringService.passQuiz(data.userId, data.jobId, data.profileId, data.grade);
-  }
-
-  @MessagePattern({ cmd: FilterationServicePattern.failQuiz })
-  failQuiz(@Payload() data: AuthQuizDto) {
-    return this.filteringService.failQuiz(data.userId, data.jobId, data.profileId, data.grade);
   }
 
   @MessagePattern({ cmd: FilterationServicePattern.submitInterview })
