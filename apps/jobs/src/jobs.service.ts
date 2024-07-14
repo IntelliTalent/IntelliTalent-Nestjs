@@ -899,25 +899,23 @@ export class JobsService {
       bulkDeletePromises.push(job.save());
     }
     try {
-      await Promise.all(bulkDeletePromises);
+      await Promise.allSettled(bulkDeletePromises);
     } catch (error) {
       console.log(`Error deleting jobs: ${error.message}`);
     }
 
     // Save the structured jobs
     const addedJobs = [];
-    const bulkInsertPromises = structuredJobs['jobs'].map((job: any) => {
-      try {
+    const bulkInsertPromises = structuredJobs['jobs'].map(
+      async (job: StructuredJob) => {
         addedJobs.push(job);
         job.source = StructuredJob.getJobSource(job.url);
-        return this.structuredJobRepository.save(job as any);
-      } catch (error) {
-        console.error(`Error saving job: ${error.message}`);
-        return;
-      }
-    });
+        return this.structuredJobRepository.save(job);
+      },
+    );
+
     try {
-      await Promise.all(bulkInsertPromises);
+      await Promise.allSettled(bulkInsertPromises);
     } catch (error) {
       console.log(`Error saving jobs: ${error.message}`);
     }
