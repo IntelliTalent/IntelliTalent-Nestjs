@@ -62,7 +62,7 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-  ) { }
+  ) {}
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
@@ -168,12 +168,14 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    await firstValueFrom(this.filtrationService.send(
-      {
-        cmd: jobsServicePatterns.beginCurrentStage,
-      },
-      { jobId: job.id, previousStage: currentStage },
-    ));
+    await firstValueFrom(
+      this.filtrationService.send(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id, previousStage: currentStage },
+      ),
+    );
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
@@ -207,12 +209,14 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    await firstValueFrom(this.filtrationService.send(
-      {
-        cmd: jobsServicePatterns.beginCurrentStage,
-      },
-      { jobId: job.id, previousStage: currentStage },
-    ));
+    await firstValueFrom(
+      this.filtrationService.send(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id, previousStage: currentStage },
+      ),
+    );
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
@@ -890,9 +894,11 @@ export class JobsService {
     console.log('Calling job extractor service');
 
     // Get all the scrapped jobs
-    const unstructuredJobs = await this.unstructuredJobsModel.find({
-      deletedAt: null,
-    });
+    const unstructuredJobs = await this.unstructuredJobsModel
+      .find({
+        deletedAt: null,
+      })
+      .limit(70);
 
     // Call the job extractor service
     const structuredJobs = JSON.parse(
@@ -912,22 +918,33 @@ export class JobsService {
     const bulkDeletePromises = [];
     for (const job of unstructuredJobs) {
       job.deletedAt = new Date();
+      job.company = job.company || 'N/A';
+      job.jobLocation = job.jobLocation || 'N/A';
       bulkDeletePromises.push(job.save());
     }
-    await Promise.all(bulkDeletePromises);
+    try {
+      await Promise.all(bulkDeletePromises);
+    } catch (error) {
+      console.log(`Error deleting jobs: ${error.message}`);
+    }
 
     // Save the structured jobs
     const addedJobs = [];
-    const bulkInsertPromises = structuredJobs['jobs'].map(async (job) => {
+    const bulkInsertPromises = structuredJobs['jobs'].map((job: any) => {
       try {
-        await this.structuredJobRepository.save(job as any);
         addedJobs.push(job);
+        job.source = StructuredJob.getJobSource(job.url);
+        return this.structuredJobRepository.save(job as any);
       } catch (error) {
         console.error(`Error saving job: ${error.message}`);
         return;
       }
     });
-    await Promise.all(bulkInsertPromises);
+    try {
+      await Promise.all(bulkInsertPromises);
+    } catch (error) {
+      console.log(`Error saving jobs: ${error.message}`);
+    }
 
     // if the number of jobs is less than 1, return that mean dont call the ats or the redis
     if (addedJobs.length < 1) {
