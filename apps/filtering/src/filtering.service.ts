@@ -835,16 +835,16 @@ export class FilteringService {
       totalCount = await this.filterationRepository
         .createQueryBuilder('filteration')
         .where(
-          'filteration.jobId = :jobId AND filteration.isQualified = :isQualified',
-          { jobId, isQualified },
+          'filteration.jobId = :jobId AND filteration.isQualified = :isQualified AND filteration.currentStage != :currentStage',
+          { jobId, isQualified, currentStage: StageType.matched },
         )
         .getCount();
       // get the qualified or unqualified users
       appliedUsers = await this.filterationRepository
         .createQueryBuilder('filteration')
         .where(
-          'filteration.jobId = :jobId AND filteration.isQualified = :isQualified',
-          { jobId, isQualified },
+          'filteration.jobId = :jobId AND filteration.isQualified = :isQualified AND filteration.currentStage != :currentStage',
+          { jobId, isQualified, currentStage: StageType.matched },
         )
         .skip((page - 1) * limit)
         .take(limit)
@@ -853,13 +853,13 @@ export class FilteringService {
       // Step 1: Count the total number of documents matching the jobId
       totalCount = await this.filterationRepository
         .createQueryBuilder('filteration')
-        .where('filteration.jobId = :jobId', { jobId })
+        .where('filteration.jobId = :jobId AND filteration.currentStage != :currentStage', { jobId, currentStage: StageType.matched })
         .getCount();
 
       // Step 2: Get the applied users with pagination
       appliedUsers = await this.filterationRepository
         .createQueryBuilder('filteration')
-        .where('filteration.jobId = :jobId', { jobId })
+        .where('filteration.jobId = :jobId AND filteration.currentStage != :currentStage', { jobId, currentStage: StageType.matched })
         .skip((page - 1) * limit)
         .take(limit)
         .getMany();
