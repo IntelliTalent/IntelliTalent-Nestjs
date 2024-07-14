@@ -17,7 +17,7 @@ import {
   UnstructuredJobs,
 } from '@app/shared';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
   CreateJobDto,
   EditJobDto,
@@ -625,20 +625,6 @@ export class JobsService {
 
     const queryBuilder = this.structuredJobRepository.createQueryBuilder('job');
 
-    if (userId) {
-      queryBuilder
-        .leftJoin(
-          'job.appliedUsers',
-          'userJobApplication',
-          'userJobApplication.userId = :userId',
-          { userId },
-        )
-        .addSelect(
-          'CASE WHEN userJobApplication.userId IS NULL THEN false ELSE true END',
-          'job_hasApplied',
-        );
-    }
-
     // Apply jobTitle if provided
     if (jobTitle) {
       queryBuilder.andWhere('LOWER(job.title) LIKE LOWER(:jobTitle)', {
@@ -739,30 +725,52 @@ export class JobsService {
 
     // Execute query and map the results to IJobs format
     const [jobs, count] = await Promise.all([
-      queryBuilder.getRawMany(),
+      queryBuilder.getMany(),
       queryBuilder.getCount(),
     ]);
 
     const responseJobs: IJobs[] = jobs.map((job) => ({
-      id: job.job_id,
-      userId: job.job_userId,
-      title: job.job_title,
-      company: job.job_company,
-      jobLocation: job.job_jobLocation,
-      type: job.job_type,
-      skills: job.job_skills,
-      url: job.job_url,
-      description: job.job_description,
-      publishedAt: job.job_publishedAt,
-      jobPlace: job.job_jobPlace,
-      neededExperience: job.job_neededExperience,
-      education: job.job_education,
-      csRequired: job.job_csRequired,
-      isActive: job.job_isActive,
-      currentStage: job.job_currentStage,
-      source: StructuredJob.getJobSourceFromEnum(job.job_source),
-      isApplied: userId ? job.job_hasApplied : null,
+      id: job.id,
+      userId: job.userId,
+      title: job.title,
+      company: job.company,
+      jobLocation: job.jobLocation,
+      type: job.type,
+      skills: job.skills,
+      url: job.url,
+      description: job.description,
+      publishedAt: job.publishedAt,
+      jobPlace: job.jobPlace,
+      neededExperience: job.neededExperience,
+      education: job.education,
+      csRequired: job.csRequired,
+      isActive: job.isActive,
+      currentStage: job.currentStage,
+      source: StructuredJob.getJobSourceFromEnum(job.source),
+      isApplied: userId ? false : null,
     }));
+
+    if (userId) {
+      // get jobs Ids
+      const jobsIds = responseJobs.map((job) => job.id);
+
+      // get the IDs of the jobs the user has applied for
+      const appliedJobsIds = await this.appliedUsersRepository
+        .find({
+          select: ['jobId'],
+          where: {
+            userId,
+            jobId: In(jobsIds),
+          },
+        })
+        .then((appliedJobs) => appliedJobs.map((job) => job.jobId));
+
+
+      // update the isApplied field
+      responseJobs.forEach((job) => {
+        job.isApplied = appliedJobsIds.includes(job.id);
+      });
+    }
 
     return {
       jobs: responseJobs,
