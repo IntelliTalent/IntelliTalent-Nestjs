@@ -236,7 +236,6 @@ export class FilteringService {
     previousStage: JobStageType,
   ): Promise<StageResponseDto> {
 
-    console.log('jobId', jobId);
     // get the job details from the job service
     const job: StructuredJob = await firstValueFrom(
       this.jobService.send(
@@ -246,7 +245,6 @@ export class FilteringService {
         { jobId },
       ),
     );
-    console.log('job', job);
 
     // check if the job exists and is open
     if (!job) {
@@ -495,9 +493,6 @@ export class FilteringService {
     const filterations = await this.filterationRepository
       .createQueryBuilder('filteration')
       .where('filteration.userId = :userId', { userId: user.id })
-      .andWhere('filteration.currentStage = :stage', {
-        stage: StageType.interview,
-      })
       .skip((page - 1) * limit)
       .take(limit)
       .select([
@@ -1126,7 +1121,6 @@ export class FilteringService {
           ? StageType.applied
           : StageType.quiz,
     });
-    console.log('applied users', appliedUsers);
     let usersScores = null;
     let quizScoresMap = new Map<string, number>();
     if (previousStage === JobStageType.Quiz) {
