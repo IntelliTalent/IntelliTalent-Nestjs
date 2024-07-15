@@ -891,34 +891,27 @@ export class JobsService {
     );
 
     // Soft delete each unstructured job
-    const bulkDeletePromises = [];
     for (const job of unstructuredJobs) {
-      job.deletedAt = new Date();
-      job.company = job.company || 'N/A';
-      job.jobLocation = job.jobLocation || 'N/A';
-      bulkDeletePromises.push(job.save());
-    }
-    try {
-      await Promise.allSettled(bulkDeletePromises);
-    } catch (error) {
-      console.log(`Error deleting jobs: ${error.message}`);
+      try {
+        await this.unstructuredJobsModel.deleteOne({ _id: job._id });
+      } catch (error) {
+        console.log(`Error deleting job: ${error.message}`);
+      }
     }
 
     // Save the structured jobs
     const addedJobs = [];
-    const bulkInsertPromises = structuredJobs['jobs'].map(
-      async (job: StructuredJob) => {
-        addedJobs.push(job);
+    const promises = structuredJobs['jobs'].map(async (job: StructuredJob) => {
+      try {
         job.source = StructuredJob.getJobSource(job.url);
-        return this.structuredJobRepository.save(job);
-      },
-    );
-
-    try {
-      await Promise.allSettled(bulkInsertPromises);
-    } catch (error) {
-      console.log(`Error saving jobs: ${error.message}`);
-    }
+        const newJob = await this.structuredJobRepository.save(job);
+        addedJobs.push(newJob);
+      } catch (error) {
+        console.log(`Error saving job: ${error.message}`);
+      }
+      return null;
+    });
+    await Promise.all(promises);
 
     // if the number of jobs is less than 1, return that mean dont call the ats or the redis
     if (addedJobs.length < 1) {
