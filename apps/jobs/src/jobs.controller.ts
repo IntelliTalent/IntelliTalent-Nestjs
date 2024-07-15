@@ -23,7 +23,7 @@ export class JobsController {
     this.jobsService.checkActiveJobs();
   }
 
-  @Cron(CronExpression.EVERY_4_HOURS)
+  @Cron(CronExpression.EVERY_2_HOURS)
   callJobExtractor() {
     this.jobsService.callJobExtractor();
   }
@@ -44,10 +44,15 @@ export class JobsController {
   }
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobDetailsById })
-  getJobDetailsById({ jobId, userId = null }: { jobId: string; userId: string }) {
+  getJobDetailsById({
+    jobId,
+    userId = null,
+  }: {
+    jobId: string;
+    userId: string;
+  }) {
     return this.jobsService.getJobDetailsById(jobId, userId);
   }
-
 
   @MessagePattern({ cmd: jobsServicePatterns.getJobs })
   getJobs(pageOptions: JobsPageOptionsDto) {
@@ -72,5 +77,10 @@ export class JobsController {
   @EventPattern({ cmd: jobsServiceEvents.userApply })
   userApply(applyDro: ApplyJobDto) {
     this.jobsService.userApply(applyDro);
+  }
+
+  @EventPattern({ cmd: jobsServiceEvents.jobExtractor })
+  jobExtractor() {
+    this.jobsService.callJobExtractor();
   }
 }

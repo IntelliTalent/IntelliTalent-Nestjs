@@ -30,7 +30,7 @@ export class UnstructuredJobs {
   @Prop({ required: true })
   jobLocation: string;
 
-  @Prop({ required: true, enum: JobType })
+  @Prop({ enum: JobType })
   type: JobType;
 
   @Prop({ type: [String] })

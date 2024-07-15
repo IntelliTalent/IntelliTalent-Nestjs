@@ -6,7 +6,6 @@ import {
   OneToOne,
   Index,
   BeforeInsert,
-  ManyToOne,
   OneToMany,
 } from 'typeorm';
 import { AbstractEntity } from './abstract.entity';
@@ -92,7 +91,7 @@ export class StructuredJob extends AbstractEntity {
   @Column({ type: 'enum', enum: StageType, default: StageType.Active })
   currentStage: StageType;
 
-  @OneToOne(() => CustomJobsStages, { cascade: ['insert', 'update']})
+  @OneToOne(() => CustomJobsStages, { cascade: ['insert', 'update'] })
   @JoinColumn()
   stages: CustomJobsStages;
 
@@ -127,10 +126,7 @@ export class StructuredJob extends AbstractEntity {
 
   static getJobSourceFromEnum(source: JobSource): string {
     return Object.keys(JobSource).find((key) => {
-      return JobSource[key] == source
+      return JobSource[key] == source;
     });
   }
-
 }
-
-

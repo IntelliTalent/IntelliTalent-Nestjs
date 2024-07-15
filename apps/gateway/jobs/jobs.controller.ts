@@ -3,6 +3,7 @@ import {
   CreateJobDto,
   EditJobDto,
   IJobs,
+  jobsServiceEvents,
   jobsServicePatterns,
 } from '@app/services_communications/jobs-service';
 import { JobsPageOptionsDto } from '@app/services_communications/jobs-service/dtos/get-jobs.dto';
@@ -50,6 +51,20 @@ export class JobsController {
     private jobsService: ClientProxy,
   ) {}
 
+  @ApiOperation({ summary: 'For testing Job Extractor service' })
+  @Public()
+  @Post('job-extractor')
+  async jobExtractor() {
+    this.jobsService.emit(
+      {
+        cmd: jobsServiceEvents.jobExtractor,
+      },
+      {},
+    );
+
+    return { message: 'Job Extractor started' };
+  }
+
   @Get()
   @OptionalPublic()
   @ApiOperation({ summary: 'Get all jobs' })
@@ -60,8 +75,11 @@ export class JobsController {
     description: 'List of jobs returned successfully.',
   })
   @ApiBearerAuth(AUTH_HEADER)
-  async getJobs(@Query() filteration: JobsPageOptionsDto, @CurrentUser() user: User) {
-    if(user) {
+  async getJobs(
+    @Query() filteration: JobsPageOptionsDto,
+    @CurrentUser() user: User,
+  ) {
+    if (user) {
       filteration.userId = user.id;
     }
 
@@ -107,13 +125,16 @@ export class JobsController {
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
   @ApiBearerAuth(AUTH_HEADER)
-  async getJobById(@Param('jobId', new ParseUUIDPipe()) jobId: string, @CurrentUser() user: User) {
+  async getJobById(
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @CurrentUser() user: User,
+  ) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobById },
       {
         jobId,
         userId: user ? user.id : null,
-      }
+      },
     );
   }
 
@@ -128,13 +149,16 @@ export class JobsController {
   })
   @ApiNotFoundResponse({ description: 'Job not found.' })
   @ApiBearerAuth(AUTH_HEADER)
-  async getJobDetailsById(@Param('jobId', new ParseUUIDPipe()) jobId: string, @CurrentUser() user: User){
+  async getJobDetailsById(
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+    @CurrentUser() user: User,
+  ) {
     return this.jobsService.send(
       { cmd: jobsServicePatterns.getJobDetailsById },
       {
         jobId,
         userId: user ? user.id : null,
-      }
+      },
     );
   }
 

@@ -62,7 +62,7 @@ export class JobsService {
     @Inject(ServiceName.FILTERATION_SERVICE)
     private readonly filtrationService: ClientProxy,
     private schedulerRegistry: SchedulerRegistry,
-  ) { }
+  ) {}
 
   private async insertScrappedJobsToRedis(jobs: StructuredJob[]) {
     try {
@@ -168,12 +168,14 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    await firstValueFrom(this.filtrationService.send(
-      {
-        cmd: jobsServicePatterns.beginCurrentStage,
-      },
-      { jobId: job.id, previousStage: currentStage },
-    ));
+    await firstValueFrom(
+      this.filtrationService.send(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id, previousStage: currentStage },
+      ),
+    );
   }
 
   private async moveJobToNextStage(job: StructuredJob) {
@@ -207,12 +209,14 @@ export class JobsService {
     await this.structuredJobRepository.save(job);
 
     // Call the filtration service to begin the next stage
-    await firstValueFrom(this.filtrationService.send(
-      {
-        cmd: jobsServicePatterns.beginCurrentStage,
-      },
-      { jobId: job.id, previousStage: currentStage },
-    ));
+    await firstValueFrom(
+      this.filtrationService.send(
+        {
+          cmd: jobsServicePatterns.beginCurrentStage,
+        },
+        { jobId: job.id, previousStage: currentStage },
+      ),
+    );
   }
 
   private scheduleJobEnd(job: StructuredJob): void {
@@ -527,7 +531,7 @@ export class JobsService {
 
   async getJobById(jobId: string, userId: string = null) {
     const job = await this.structuredJobRepository.findOne({
-      where: { id: jobId, isActive: true },
+      where: { id: jobId },
     });
 
     if (!job) {
@@ -599,6 +603,7 @@ export class JobsService {
     }
 
     Object.assign(job, { isApplied: userId ? hasApplied : null });
+    Object.assign(job, { source: job.jobSource });
 
     return job;
   }
@@ -765,7 +770,6 @@ export class JobsService {
         })
         .then((appliedJobs) => appliedJobs.map((job) => job.jobId));
 
-
       // update the isApplied field
       responseJobs.forEach((job) => {
         job.isApplied = appliedJobsIds.includes(job.id);
@@ -866,9 +870,11 @@ export class JobsService {
     console.log('Calling job extractor service');
 
     // Get all the scrapped jobs
-    const unstructuredJobs = await this.unstructuredJobsModel.find({
-      deletedAt: null,
-    });
+    const unstructuredJobs = await this.unstructuredJobsModel
+      .find({
+        deletedAt: null,
+      })
+      .limit(20);
 
     // Call the job extractor service
     const structuredJobs = JSON.parse(
@@ -888,22 +894,31 @@ export class JobsService {
     const bulkDeletePromises = [];
     for (const job of unstructuredJobs) {
       job.deletedAt = new Date();
+      job.company = job.company || 'N/A';
+      job.jobLocation = job.jobLocation || 'N/A';
       bulkDeletePromises.push(job.save());
     }
-    await Promise.all(bulkDeletePromises);
+    try {
+      await Promise.allSettled(bulkDeletePromises);
+    } catch (error) {
+      console.log(`Error deleting jobs: ${error.message}`);
+    }
 
     // Save the structured jobs
     const addedJobs = [];
-    const bulkInsertPromises = structuredJobs['jobs'].map(async (job) => {
-      try {
-        await this.structuredJobRepository.save(job as any);
+    const bulkInsertPromises = structuredJobs['jobs'].map(
+      async (job: StructuredJob) => {
         addedJobs.push(job);
-      } catch (error) {
-        console.error(`Error saving job: ${error.message}`);
-        return;
-      }
-    });
-    await Promise.all(bulkInsertPromises);
+        job.source = StructuredJob.getJobSource(job.url);
+        return this.structuredJobRepository.save(job);
+      },
+    );
+
+    try {
+      await Promise.allSettled(bulkInsertPromises);
+    } catch (error) {
+      console.log(`Error saving jobs: ${error.message}`);
+    }
 
     // if the number of jobs is less than 1, return that mean dont call the ats or the redis
     if (addedJobs.length < 1) {
