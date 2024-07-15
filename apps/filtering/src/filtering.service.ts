@@ -973,9 +973,6 @@ export class FilteringService {
     const result = await this.filterationRepository
       .createQueryBuilder('filteration')
       .where('filteration.userId = :userId', { userId })
-      .andWhere('filteration.currentStage = :currentStage', {
-        currentStage: StageType.interview,
-      })
       .getMany();
 
     const takenCnt = result.filter(
