@@ -12,7 +12,7 @@
 - [⛏️ Built With](#built-with)
 - [🏁 Getting started](#getting-started)
 - [🏁 Description](#Description)
-- [📷 Features](#features)
+- [📷 Modules](#modules)
 - [🏁 API Documentation](#API-Documentation)
 - [🏁 Function Documentation](#Function-Documentation)
 - [✍️ Contributors](#contributors)
@@ -92,7 +92,8 @@
 </blockquote>
 <hr>
 
-## 📷 Features
+
+<h2 href="#modules">📷 Modules</h2>
 
 <details>
 <summary>
@@ -106,18 +107,6 @@
 - Reset password
 - Verify email
  
-</details>
-
-<details>
-<summary>
-<h4 style="display:inline">
-<strong><em> 🔍 Scraper </em></strong></h4>
-</summary>
-
-- Scrape LinkedIn and Wuzzuf for new jobs
-- Check every while if the job is still active or not
-- Extract important info from the scraped jobs
-    
 </details>
 
 
@@ -147,17 +136,6 @@
 <details>
 <summary>
 <h4 style="display:inline">
-<strong><em> 📃 CV and Cover letter generator </em></strong></h4>
-</summary>
-
-- User can create a CV for his profile with one click
-- User can create a Cover Letter for his profile for a certain company with one click
-    
-</details>
-
-<details>
-<summary>
-<h4 style="display:inline">
 <strong><em> 💼 Jobs</em></strong></h4>
 </summary>
 
@@ -165,17 +143,9 @@
 - Add custom filters to the job (years of experience, computer science degree, ...etc)
 - Add Quiz stage for job applicants (generated automatically)
 - Add Interview stage for job applicants
-
-</details>
-
-<details>
-<summary>
-<h4 style="display:inline">
-<strong><em> 🔎 Find jobs</em></strong></h4>
-</summary>
-
-- Search for a job with many filters
 - Apply for a job
+- Find Jobs
+    - Search for a job with many filters
 
 </details>
 
