@@ -50,10 +50,10 @@
   </li>
   <li><strong><em>Navigate to project folder and create file named ".env"</em></strong>
     <div>
-        <code>$ cd Backend & touch .env</code>
+        <code>$ touch .env & cd IntelliTalent-Nestjs</code>
     </div>
   </li>
-  <li><strong><em>Contact us to fill ".env" file</em></strong>
+  <li><strong><em>Fill ".env" file with required fields</em></strong>
   </li>
   <li><strong><em>Install Node js and NPM</em></strong>
   </li>
