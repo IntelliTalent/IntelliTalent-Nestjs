@@ -28,6 +28,7 @@
   <li>PostgreSQL</li>
   <li>MongoDB</li>
   <li>Redis</li>
+  <li>RabbitMQ</li>
   <li>TypeORM</li>
   <li>Mongoose</li>
   <li>JSON Web Token</li>
