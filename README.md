@@ -80,7 +80,7 @@
   Intelli-Talent streamlines job searching and recruitment with features like automated CV and cover letter generation, job matching, and a Chrome extension for auto-filling application forms. For recruiters, it offers a comprehensive Application Tracking System (ATS) and multi-stage candidate filtration, including quizzes and interviews.
   <br>
   <br>
-  This website is developed in React js for the frontend and in Node js for the backend.
+  This website is developed with React js for the frontend, Nest.js for some backend services, and Flask for the other backend services.
  </p>
 </blockquote>
 <hr>
