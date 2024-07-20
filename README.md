@@ -87,7 +87,7 @@
 <h2 href="#API-Documentation">API Documentation</h2>
 <blockquote>
   <p>
-  You can look on the API documentation at <a href="http://185.69.167.155:3000/api/v1/docs#/">API Documentation</a>
+  You can look at the API documentation after running the application at <a href="http://localhost:3000/api/v1/docs#/">API Documentation</a>
   </p>
 </blockquote>
 <hr>
