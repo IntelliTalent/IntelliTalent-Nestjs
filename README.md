@@ -14,9 +14,7 @@
 - [🏁 Description](#Description)
 - [📷 Modules](#modules)
 - [🏁 API Documentation](#API-Documentation)
-- [🏁 Function Documentation](#Function-Documentation)
 - [✍️ Contributors](#contributors)
-- [🔒 License](#license)
 </details>
 
 <hr>
