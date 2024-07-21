@@ -57,16 +57,11 @@
   </li>
   <li><strong><em>Fill ".env" file with required fields</em></strong>
   </li>
-  <li><strong><em>Install Node js and NPM</em></strong>
+  <li><strong><em>Install Docker and Docker Compose</em></strong>
   </li>
-  <li><strong><em>Install dependencies</em></strong>
+  <li><strong><em>Start all microservices</em></strong>
     <div>
-        <code>$ npm install</code>
-    </div>
-  </li>
-  <li><strong><em>Start the application</em></strong>
-    <div>
-        <code>$ npm start</code>
+        <code>$ docker compose up -d</code>
     </div>
   </li>
 
