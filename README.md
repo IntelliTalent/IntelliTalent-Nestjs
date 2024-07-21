@@ -98,7 +98,7 @@
 </summary>
 
 - Sign up
-- Login in
+- Log in
 - Forget password
 - Reset password
 - Verify email
