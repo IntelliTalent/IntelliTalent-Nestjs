@@ -1,8 +1,12 @@
 <div align="center">
-    <h1 align='center'>⚡️<i>Intelli-Talent</i>⚡️</h1>
-    <p>A website where you can find your <i>Talent<i></p>
+<img src="docs/logo.png" alt="Intelli-Talent" border="0" style="width: 35%; height: 35%;">
+<h1/>
 </div>
 
+<div align="center">
+    <h1 align='center'>⚡️<i>Intelli-Talent</i>⚡️</h1>
+    <p><i>Get discovered. Get hired.</i></p>
+</div>
 
 <details open="open">
 <summary>
@@ -90,7 +94,6 @@
 </blockquote>
 <hr>
 
-
 <h2 href="#modules">📷 Modules</h2>
 
 <details>
@@ -104,9 +107,8 @@
 - Forget password
 - Reset password
 - Verify email
- 
-</details>
 
+</details>
 
 <details>
 <summary>
@@ -116,7 +118,7 @@
 
 - Match the entire profile of the user with all available jobs
 - Determine which job is the perfect match for the user
-    
+
 </details>
 
 <details>
@@ -143,7 +145,7 @@
 - Add Interview stage for job applicants
 - Apply for a job
 - Find Jobs
-    - Search for a job with many filters
+  - Search for a job with many filters
 
 </details>
 
@@ -185,9 +187,8 @@
 - Matching for a certain job email
 - Qualification to next stage email (quiz, interview)
 - Acceptance email
-    
-</details>
 
+</details>
 
 <h2 href="#Contributors">✍️ Contributors</h2>
 
