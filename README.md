@@ -71,13 +71,13 @@
 <h2 href="#Description">Description</h2>
 <blockquote>
   <p>
-  This website was implemented for our Graduation Project by a team of 4 students.
+  This platform was implemented for our Graduation Project by a team of 4 students.
   <br>
   <br>
   Intelli-Talent streamlines job searching and recruitment with features like automated CV and cover letter generation, job matching, and a Chrome extension for auto-filling application forms. For recruiters, it offers a comprehensive Application Tracking System (ATS) and multi-stage candidate filtration, including quizzes and interviews.
   <br>
   <br>
-  This website is developed with React js for the frontend, Nest.js for some backend services, and Flask for the other backend services.
+  This platform is developed with React js for the frontend, Nest.js for some backend services, and Flask for the other backend services.
  </p>
 </blockquote>
 <hr>
